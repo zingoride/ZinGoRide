@@ -43,7 +43,7 @@ export function SidebarNav() {
             <span className="text-lg font-semibold">ZinGo Ride</span>
           </Button>
           <div className="md:ml-auto">
-            <SidebarTrigger />
+            <SidebarTrigger className="hidden" />
           </div>
         </div>
       </SidebarHeader>
@@ -51,7 +51,7 @@ export function SidebarNav() {
         <SidebarMenu>
           {menuItems.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
-              <Link href={href} passHref>
+              <Link href={href}>
                 <SidebarMenuButton
                   isActive={pathname === href}
                   tooltip={label}
