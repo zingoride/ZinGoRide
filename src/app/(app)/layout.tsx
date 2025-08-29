@@ -1,8 +1,7 @@
 
-import { Sidebar } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Header } from "@/components/header";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function AppLayout({
     children,
@@ -14,6 +13,8 @@ export default function AppLayout({
             <Sheet>
                  <Header />
                  <SheetContent side="left" className="flex flex-col p-0">
+                    <SheetTitle className="sr-only">Rider Menu</SheetTitle>
+                    <SheetDescription className="sr-only">Main navigation menu for the rider portal.</SheetDescription>
                     <SidebarNav />
                 </SheetContent>
             </Sheet>

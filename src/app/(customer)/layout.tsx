@@ -1,7 +1,7 @@
 
 import { CustomerHeader } from "@/components/customer-header";
 import { CustomerSidebar } from "@/components/customer-sidebar";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 export default function CustomerLayout({
     children,
@@ -17,6 +17,8 @@ export default function CustomerLayout({
                 <Sheet>
                     <CustomerHeader />
                     <SheetContent side="left" className="p-0 flex flex-col">
+                        <SheetTitle className="sr-only">Customer Menu</SheetTitle>
+                        <SheetDescription className="sr-only">Main navigation menu for the customer portal.</SheetDescription>
                         <CustomerSidebar />
                     </SheetContent>
                 </Sheet>
