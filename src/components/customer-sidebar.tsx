@@ -40,9 +40,6 @@ export function CustomerSidebar() {
             <Package2 className="h-6 w-6" />
             <span className="text-lg font-semibold">ZinGo Ride</span>
           </Button>
-          <div className="md:ml-auto">
-            <SidebarTrigger className="hidden" />
-          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
