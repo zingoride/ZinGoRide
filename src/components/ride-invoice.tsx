@@ -24,7 +24,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className='flex flex-col items-center text-center'>
-            <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+            <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
             <DialogTitle className="text-2xl">Ride Mukammal!</DialogTitle>
             <DialogDescription>
               Ride ID: {ride.id}
