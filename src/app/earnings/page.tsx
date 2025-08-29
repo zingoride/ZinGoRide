@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { EarningsChart } from "@/components/earnings-chart";
-import { RideHistoryTable } from "@/components/ride-history-table";
 import { DollarSign, Goal, Wallet } from "lucide-react";
 
 export default function EarningsPage() {
@@ -58,18 +57,6 @@ export default function EarningsPage() {
           </CardContent>
         </Card>
         <div className="hidden xl:block"></div>
-      </div>
-
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Ride History</CardTitle>
-            <CardDescription>Aap ki tamam pichli rides ki tafseelat.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RideHistoryTable />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

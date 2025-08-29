@@ -8,6 +8,7 @@ import {
   Package2,
   BarChart3,
   Bell,
+  History,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/earnings", label: "Kamai", icon: BarChart3 },
+  { href: "/history", label: "Tareekh", icon: History },
   { href: "/profile", label: "Profile", icon: User },
 ];
 
