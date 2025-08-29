@@ -8,15 +8,12 @@ import {
   User,
   Package2,
   BarChart3,
-  Bell,
   History,
   Settings,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 import { useLanguage } from "@/context/LanguageContext";
-import { Separator } from "./ui/separator";
 
 const translations = {
   ur: {
@@ -75,13 +72,6 @@ export function SidebarNav() {
           ))}
         </nav>
       </div>
-       <div className="mt-auto p-4">
-        <Separator className="my-2" />
-        <Button variant="ghost" className="w-full justify-start gap-3 px-3 py-2 text-muted-foreground">
-            <Bell className="h-4 w-4" />
-            {t.notifications}
-        </Button>
-       </div>
     </div>
   );
 }

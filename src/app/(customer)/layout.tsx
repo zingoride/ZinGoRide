@@ -16,7 +16,7 @@ export default function CustomerLayout({
             <div className="flex flex-col">
                 <Sheet>
                     <CustomerHeader />
-                    <SheetContent side="left" className="p-0 flex flex-col">
+                    <SheetContent side="left" className="p-0 flex flex-col sm:max-w-xs">
                         <SheetTitle className="sr-only">Customer Menu</SheetTitle>
                         <SheetDescription className="sr-only">Main navigation menu for the customer portal.</SheetDescription>
                         <CustomerSidebar />

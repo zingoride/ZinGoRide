@@ -18,6 +18,7 @@ import { useRiderStatus } from '@/context/RiderStatusContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
+import { Input } from './ui/input';
 
 const translations = {
   ur: {
@@ -51,22 +52,30 @@ export function Header() {
   const t = translations[language];
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
        <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="sm:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          className="shrink-0 md:hidden"
+        >
           <Menu className="h-5 w-5" />
           <span className="sr-only">{t.toggleMenu}</span>
         </Button>
       </SheetTrigger>
-      <div className="relative ml-auto flex-1 md:grow-0">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <input
-          type="search"
-          placeholder={t.search}
-          className="w-full rounded-lg bg-secondary pl-8 h-9"
-        />
+      <div className="w-full flex-1">
+        <form>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t.search}
+              className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+            />
+          </div>
+        </form>
       </div>
-      <div className="flex items-center gap-2">
+       <div className="flex items-center gap-2">
         <Label htmlFor="online-status-switch" className="text-sm font-medium">
           {isOnline ? t.online : t.offline}
         </Label>
@@ -77,17 +86,9 @@ export function Header() {
           aria-label="Online/Offline status"
         />
       </div>
-      <Button variant="ghost" size="icon" className="rounded-full">
-        <Bell className="h-5 w-5" />
-        <span className="sr-only">{t.notifications}</span>
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="overflow-hidden rounded-full"
-          >
+          <Button variant="secondary" size="icon" className="rounded-full">
             <Avatar>
               <AvatarImage
                 src="https://picsum.photos/100/100"
@@ -96,6 +97,7 @@ export function Header() {
               />
               <AvatarFallback>ZR</AvatarFallback>
             </Avatar>
+            <span className="sr-only">Toggle user menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -106,7 +108,9 @@ export function Header() {
           </DropdownMenuItem>
           <DropdownMenuItem>{t.support}</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>{t.logout}</DropdownMenuItem>
+           <DropdownMenuItem asChild>
+             <Link href="/rider-login">{t.logout}</Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

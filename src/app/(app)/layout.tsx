@@ -9,18 +9,23 @@ export default function AppLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex min-h-screen w-full flex-col">
-            <Sheet>
-                 <Header />
-                 <SheetContent side="left" className="flex flex-col p-0">
-                    <SheetTitle className="sr-only">Rider Menu</SheetTitle>
-                    <SheetDescription className="sr-only">Main navigation menu for the rider portal.</SheetDescription>
-                    <SidebarNav />
-                </SheetContent>
-            </Sheet>
-            <main className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-                {children}
-            </main>
+        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <div className="hidden border-r bg-muted/40 md:block">
+               <SidebarNav />
+            </div>
+            <div className="flex flex-col">
+                <Sheet>
+                    <Header />
+                    <SheetContent side="left" className="flex flex-col p-0 sm:max-w-xs">
+                        <SheetTitle className="sr-only">Rider Menu</SheetTitle>
+                        <SheetDescription className="sr-only">Main navigation menu for the rider portal.</SheetDescription>
+                        <SidebarNav />
+                    </SheetContent>
+                </Sheet>
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-8">
+                    {children}
+                </main>
+            </div>
         </div>
     )
 }
