@@ -1,12 +1,11 @@
 
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import {
-  Map,
   MapPin,
   Phone,
-  MessageSquare,
   X,
   Star,
   Navigation,
@@ -16,11 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useRide } from '@/context/RideContext';
-import { useToast } from '@/hooks/use-toast';
 import { ChatDialog } from './chat-dialog';
 
 export function InProgressRide() {
   const { activeRide, completeRide, cancelRide } = useRide();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   if (!activeRide) {
     return null;
@@ -35,21 +34,18 @@ export function InProgressRide() {
   };
   
   const handleNavigate = () => {
-    if (pickup) {
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickup)}`;
-      window.open(mapsUrl, '_blank');
-    }
+    setIsNavigating(true);
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
       <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
         <Image
-          src="https://placehold.co/1600x1200/e2e8f0/475569?text=Map+View"
+          src={isNavigating ? "https://placehold.co/1600x1200/e2e8f0/475569?text=Navigation+Route" : "https://placehold.co/1600x1200/e2e8f0/475569?text=Map+View"}
           alt="Map with route"
           fill
           objectFit="cover"
-          data-ai-hint="street map"
+          data-ai-hint={isNavigating ? "navigation route map" : "street map"}
         />
       </div>
 
