@@ -1,3 +1,4 @@
+
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Package2 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
   return (
