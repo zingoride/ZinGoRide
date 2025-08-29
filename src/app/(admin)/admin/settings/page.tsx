@@ -40,6 +40,12 @@ const translations = {
     themeGreen: "Green",
     themeOrange: "Orange",
     themeRose: "Rose",
+    themeViolet: "Violet",
+    themeYellow: "Yellow",
+    themeLime: "Lime",
+    themeCyan: "Cyan",
+    themePink: "Pink",
+    themeSlate: "Slate",
   },
   en: {
     settings: "Settings",
@@ -65,6 +71,12 @@ const translations = {
     themeGreen: "Green",
     themeOrange: "Orange",
     themeRose: "Rose",
+    themeViolet: "Violet",
+    themeYellow: "Yellow",
+    themeLime: "Lime",
+    themeCyan: "Cyan",
+    themePink: "Pink",
+    themeSlate: "Slate",
   },
 };
 
@@ -80,6 +92,12 @@ const colorOptions = [
     { name: 'Green', value: 'theme-green', color: 'bg-green-500' },
     { name: 'Orange', value: 'theme-orange', color: 'bg-orange-500' },
     { name: 'Rose', value: 'theme-rose', color: 'bg-rose-500' },
+    { name: 'Violet', value: 'theme-violet', color: 'bg-violet-500' },
+    { name: 'Yellow', value: 'theme-yellow', color: 'bg-yellow-500' },
+    { name: 'Lime', value: 'theme-lime', color: 'bg-lime-500' },
+    { name: 'Cyan', value: 'theme-cyan', color: 'bg-cyan-500' },
+    { name: 'Pink', value: 'theme-pink', color: 'bg-pink-500' },
+    { name: 'Slate', value: 'theme-slate', color: 'bg-slate-500' },
 ]
 
 export default function AdminSettingsPage() {
@@ -155,7 +173,7 @@ export default function AdminSettingsPage() {
                     <RadioGroup 
                         value={themeColor} 
                         onValueChange={(value) => setThemeColor(value as any)}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        className="grid grid-cols-2 md:grid-cols-5 gap-4"
                     >
                         {colorOptions.map((option) => (
                             <div key={option.value}>

@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
-type ThemeColor = 'theme-blue' | 'theme-green' | 'theme-orange' | 'theme-rose';
+type ThemeColor = 'theme-blue' | 'theme-green' | 'theme-orange' | 'theme-rose' | 'theme-violet' | 'theme-yellow' | 'theme-lime' | 'theme-cyan' | 'theme-pink' | 'theme-slate';
 
 interface ThemeColorContextType {
   themeColor: ThemeColor;
@@ -23,7 +23,7 @@ export function ThemeColorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.body.classList.remove('theme-blue', 'theme-green', 'theme-orange', 'theme-rose');
+    document.body.classList.remove('theme-blue', 'theme-green', 'theme-orange', 'theme-rose', 'theme-violet', 'theme-yellow', 'theme-lime', 'theme-cyan', 'theme-pink', 'theme-slate');
     document.body.classList.add(themeColor);
   }, [themeColor]);
 
