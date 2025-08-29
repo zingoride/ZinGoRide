@@ -169,7 +169,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         
-        <div className="grid w-full max-w-4xl gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+        <div className="grid w-full max-w-4xl gap-4 md:gap-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Aaj Ki Kamai</CardTitle>
@@ -217,15 +217,15 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
-      <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
+    <div className="grid flex-1 items-start gap-4 md:gap-8">
+      <div className="grid auto-rows-max items-start gap-4 md:gap-8">
         <div className="grid gap-4">
           {rideRequests.map((request) => (
             <RideRequest key={request.id} {...request} />
           ))}
         </div>
       </div>
-      <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-1">
+      <div className="grid auto-rows-max items-start gap-4 md:gap-8">
         <TipCalculator />
       </div>
     </div>

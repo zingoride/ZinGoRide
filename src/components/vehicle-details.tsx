@@ -28,7 +28,7 @@ export function VehicleDetails() {
         <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
             <Image src="https://picsum.photos/300/200" width={300} height={200} alt="Vehicle Image" className="rounded-md" data-ai-hint="white car" />
         </div>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid gap-4">
             <div className="grid gap-2">
                 <Label htmlFor="vehicle-type">Gaari ki Qisam</Label>
                 <Select defaultValue="car">

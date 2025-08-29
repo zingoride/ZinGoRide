@@ -6,7 +6,7 @@ import { DollarSign, Goal, Wallet } from "lucide-react";
 export default function EarningsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Aaj Ki Kamai</CardTitle>
@@ -46,8 +46,8 @@ export default function EarningsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-4 md:gap-8">
+        <Card>
           <CardHeader>
             <CardTitle>Kamai Ka Jaiza</CardTitle>
             <CardDescription>Pichle 7 dinon ki kamai.</CardDescription>
@@ -56,7 +56,6 @@ export default function EarningsPage() {
             <EarningsChart />
           </CardContent>
         </Card>
-        <div className="hidden xl:block"></div>
       </div>
     </div>
   );

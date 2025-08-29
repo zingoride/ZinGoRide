@@ -18,8 +18,8 @@ import { SidebarTrigger } from './ui/sidebar';
 export function CustomerHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background px-4 sm:px-6 h-16 flex items-center">
-       <SidebarTrigger className="md:hidden -ml-2" />
-      <div className="flex items-center justify-between w-full">
+       <SidebarTrigger className="-ml-2" />
+      <div className="flex items-center justify-between w-full ml-4">
         <Link href="/customer" className="flex items-center gap-2">
             <Package2 className="h-6 w-6" />
             <span className="text-lg font-semibold">ZinGo Ride</span>

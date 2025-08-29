@@ -25,8 +25,8 @@ export default function CustomerPage() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 h-[calc(100vh-4rem)]">
-            <div className="md:col-span-1 bg-muted hidden md:flex items-center justify-center p-8">
+        <div className="flex flex-col h-[calc(100vh-4rem)]">
+            <div className="flex-1 bg-muted flex items-center justify-center p-4">
                  <div className="w-full h-full relative shadow-lg rounded-lg overflow-hidden">
                     <Image
                         src="https://picsum.photos/seed/customermap/1600/1200"
@@ -40,7 +40,7 @@ export default function CustomerPage() {
                     </div>
                 </div>
             </div>
-            <div className="col-span-1 bg-background p-4 flex flex-col gap-4 overflow-y-auto">
+            <div className="bg-background p-4 flex flex-col gap-4">
                 {pageState === 'booking' && <RideBookingForm onFindRide={handleFindRide} />}
                 {pageState === 'rides_available' && <AvailableRides onConfirmRide={handleConfirmRide} />}
                 {pageState === 'confirmed' && <CustomerRideStatus onCancel={handleCancelRide} />}

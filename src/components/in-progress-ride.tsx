@@ -56,8 +56,8 @@ export function InProgressRide() {
 
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
-      <div className="lg:col-span-2 h-[450px] lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative bg-muted flex flex-col items-center justify-center">
+    <div className="flex flex-col gap-8 items-start h-full">
+      <div className="w-full h-[300px] rounded-lg overflow-hidden relative bg-muted flex flex-col items-center justify-center">
         <div className="absolute top-4 left-4 z-10">
             <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
                  {rideStage === 'pickup' ? 'On the way to Pickup' : 'On the way to Dropoff'}
@@ -75,7 +75,7 @@ export function InProgressRide() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 w-full">
         <Card>
           <CardHeader>
             <CardTitle>Rider ki Maloomat</CardTitle>

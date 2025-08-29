@@ -10,7 +10,7 @@ export default function CustomerLayout({
 }) {
     return (
         <SidebarProvider>
-            <Sidebar>
+            <Sidebar collapsible="offcanvas">
                 <CustomerSidebar />
             </Sidebar>
             <SidebarInset>
