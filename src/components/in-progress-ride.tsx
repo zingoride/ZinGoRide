@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -39,35 +40,37 @@ export function InProgressRide() {
 
       <div className="flex flex-col gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Rider ki Maloomat</CardTitle>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="icon">
-                <Phone className="h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <MessageSquare className="h-5 w-5" />
-              </Button>
-            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={rider?.avatarUrl} data-ai-hint="portrait woman" />
-                <AvatarFallback>
-                  {rider?.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-xl font-bold">{rider?.name}</p>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span>{rider?.rating.toFixed(1)}</span>
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                        <AvatarImage src={rider?.avatarUrl} data-ai-hint="portrait woman" />
+                        <AvatarFallback>
+                        {rider?.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="text-xl font-bold">{rider?.name}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span>{rider?.rating.toFixed(1)}</span>
+                        </div>
+                    </div>
                 </div>
-              </div>
+                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon">
+                        <Phone className="h-5 w-5" />
+                    </Button>
+                    <Button variant="outline" size="icon">
+                        <MessageSquare className="h-5 w-5" />
+                    </Button>
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -92,14 +95,14 @@ export function InProgressRide() {
                 <p className="font-semibold">{dropoff}</p>
               </div>
             </div>
+            <Button size="lg" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+                <Navigation className="mr-2 h-5 w-5" />
+                Navigate to Pickup
+            </Button>
           </CardContent>
         </Card>
         
         <div className='space-y-2'>
-            <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                <Navigation className="mr-2 h-5 w-5" />
-                Navigate to Pickup
-            </Button>
             <Button size="lg" className="w-full" onClick={completeRide}>
                 Ride Mukammal Karein
             </Button>
