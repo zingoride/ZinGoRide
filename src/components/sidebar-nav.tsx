@@ -51,16 +51,13 @@ export function SidebarNav() {
         <SidebarMenu>
           {menuItems.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
-              <Link href={href} legacyBehavior passHref>
+              <Link href={href} passHref>
                 <SidebarMenuButton
-                  asChild
                   isActive={pathname === href}
                   tooltip={label}
                 >
-                  <a>
-                    <Icon className="h-5 w-5" />
-                    <span>{label}</span>
-                  </a>
+                  <Icon className="h-5 w-5" />
+                  <span>{label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
