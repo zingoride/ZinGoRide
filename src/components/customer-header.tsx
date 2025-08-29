@@ -11,15 +11,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Package2 } from 'lucide-react';
+import { Menu, Package2 } from 'lucide-react';
 import Link from 'next/link';
-import { SidebarTrigger } from './ui/sidebar';
+import { SheetTrigger } from './ui/sheet';
+
 
 export function CustomerHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background px-4 sm:px-6 h-16 flex items-center">
-       <SidebarTrigger />
-      <div className="flex items-center justify-between w-full ml-4">
+       <SheetTrigger asChild>
+        <Button size="icon" variant="outline" className="sm:hidden">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </SheetTrigger>
+      <div className="flex items-center justify-between w-full sm:ml-4">
         <Link href="/customer" className="flex items-center gap-2">
             <Package2 className="h-6 w-6" />
             <span className="text-lg font-semibold">ZinGo Ride</span>

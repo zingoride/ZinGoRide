@@ -12,14 +12,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import {
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
+import { Button } from "./ui/button";
+
 
 const menuItems = [
   { href: "/customer", label: "Book a Ride", icon: Car },
@@ -31,42 +25,36 @@ export function CustomerSidebar() {
   const pathname = usePathname();
 
   return (
-    <>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-            <Package2 className="h-6 w-6" />
-            <span className="text-lg font-semibold">ZinGo Ride</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
+    <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <Link href="/customer" className="flex items-center gap-2 font-semibold">
+          <Package2 className="h-6 w-6" />
+          <span className="">ZinGo Ride</span>
+        </Link>
+      </div>
+      <div className="flex-1">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
           {menuItems.map(({ href, label, icon: Icon }) => (
-            <SidebarMenuItem key={href}>
-              <Link href={href}>
-                <SidebarMenuButton
-                  isActive={pathname === href}
-                  tooltip={label}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{label}</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                pathname === href && "bg-muted text-primary"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
           ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-         <SidebarMenu>
-          <SidebarMenuItem>
-             <Link href="#">
-                <SidebarMenuButton tooltip="Settings">
-                    <Settings className="h-5 w-5" />
-                    <span>Settings</span>
-                </SidebarMenuButton>
-              </Link>
-          </SidebarMenuItem>
-         </SidebarMenu>
-      </SidebarFooter>
-    </>
+        </nav>
+      </div>
+      <div className="mt-auto p-4">
+        <Button size="sm" className="w-full">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+        </Button>
+      </div>
+    </div>
   );
 }
