@@ -27,7 +27,7 @@ export function InProgressRide() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
-      <div className="lg:col-span-2 h-[calc(100vh-10rem)] rounded-lg overflow-hidden">
+      <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
         <Image
           src="https://picsum.photos/seed/map/1600/1200"
           alt="Map with route"
