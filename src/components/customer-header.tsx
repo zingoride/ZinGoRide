@@ -25,7 +25,7 @@ export function CustomerHeader() {
         
         <div className="flex items-center gap-4">
              <Link href="/rider-login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hidden sm:block">
-                Driver Portal
+                Rider Portal
             </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
