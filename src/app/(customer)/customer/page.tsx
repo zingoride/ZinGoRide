@@ -5,8 +5,8 @@ import Image from "next/image";
 
 export default function CustomerPage() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 h-[calc(100vh-4rem)]">
-            <div className="md:col-span-2 bg-muted hidden md:flex items-center justify-center p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 h-[calc(100vh-4rem)]">
+            <div className="md:col-span-1 bg-muted hidden md:flex items-center justify-center p-8">
                  <div className="w-full h-full relative shadow-lg rounded-lg overflow-hidden">
                     <Image
                         src="https://picsum.photos/seed/customermap/1600/1200"
