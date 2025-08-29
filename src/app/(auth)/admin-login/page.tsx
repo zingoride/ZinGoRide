@@ -14,54 +14,41 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Package2 } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { Package2, Shield } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext";
 
 const translations = {
   ur: {
-    title: "Customer Login",
+    title: "Admin Login",
     description: "Login karne ke liye apna email aur password darj karein.",
     emailLabel: "Email",
     passwordLabel: "Password",
     loginButton: "Login",
-    signupPrompt: "Naya account banana hai?",
-    signupLink: "Sign up",
-    riderPrompt: "Rider ho?",
-    riderLink: "Yahan login karein.",
-    adminPrompt: "Admin ho?",
-    adminLink: "Yahan login karein.",
   },
   en: {
-    title: "Customer Login",
+    title: "Admin Login",
     description: "Enter your email and password to login.",
     emailLabel: "Email",
     passwordLabel: "Password",
     loginButton: "Login",
-    signupPrompt: "Don't have an account?",
-    signupLink: "Sign up",
-    riderPrompt: "Are you a rider?",
-    riderLink: "Login here.",
-    adminPrompt: "Are you an admin?",
-    adminLink: "Login here.",
   },
 };
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language];
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/customer');
+    router.push('/admin');
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4">
         <div className="flex items-center gap-2 mb-6">
-            <Package2 className="h-8 w-8" />
-            <span className="text-2xl font-semibold">ZinGo Ride</span>
+            <Shield className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-semibold">ZinGo Admin</span>
         </div>
       <Card className="w-full">
         <CardHeader>
@@ -72,7 +59,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" placeholder="admin@example.com" required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
@@ -83,18 +70,8 @@ export default function LoginPage() {
             </Button>
           </form>
             <div className="mt-4 text-center text-sm">
-                {t.signupPrompt}{" "}
-                <Link href="/signup" className="underline">
-                    {t.signupLink}
-                </Link>
-            </div>
-             <Separator className="my-4" />
-             <div className="grid grid-cols-2 gap-4 text-center text-sm">
-                 <Link href="/rider-login" className="underline">
-                    {t.riderPrompt} {t.riderLink}
-                </Link>
-                 <Link href="/admin-login" className="underline">
-                    {t.adminPrompt} {t.adminLink}
+                 <Link href="/login" className="underline">
+                    Back to Customer Login
                 </Link>
             </div>
         </CardContent>
@@ -102,3 +79,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
