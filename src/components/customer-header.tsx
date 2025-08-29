@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Menu, Package2 } from 'lucide-react';
+import { Package2 } from 'lucide-react';
 import Link from 'next/link';
 
 export function CustomerHeader() {
