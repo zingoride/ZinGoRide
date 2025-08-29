@@ -10,7 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export function RideRequest() {
+interface RideRequestProps {
+  id: string;
+  pickup: string;
+  dropoff: string;
+  fare: number;
+  eta: string;
+}
+
+export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps) {
   return (
     <Card className="overflow-hidden shadow-lg">
       <CardHeader className="flex flex-row items-start bg-muted/50">
@@ -18,7 +26,7 @@ export function RideRequest() {
           <CardTitle className="group flex items-center gap-2 text-lg">
             Nayi Ride Ki Darkhwast
           </CardTitle>
-          <CardDescription>Ride ID: #ZR-86572</CardDescription>
+          <CardDescription>Ride ID: #{id}</CardDescription>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1">
@@ -35,12 +43,12 @@ export function RideRequest() {
               <MapPin className="h-5 w-5 text-primary mr-3" />
               <div className="flex-1">
                 <p className="font-semibold text-muted-foreground">Uthanay ki Jagah</p>
-                <p className="font-medium">Saddar, Karachi</p>
+                <p className="font-medium">{pickup}</p>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground mx-4" />
               <div className="flex-1 text-right">
                 <p className="font-semibold text-muted-foreground">Manzil</p>
-                <p className="font-medium">Clifton, Karachi</p>
+                <p className="font-medium">{dropoff}</p>
               </div>
               <MapPin className="h-5 w-5 text-accent ml-3" />
             </div>
@@ -50,14 +58,14 @@ export function RideRequest() {
                 <DollarSign className="h-5 w-5 text-primary mr-3" />
                 <div>
                   <p className="font-semibold text-muted-foreground">Andazan Kiraya</p>
-                  <p className="font-medium">PKR 450.00</p>
+                  <p className="font-medium">PKR {fare.toFixed(2)}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Clock className="h-5 w-5 text-primary mr-3" />
                 <div>
                   <p className="font-semibold text-muted-foreground">Pohanchne ka Waqt</p>
-                  <p className="font-medium">8 Minutes</p>
+                  <p className="font-medium">{eta}</p>
                 </div>
               </div>
             </div>
