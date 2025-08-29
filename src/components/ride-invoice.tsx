@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -13,11 +14,20 @@ import { Separator } from '@/components/ui/separator';
 import { useRide, type RideDetails } from '@/context/RideContext';
 import { Badge } from './ui/badge';
 import { CheckCircle2, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export function RideInvoice({ ride }: { ride: RideDetails }) {
   const { closeInvoice } = useRide();
+  const { toast } = useToast();
   const tip = 50; // Dummy tip
   const total = ride.fare + tip;
+
+  const handlePaymentMethodClick = () => {
+    toast({
+      title: 'Cash Payment',
+      description: 'Raqam rider se cash mein leni hai.',
+    });
+  };
 
   return (
     <Dialog open={true} onOpenChange={(isOpen) => !isOpen && closeInvoice()}>
@@ -81,7 +91,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
             <span>PKR {total.toFixed(2)}</span>
           </div>
            <div className='flex justify-center'>
-             <Badge>Cash Payment</Badge>
+             <Badge onClick={handlePaymentMethodClick} className="cursor-pointer">Cash Payment</Badge>
           </div>
         </div>
 
