@@ -17,10 +17,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useRide } from '@/context/RideContext';
 import { useToast } from '@/hooks/use-toast';
+import { ChatDialog } from './chat-dialog';
 
 export function InProgressRide() {
   const { activeRide, completeRide, cancelRide } = useRide();
-  const { toast } = useToast();
 
   if (!activeRide) {
     return null;
@@ -34,13 +34,6 @@ export function InProgressRide() {
     }
   };
   
-  const handleChat = () => {
-    toast({
-      title: "Jald hi aa raha hai!",
-      description: "Chat ka feature abhi dastyaab nahi hai.",
-    });
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
       <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
@@ -82,9 +75,7 @@ export function InProgressRide() {
                     <Button variant="outline" size="icon" onClick={handleCall}>
                         <Phone className="h-5 w-5" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={handleChat}>
-                        <MessageSquare className="h-5 w-5" />
-                    </Button>
+                    <ChatDialog riderName={rider?.name || 'Rider'} />
                 </div>
             </div>
           </CardContent>
