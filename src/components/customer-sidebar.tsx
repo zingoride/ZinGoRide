@@ -18,10 +18,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Button } from "./ui/button";
 
 const menuItems = [
   { href: "/customer", label: "Book a Ride", icon: Car },
@@ -36,10 +34,8 @@ export function CustomerSidebar() {
     <>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="hidden md:flex">
             <Package2 className="h-6 w-6" />
             <span className="text-lg font-semibold">ZinGo Ride</span>
-          </Button>
         </div>
       </SidebarHeader>
       <SidebarContent>
