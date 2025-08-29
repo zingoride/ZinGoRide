@@ -19,6 +19,7 @@ const menuItems = [
   { href: "/customer", label: "Book a Ride", icon: Car },
   { href: "/customer/my-rides", label: "My Rides", icon: History },
   { href: "/customer/profile", label: "Profile", icon: User },
+  { href: "/customer/settings", label: "Settings", icon: Settings },
 ];
 
 export function CustomerSidebar() {
@@ -50,10 +51,7 @@ export function CustomerSidebar() {
         </nav>
       </div>
       <div className="mt-auto p-4">
-        <Button size="sm" className="w-full">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-        </Button>
+        {/* This area can be used for other items if needed in the future */}
       </div>
     </div>
   );

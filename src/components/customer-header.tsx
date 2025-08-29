@@ -58,7 +58,9 @@ export function CustomerHeader() {
                 <DropdownMenuItem asChild>
                   <Link href="/customer/my-rides">My Rides</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/customer/settings">Settings</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/login">Logout</Link>
