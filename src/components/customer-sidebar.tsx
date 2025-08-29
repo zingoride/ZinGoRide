@@ -10,20 +10,35 @@ import {
   History,
   Settings,
 } from "lucide-react";
-
+import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 
-
-const menuItems = [
-  { href: "/customer", label: "Book a Ride", icon: Car },
-  { href: "/customer/my-rides", label: "My Rides", icon: History },
-  { href: "/customer/profile", label: "Profile", icon: User },
-  { href: "/customer/settings", label: "Settings", icon: Settings },
-];
+const translations = {
+  ur: {
+    bookARide: "Book a Ride",
+    myRides: "My Rides",
+    profile: "Profile",
+    settings: "Settings",
+  },
+  en: {
+    bookARide: "Book a Ride",
+    myRides: "My Rides",
+    profile: "Profile",
+    settings: "Settings",
+  },
+};
 
 export function CustomerSidebar() {
   const pathname = usePathname();
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const menuItems = [
+    { href: "/customer", label: t.bookARide, icon: Car },
+    { href: "/customer/my-rides", label: t.myRides, icon: History },
+    { href: "/customer/profile", label: t.profile, icon: User },
+    { href: "/customer/settings", label: t.settings, icon: Settings },
+  ];
 
   return (
     <div className="flex h-full max-h-screen flex-col gap-2">

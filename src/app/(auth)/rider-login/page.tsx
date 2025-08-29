@@ -16,9 +16,37 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Package2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { useLanguage } from "@/context/LanguageContext";
+
+const translations = {
+  ur: {
+    title: "Rider Login",
+    description: "Login karne ke liye apna email aur password darj karein.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    loginButton: "Login",
+    signupPrompt: "Naya account banana hai?",
+    signupLink: "Sign up",
+    customerPrompt: "Customer ho?",
+    customerLink: "Yahan login karein.",
+  },
+  en: {
+    title: "Rider Login",
+    description: "Enter your email and password to login.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    loginButton: "Login",
+    signupPrompt: "Don't have an account?",
+    signupLink: "Sign up",
+    customerPrompt: "Are you a customer?",
+    customerLink: "Login here.",
+  },
+};
 
 export default function RiderLoginPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,37 +59,35 @@ export default function RiderLoginPage() {
             <Package2 className="h-8 w-8" />
             <span className="text-2xl font-semibold">ZinGo Ride</span>
         </div>
-      <Card className="w-full max-w-sm">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Rider Login</CardTitle>
-          <CardDescription>
-            Login karne ke liye apna email aur password darj karein.
-          </CardDescription>
+          <CardTitle className="text-2xl">{t.title}</CardTitle>
+          <CardDescription>{t.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t.emailLabel}</Label>
               <Input id="email" type="email" placeholder="m@example.com" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t.passwordLabel}</Label>
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              Login
+              {t.loginButton}
             </Button>
           </form>
             <div className="mt-4 text-center text-sm">
-                Naya account banana hai?{" "}
+                {t.signupPrompt}{" "}
                 <Link href="/rider-signup" className="underline">
-                    Sign up
+                    {t.signupLink}
                 </Link>
             </div>
              <Separator className="my-4"/>
              <div className="text-center text-sm">
                  <Link href="/login" className="underline">
-                    Customer ho? Yahan login karein.
+                    {t.customerPrompt} {t.customerLink}
                 </Link>
             </div>
         </CardContent>

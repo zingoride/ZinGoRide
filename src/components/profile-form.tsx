@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -12,15 +13,36 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { useLanguage } from "@/context/LanguageContext"
+
+const translations = {
+    ur: {
+        myProfile: "Mera Profile",
+        description: "Apni zaati maloomat yahan update karein.",
+        fullName: "Poora Naam",
+        phoneNumber: "Phone Number",
+        email: "Email",
+        saveChanges: "Tabdeelian Mehfooz Karein",
+    },
+    en: {
+        myProfile: "My Profile",
+        description: "Update your personal information here.",
+        fullName: "Full Name",
+        phoneNumber: "Phone Number",
+        email: "Email",
+        saveChanges: "Save Changes",
+    }
+}
 
 export function ProfileForm() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mera Profile</CardTitle>
-        <CardDescription>
-          Apni zaati maloomat yahan update karein.
-        </CardDescription>
+        <CardTitle>{t.myProfile}</CardTitle>
+        <CardDescription>{t.description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="flex items-center gap-4">
@@ -35,21 +57,21 @@ export function ProfileForm() {
         </div>
         <div className="grid gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="name">Poora Naam</Label>
+                <Label htmlFor="name">{t.fullName}</Label>
                 <Input id="name" defaultValue="Ali Khan" />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t.phoneNumber}</Label>
                 <Input id="phone" type="tel" defaultValue="+92 300 1234567" />
             </div>
         </div>
         <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.email}</Label>
             <Input id="email" type="email" defaultValue="ali.khan@zingo.com" />
         </div>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
-        <Button>Tabdeelian Mehfooz Karein</Button>
+        <Button>{t.saveChanges}</Button>
       </CardFooter>
     </Card>
   )

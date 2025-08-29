@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -5,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { RiderStatusProvider } from "@/context/RiderStatusContext";
 import { RideProvider } from "@/context/RideContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -26,11 +28,13 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <RiderStatusProvider>
-          <RideProvider>
-            {children}
-          </RideProvider>
-        </RiderStatusProvider>
+        <LanguageProvider>
+          <RiderStatusProvider>
+            <RideProvider>
+              {children}
+            </RideProvider>
+          </RiderStatusProvider>
+        </LanguageProvider>
         <Toaster />
       </body>
     </html>

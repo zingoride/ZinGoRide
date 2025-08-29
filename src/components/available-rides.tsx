@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 const rideOptions = [
   {
@@ -39,14 +40,35 @@ const rideOptions = [
   },
 ];
 
+const translations = {
+    ur: {
+        chooseRide: "Ride Chunein",
+        eta: "Andazan waqt",
+        seats: "seats",
+        confirmRide: "Ride Confirm Karein",
+        rideConfirmedTitle: "Ride Confirmed!",
+        rideConfirmedDesc: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
+    },
+    en: {
+        chooseRide: "Choose a Ride",
+        eta: "ETA",
+        seats: "seats",
+        confirmRide: "Confirm Ride",
+        rideConfirmedTitle: "Ride Confirmed!",
+        rideConfirmedDesc: "Your ride has been booked. The driver will contact you shortly.",
+    }
+}
+
 export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void }) {
   const [selectedRide, setSelectedRide] = useState('Car');
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const handleConfirmRide = () => {
     toast({
-      title: "Ride Confirmed!",
-      description: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
+      title: t.rideConfirmedTitle,
+      description: t.rideConfirmedDesc,
     });
     onConfirmRide();
   };
@@ -55,7 +77,7 @@ export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void })
     <div className="w-full">
       <Card>
         <CardContent className="p-4 space-y-4">
-          <h3 className="text-lg font-semibold text-center">Ride Chunein</h3>
+          <h3 className="text-lg font-semibold text-center">{t.chooseRide}</h3>
           <div className="space-y-3">
             {rideOptions.map((ride) => (
               <div
@@ -85,15 +107,15 @@ export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void })
                     <p className="font-bold text-md">{ride.price}</p>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
-                     <p>Andazan waqt: {ride.eta}</p>
-                     <p>{ride.seats} seats</p>
+                     <p>{t.eta}: {ride.eta}</p>
+                     <p>{ride.seats} {t.seats}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
           <Button className="w-full" size="lg" onClick={handleConfirmRide}>
-            Ride Confirm Karein
+            {t.confirmRide}
           </Button>
         </CardContent>
       </Card>

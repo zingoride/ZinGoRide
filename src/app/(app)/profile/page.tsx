@@ -1,3 +1,6 @@
+
+'use client';
+
 import { ProfileForm } from "@/components/profile-form";
 import { VehicleDetails } from "@/components/vehicle-details";
 

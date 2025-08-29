@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -36,21 +37,77 @@ import { suggestDynamicTips } from "@/app/actions";
 import type { SuggestDynamicTipsOutput } from "@/ai/flows/suggest-dynamic-tips";
 import { Loader2, Wand2, ThumbsUp, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "./ui/badge";
+import { useLanguage } from "@/context/LanguageContext";
 
-const formSchema = z.object({
-  displayedFare: z.coerce
-    .number()
-    .min(50, { message: "Kiraya kam se kam 50 hona chahiye." }),
-  riderRating: z.number().min(1).max(5),
-  riderProfile: z.string().min(1, { message: "Rider profile zaroori hai." }),
-  travelConditions: z
-    .string()
-    .min(10, { message: "Safar ki tafseelat likhein." }),
-});
+const translations = {
+  ur: {
+    title: "AI Tip Tajaveez",
+    description: "Safar ki tafseelat darj karein aur behtareen tip ki tajaveez payen.",
+    fareLabel: "Ride ka Kiraya (PKR)",
+    farePlaceholder: "e.g. 450",
+    ratingLabel: "Rider ki Rating",
+    profileLabel: "Rider Profile",
+    profilePlaceholder: "Rider ka profile chunein",
+    newUser: "Naya User",
+    frequentRider: "Aksar Safar Karne Wala",
+    businessTraveler: "Karobari Musafir",
+    conditionsLabel: "Safar ke Halaat",
+    conditionsPlaceholder: "e.g. Heavy traffic...",
+    buttonText: "Tip Ki Tajveez Dein",
+    loadingText: "Tip Ki Tajveez Dein",
+    errorTitle: "Oh oh! Kuch ghalat ho gaya.",
+    errorDescription: "Tip ki tajaveez hasil karne mein masla hua.",
+    suggestedTips: "Tajweez Shuda Tips",
+    reasoning: "Wajah",
+    approve: "Manzoor Karein",
+    fareMinError: "Kiraya kam se kam 50 hona chahiye.",
+    profileReqError: "Rider profile zaroori hai.",
+    conditionsReqError: "Safar ki tafseelat likhein.",
+  },
+  en: {
+    title: "AI Tip Suggestions",
+    description: "Enter ride details to get smart tip suggestions.",
+    fareLabel: "Ride Fare (PKR)",
+    farePlaceholder: "e.g. 450",
+    ratingLabel: "Rider Rating",
+    profileLabel: "Rider Profile",
+    profilePlaceholder: "Select rider profile",
+    newUser: "New User",
+    frequentRider: "Frequent Rider",
+    businessTraveler: "Business Traveler",
+    conditionsLabel: "Travel Conditions",
+    conditionsPlaceholder: "e.g. Heavy traffic...",
+    buttonText: "Suggest Tip",
+    loadingText: "Suggesting Tip",
+    errorTitle: "Uh oh! Something went wrong.",
+    errorDescription: "There was a problem getting tip suggestions.",
+    suggestedTips: "Suggested Tips",
+    reasoning: "Reasoning",
+    approve: "Approve",
+    fareMinError: "Fare must be at least 50.",
+    profileReqError: "Rider profile is required.",
+    conditionsReqError: "Please describe the travel conditions.",
+  },
+};
+
 
 export function TipCalculator() {
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const formSchema = z.object({
+    displayedFare: z.coerce
+      .number()
+      .min(50, { message: t.fareMinError }),
+    riderRating: z.number().min(1).max(5),
+    riderProfile: z.string().min(1, { message: t.profileReqError }),
+    travelConditions: z
+      .string()
+      .min(10, { message: t.conditionsReqError }),
+  });
+
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SuggestDynamicTipsOutput | null>(null);
 
@@ -74,8 +131,8 @@ export function TipCalculator() {
       console.error(error);
       toast({
         variant: "destructive",
-        title: "Oh oh! Kuch ghalat ho gaya.",
-        description: "Tip ki tajaveez hasil karne mein masla hua.",
+        title: t.errorTitle,
+        description: t.errorDescription,
       });
     } finally {
       setLoading(false);
@@ -87,10 +144,10 @@ export function TipCalculator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wand2 className="h-6 w-6 text-primary" />
-          <span>AI Tip Tajaveez</span>
+          <span>{t.title}</span>
         </CardTitle>
         <CardDescription>
-          Safar ki tafseelat darj karein aur behtareen tip ki tajaveez payen.
+          {t.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,9 +158,9 @@ export function TipCalculator() {
               name="displayedFare"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ride ka Kiraya (PKR)</FormLabel>
+                  <FormLabel>{t.fareLabel}</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g. 450" {...field} />
+                    <Input type="number" placeholder={t.farePlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,7 +171,7 @@ export function TipCalculator() {
               name="riderRating"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rider ki Rating: {field.value}</FormLabel>
+                  <FormLabel>{t.ratingLabel}: {field.value}</FormLabel>
                   <FormControl>
                     <Slider
                       min={1}
@@ -132,20 +189,20 @@ export function TipCalculator() {
               name="riderProfile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rider Profile</FormLabel>
+                  <FormLabel>{t.profileLabel}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Rider ka profile chunein" />
+                        <SelectValue placeholder={t.profilePlaceholder} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="New User">Naya User</SelectItem>
-                      <SelectItem value="Frequent Rider">Aksar Safar Karne Wala</SelectItem>
-                      <SelectItem value="Business Traveler">Karobari Musafir</SelectItem>
+                      <SelectItem value="New User">{t.newUser}</SelectItem>
+                      <SelectItem value="Frequent Rider">{t.frequentRider}</SelectItem>
+                      <SelectItem value="Business Traveler">{t.businessTraveler}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -157,9 +214,9 @@ export function TipCalculator() {
               name="travelConditions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Safar ke Halaat</FormLabel>
+                  <FormLabel>{t.conditionsLabel}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g. Heavy traffic..." {...field} />
+                    <Textarea placeholder={t.conditionsPlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -171,7 +228,7 @@ export function TipCalculator() {
               ) : (
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
-              Tip Ki Tajveez Dein
+              {loading ? t.loadingText : t.buttonText}
             </Button>
           </form>
         </Form>
@@ -179,7 +236,7 @@ export function TipCalculator() {
       {result && (
         <CardFooter className="flex flex-col items-start gap-4 pt-4 border-t">
           <div>
-            <h3 className="font-semibold text-md">Tajweez Shuda Tips</h3>
+            <h3 className="font-semibold text-md">{t.suggestedTips}</h3>
             <div className="flex gap-2 mt-2">
               {result.suggestedTipAmounts.map((tip) => (
                 <Button key={tip} variant="outline" className="flex gap-2">
@@ -190,14 +247,14 @@ export function TipCalculator() {
             </div>
           </div>
           <div>
-            <h3 className="font-semibold text-md">Wajah</h3>
+            <h3 className="font-semibold text-md">{t.reasoning}</h3>
             <p className="text-sm text-muted-foreground mt-1">
               {result.reasoning}
             </p>
           </div>
           <Button variant="secondary" className="w-full">
             <ThumbsUp className="mr-2 h-4 w-4" />
-            Manzoor Karein
+            {t.approve}
           </Button>
         </CardFooter>
       )}

@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
+import { useLanguage } from '@/context/LanguageContext';
 
 const initialRideRequests = [
   {
@@ -119,11 +120,37 @@ function generateNewRide(existingIds: Set<string>) {
   return { id: newId, pickup, dropoff, fare, eta };
 }
 
+const translations = {
+  ur: {
+    youAreOffline: "Aap Offline Hain",
+    goOnlineToReceive: "Nayi ride requests hasil karne ke liye online jayen.",
+    goOnline: "Go Online",
+    todaysEarnings: "Aaj Ki Kamai",
+    fromYesterday: "+15% pichle din se",
+    thisWeekEarnings: "Is Haftay Ki Kamai",
+    fromLastWeek: "+8% pichle haftay se",
+    weeklyGoal: "Haftawar Had",
+    goalCompleted: "72% hadaf mukammal"
+  },
+  en: {
+    youAreOffline: "You are Offline",
+    goOnlineToReceive: "Go online to receive new ride requests.",
+    goOnline: "Go Online",
+    todaysEarnings: "Today's Earnings",
+    fromYesterday: "+15% from yesterday",
+    thisWeekEarnings: "This Week's Earnings",
+    fromLastWeek: "+8% from last week",
+    weeklyGoal: "Weekly Goal",
+    goalCompleted: "72% goal completed"
+  }
+}
 
 export default function Dashboard() {
   const [rideRequests, setRideRequests] = useState(initialRideRequests);
   const { isOnline, toggleStatus } = useRiderStatus();
   const { activeRide, completedRide } = useRide();
+  const { language } = useLanguage();
+  const t = translations[language];
 
   useEffect(() => {
     if (!isOnline) {
@@ -152,57 +179,57 @@ export default function Dashboard() {
   if (!isOnline) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full text-center">
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2">
               <WifiOff className="h-8 w-8 text-destructive" />
-              <span>Aap Offline Hain</span>
+              <span>{t.youAreOffline}</span>
             </CardTitle>
             <CardDescription>
-              Nayi ride requests hasil karne ke liye online jayen.
+              {t.goOnlineToReceive}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={toggleStatus} size="lg" className="w-full">
-              Go Online
+              {t.goOnline}
             </Button>
           </CardContent>
         </Card>
         
-        <div className="grid w-full max-w-4xl gap-4 md:gap-8">
+        <div className="grid w-full gap-4 md:gap-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Aaj Ki Kamai</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.todaysEarnings}</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">PKR 4,250</div>
                 <p className="text-xs text-muted-foreground">
-                  +15% pichle din se
+                  {t.fromYesterday}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Is Haftay Ki Kamai</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.thisWeekEarnings}</CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">PKR 21,800</div>
                 <p className="text-xs text-muted-foreground">
-                  +8% pichle haftay se
+                  {t.fromLastWeek}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Haftawar Had</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.weeklyGoal}</CardTitle>
                 <Goal className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">PKR 30,000</div>
                 <p className="text-xs text-muted-foreground mb-2">
-                  72% hadaf mukammal
+                  {t.goalCompleted}
                 </p>
                 <Progress value={72} aria-label="72% complete" />
               </CardContent>

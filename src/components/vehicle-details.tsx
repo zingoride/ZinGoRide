@@ -1,3 +1,4 @@
+
 "use client"
 
 import Image from "next/image"
@@ -14,15 +15,38 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Bike, Car } from "lucide-react"
+import { useLanguage } from "@/context/LanguageContext"
+
+const translations = {
+    ur: {
+        title: "Meri Gaari",
+        description: "Apni gaari ki tafseelat yahan update karein.",
+        vehicleType: "Gaari ki Qisam",
+        make: "Make/Company",
+        model: "Model",
+        licensePlate: "License Plate",
+        saveButton: "Gaari Ki Maloomat Save Karein",
+    },
+    en: {
+        title: "My Vehicle",
+        description: "Update your vehicle details here.",
+        vehicleType: "Vehicle Type",
+        make: "Make/Company",
+        model: "Model",
+        licensePlate: "License Plate",
+        saveButton: "Save Vehicle Information",
+    }
+}
 
 export function VehicleDetails() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Meri Gaari</CardTitle>
-        <CardDescription>
-          Apni gaari ki tafseelat yahan update karein.
-        </CardDescription>
+        <CardTitle>{t.title}</CardTitle>
+        <CardDescription>{t.description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
@@ -30,7 +54,7 @@ export function VehicleDetails() {
         </div>
         <div className="grid gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="vehicle-type">Gaari ki Qisam</Label>
+                <Label htmlFor="vehicle-type">{t.vehicleType}</Label>
                 <Select defaultValue="car">
                     <SelectTrigger id="vehicle-type" aria-label="Select vehicle type">
                         <SelectValue placeholder="Select vehicle type" />
@@ -50,21 +74,21 @@ export function VehicleDetails() {
                 </Select>
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="make">Make/Company</Label>
+                <Label htmlFor="make">{t.make}</Label>
                 <Input id="make" defaultValue="Toyota" />
             </div>
              <div className="grid gap-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">{t.model}</Label>
                 <Input id="model" defaultValue="Corolla" />
             </div>
              <div className="grid gap-2">
-                <Label htmlFor="license-plate">License Plate</Label>
+                <Label htmlFor="license-plate">{t.licensePlate}</Label>
                 <Input id="license-plate" defaultValue="KHI-1234" />
             </div>
         </div>
       </CardContent>
        <CardFooter className="border-t px-6 py-4">
-        <Button>Gaari Ki Maloomat Save Karein</Button>
+        <Button>{t.saveButton}</Button>
       </CardFooter>
     </Card>
   )

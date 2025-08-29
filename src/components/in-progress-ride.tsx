@@ -17,13 +17,45 @@ import { Separator } from '@/components/ui/separator';
 import { useRide } from '@/context/RideContext';
 import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
+import { useLanguage } from '@/context/LanguageContext';
 
+const translations = {
+    ur: {
+        toPickup: "Pickup ke raaste par",
+        toDropoff: "Dropoff ke raaste par",
+        mapPlaceholder: "Live Map Placeholder",
+        riderInfo: "Rider ki Maloomat",
+        rideDetails: "Safar ki Tafseelat",
+        pickupLocation: "Uthanay ki Jagah",
+        dropoffLocation: "Manzil",
+        navigateToPickup: "Navigate to Pickup",
+        navigateToDropoff: "Navigate to Dropoff",
+        startRide: "Start Ride",
+        completeRide: "Ride Mukammal Karein",
+        cancelRide: "Ride Mansookh Karein",
+    },
+    en: {
+        toPickup: "On the way to Pickup",
+        toDropoff: "On the way to Dropoff",
+        mapPlaceholder: "Live Map Placeholder",
+        riderInfo: "Rider Information",
+        rideDetails: "Ride Details",
+        pickupLocation: "Pickup Location",
+        dropoffLocation: "Destination",
+        navigateToPickup: "Navigate to Pickup",
+        navigateToDropoff: "Navigate to Dropoff",
+        startRide: "Start Ride",
+        completeRide: "Complete Ride",
+        cancelRide: "Cancel Ride",
+    }
+}
 
 export function InProgressRide() {
   const { activeRide, completeRide, cancelRide } = useRide();
   const [isNavigating, setIsNavigating] = useState(false);
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
-
+  const { language } = useLanguage();
+  const t = translations[language];
 
   if (!activeRide) {
     return null;
@@ -60,7 +92,7 @@ export function InProgressRide() {
       <div className="w-full h-[300px] rounded-lg overflow-hidden relative bg-muted flex flex-col items-center justify-center">
         <div className="absolute top-4 left-4 z-10">
             <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
-                 {rideStage === 'pickup' ? 'On the way to Pickup' : 'On the way to Dropoff'}
+                 {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
             </Badge>
         </div>
         <Image
@@ -71,14 +103,14 @@ export function InProgressRide() {
           data-ai-hint={mapHint}
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <p className="text-white text-sm font-semibold bg-black/50 px-3 py-1.5 rounded-md">Live Map Placeholder</p>
+            <p className="text-white text-sm font-semibold bg-black/50 px-3 py-1.5 rounded-md">{t.mapPlaceholder}</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-6 w-full">
         <Card>
           <CardHeader>
-            <CardTitle>Rider ki Maloomat</CardTitle>
+            <CardTitle>{t.riderInfo}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between gap-4">
@@ -112,13 +144,13 @@ export function InProgressRide() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Safar ki Tafseelat</CardTitle>
+            <CardTitle>{t.rideDetails}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-4">
               <MapPin className="h-6 w-6 text-primary mt-1" />
               <div>
-                <p className="text-sm text-muted-foreground">Uthanay ki Jagah</p>
+                <p className="text-sm text-muted-foreground">{t.pickupLocation}</p>
                 <p className="font-semibold">{pickup}</p>
               </div>
             </div>
@@ -126,18 +158,18 @@ export function InProgressRide() {
             <div className="flex items-start gap-4">
               <MapPin className="h-6 w-6 text-accent mt-1" />
               <div>
-                <p className="text-sm text-muted-foreground">Manzil</p>
+                <p className="text-sm text-muted-foreground">{t.dropoffLocation}</p>
                 <p className="font-semibold">{dropoff}</p>
               </div>
             </div>
              <div className="flex flex-col gap-2 mt-4">
                 <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleNavigate}>
                     <Navigation className="mr-2 h-5 w-5" />
-                    {rideStage === 'pickup' ? 'Navigate to Pickup' : 'Navigate to Dropoff'}
+                    {rideStage === 'pickup' ? t.navigateToPickup : t.navigateToDropoff}
                 </Button>
                 {rideStage === 'pickup' && (
                   <Button size="lg" className="w-full" onClick={handleStartRide}>
-                    Start Ride
+                    {t.startRide}
                   </Button>
                 )}
             </div>
@@ -146,11 +178,11 @@ export function InProgressRide() {
         
         <div className='space-y-2'>
             <Button size="lg" className="w-full" onClick={completeRide} disabled={rideStage === 'pickup'}>
-                Ride Mukammal Karein
+                {t.completeRide}
             </Button>
              <Button variant="destructive" size="lg" className="w-full" onClick={cancelRide}>
                 <X className="mr-2 h-5 w-5" />
-                Ride Mansookh Karein
+                {t.cancelRide}
             </Button>
         </div>
 

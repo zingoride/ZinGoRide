@@ -24,16 +24,36 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
-const menuItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/earnings", label: "Kamai", icon: BarChart3 },
-  { href: "/history", label: "Tareekh", icon: History },
-  { href: "/profile", label: "Profile", icon: User },
-];
+const translations = {
+  ur: {
+    dashboard: "Dashboard",
+    earnings: "Kamai",
+    history: "Tareekh",
+    profile: "Profile",
+    notifications: "Ittila'at",
+  },
+  en: {
+    dashboard: "Dashboard",
+    earnings: "Earnings",
+    history: "History",
+    profile: "Profile",
+    notifications: "Notifications",
+  },
+};
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const menuItems = [
+    { href: "/", label: t.dashboard, icon: Home },
+    { href: "/earnings", label: t.earnings, icon: BarChart3 },
+    { href: "/history", label: t.history, icon: History },
+    { href: "/profile", label: t.profile, icon: User },
+  ];
 
   return (
     <>
@@ -71,7 +91,7 @@ export function SidebarNav() {
           <SidebarMenuItem>
              <SidebarMenuButton>
                 <Bell className="h-5 w-5" />
-                <span>Ittila'at</span>
+                <span>{t.notifications}</span>
               </SidebarMenuButton>
           </SidebarMenuItem>
          </SidebarMenu>

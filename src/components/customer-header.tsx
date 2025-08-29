@@ -14,15 +14,37 @@ import { Button } from '@/components/ui/button';
 import { Menu, Package2 } from 'lucide-react';
 import Link from 'next/link';
 import { SheetTrigger } from './ui/sheet';
+import { useLanguage } from '@/context/LanguageContext';
 
+const translations = {
+  ur: {
+    toggleMenu: "Toggle Menu",
+    myAccount: "Mera Account",
+    profile: "Profile",
+    myRides: "My Rides",
+    settings: "Settings",
+    logout: "Logout",
+  },
+  en: {
+    toggleMenu: "Toggle Menu",
+    myAccount: "My Account",
+    profile: "Profile",
+    myRides: "My Rides",
+    settings: "Settings",
+    logout: "Logout",
+  }
+};
 
 export function CustomerHeader() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background px-4 sm:px-6 h-16 flex items-center">
        <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="sm:hidden">
+        <Button size="icon" variant="outline">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
+          <span className="sr-only">{t.toggleMenu}</span>
         </Button>
       </SheetTrigger>
       <div className="flex items-center justify-between w-full sm:ml-4">
@@ -50,20 +72,20 @@ export function CustomerHeader() {
                 </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Ahmad Ali</DropdownMenuLabel>
+                <DropdownMenuLabel>{t.myAccount}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/customer/profile">Profile</Link>
+                  <Link href="/customer/profile">{t.profile}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/customer/my-rides">My Rides</Link>
+                  <Link href="/customer/my-rides">{t.myRides}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/customer/settings">Settings</Link>
+                  <Link href="/customer/settings">{t.settings}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/login">Logout</Link>
+                  <Link href="/login">{t.logout}</Link>
                 </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
