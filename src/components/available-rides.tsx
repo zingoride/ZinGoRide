@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 const rideOptions = [
   {
@@ -40,6 +41,14 @@ const rideOptions = [
 
 export function AvailableRides() {
   const [selectedRide, setSelectedRide] = useState('Car');
+  const { toast } = useToast();
+
+  const handleConfirmRide = () => {
+    toast({
+      title: "Ride Confirmed!",
+      description: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
+    });
+  };
 
   return (
     <div className="w-full">
@@ -82,7 +91,7 @@ export function AvailableRides() {
               </div>
             ))}
           </div>
-          <Button className="w-full" size="lg">
+          <Button className="w-full" size="lg" onClick={handleConfirmRide}>
             Ride Confirm Karein
           </Button>
         </CardContent>

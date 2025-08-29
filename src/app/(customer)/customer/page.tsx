@@ -1,9 +1,18 @@
 
+'use client';
+
+import { useState } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import Image from "next/image";
 
 export default function CustomerPage() {
+    const [showRides, setShowRides] = useState(false);
+
+    const handleFindRide = () => {
+        setShowRides(true);
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 h-[calc(100vh-4rem)]">
             <div className="md:col-span-1 bg-muted hidden md:flex items-center justify-center p-8">
@@ -21,8 +30,8 @@ export default function CustomerPage() {
                 </div>
             </div>
             <div className="col-span-1 bg-background p-4 flex flex-col gap-4 overflow-y-auto">
-                <RideBookingForm />
-                <AvailableRides />
+                <RideBookingForm onFindRide={handleFindRide} />
+                {showRides && <AvailableRides />}
             </div>
         </div>
     );

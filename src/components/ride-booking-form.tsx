@@ -6,17 +6,24 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MapPin, ArrowRight } from 'lucide-react';
 
-export function RideBookingForm() {
+export function RideBookingForm({ onFindRide }: { onFindRide: () => void }) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFindRide();
+  };
+
   return (
     <Card className="shadow-lg">
       <CardContent className="p-4">
-        <div className="grid gap-3">
+        <form onSubmit={handleSubmit} className="grid gap-3">
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               id="pickup"
               placeholder="Uthanay ki jagah?"
               className="pl-10"
+              defaultValue="Saddar, Karachi"
+              required
             />
           </div>
           <div className="relative">
@@ -25,12 +32,14 @@ export function RideBookingForm() {
               id="dropoff"
               placeholder="Kahan jana hai?"
               className="pl-10"
+              defaultValue="Clifton, Karachi"
+              required
             />
           </div>
-          <Button className="w-full">
+          <Button type="submit" className="w-full">
             <ArrowRight className="mr-2 h-4 w-4" /> Ride Dhundein
           </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );
