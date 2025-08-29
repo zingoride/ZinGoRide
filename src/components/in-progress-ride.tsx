@@ -16,10 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useRide } from '@/context/RideContext';
 import { ChatDialog } from './chat-dialog';
+import { Badge } from './ui/badge';
+
 
 export function InProgressRide() {
   const { activeRide, completeRide, cancelRide } = useRide();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
+
 
   if (!activeRide) {
     return null;
@@ -36,16 +40,35 @@ export function InProgressRide() {
   const handleNavigate = () => {
     setIsNavigating(true);
   };
+  
+  const handleStartRide = () => {
+    setRideStage('dropoff');
+    setIsNavigating(true); // Automatically start navigation to dropoff
+  }
+
+  const mapImageUrl = isNavigating 
+    ? (rideStage === 'pickup' ? "https://picsum.photos/seed/map-route/1600/1200" : "https://picsum.photos/seed/map-dropoff/1600/1200")
+    : "https://picsum.photos/seed/map-view/1600/1200";
+    
+  const mapHint = isNavigating
+    ? (rideStage === 'pickup' ? "navigation route map" : "navigation destination map")
+    : "street map";
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
-      <div className="lg:col-span-2 h-[450px] lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative bg-muted flex items-center justify-center">
+      <div className="lg:col-span-2 h-[450px] lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative bg-muted flex flex-col items-center justify-center">
+        <div className="absolute top-4 left-4 z-10">
+            <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
+                 {rideStage === 'pickup' ? 'On the way to Pickup' : 'On the way to Dropoff'}
+            </Badge>
+        </div>
         <Image
-          src={isNavigating ? "https://picsum.photos/seed/map-route/1600/1200" : "https://picsum.photos/seed/map-view/1600/1200"}
+          src={mapImageUrl}
           alt="Map with route"
           fill
           style={{objectFit:"cover"}}
-          data-ai-hint={isNavigating ? "navigation route map" : "street map"}
+          data-ai-hint={mapHint}
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
             <p className="text-white text-lg font-semibold bg-black/50 px-4 py-2 rounded-lg">Live Map Placeholder</p>
@@ -107,15 +130,22 @@ export function InProgressRide() {
                 <p className="font-semibold">{dropoff}</p>
               </div>
             </div>
-            <Button size="lg" className="w-full mt-4 bg-blue-600 hover:bg-blue-700" onClick={handleNavigate}>
-                <Navigation className="mr-2 h-5 w-5" />
-                Navigate to Pickup
-            </Button>
+             <div className="flex flex-col gap-2 mt-4">
+                <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleNavigate}>
+                    <Navigation className="mr-2 h-5 w-5" />
+                    {rideStage === 'pickup' ? 'Navigate to Pickup' : 'Navigate to Dropoff'}
+                </Button>
+                {rideStage === 'pickup' && (
+                  <Button size="lg" className="w-full" onClick={handleStartRide}>
+                    Start Ride
+                  </Button>
+                )}
+            </div>
           </CardContent>
         </Card>
         
         <div className='space-y-2'>
-            <Button size="lg" className="w-full" onClick={completeRide}>
+            <Button size="lg" className="w-full" onClick={completeRide} disabled={rideStage === 'pickup'}>
                 Ride Mukammal Karein
             </Button>
              <Button variant="destructive" size="lg" className="w-full" onClick={cancelRide}>
