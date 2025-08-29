@@ -71,7 +71,7 @@ export function InProgressRide() {
           data-ai-hint={mapHint}
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <p className="text-white text-lg font-semibold bg-black/50 px-4 py-2 rounded-lg">Live Map Placeholder</p>
+            <p className="text-white text-base font-semibold bg-black/50 px-4 py-2 rounded-lg">Live Map Placeholder</p>
         </div>
       </div>
 
