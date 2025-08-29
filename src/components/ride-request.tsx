@@ -33,11 +33,11 @@ export function RideRequest() {
       <CardContent className="p-0">
         <div className="relative h-64 md:h-96">
           <Image
-            src="https://picsum.photos/1200/800"
-            alt="Ride map"
+            src="https://picsum.photos/800/600"
+            alt="Car waiting for a ride"
             fill
             className="object-cover"
-            data-ai-hint="map route"
+            data-ai-hint="modern car"
           />
         </div>
         <div className="p-6 text-sm">
