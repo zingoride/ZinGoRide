@@ -1,5 +1,7 @@
 
+import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { CustomerHeader } from "@/components/customer-header";
+import { CustomerSidebar } from "@/components/customer-sidebar";
 
 export default function CustomerLayout({
     children,
@@ -7,11 +9,16 @@ export default function CustomerLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="min-h-screen flex flex-col">
-            <CustomerHeader />
-            <main className="flex-1">
-                {children}
-            </main>
-        </div>
+        <SidebarProvider>
+            <Sidebar>
+                <CustomerSidebar />
+            </Sidebar>
+            <SidebarInset>
+                <CustomerHeader />
+                <main className="flex-1">
+                    {children}
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
     )
 }

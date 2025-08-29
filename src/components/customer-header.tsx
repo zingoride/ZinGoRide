@@ -13,11 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Package2 } from 'lucide-react';
 import Link from 'next/link';
+import { SidebarTrigger } from './ui/sidebar';
 
 export function CustomerHeader() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 w-full border-b bg-background px-4 sm:px-6 h-16 flex items-center">
+       <SidebarTrigger className="md:hidden -ml-2" />
+      <div className="flex items-center justify-between w-full">
         <Link href="/customer" className="flex items-center gap-2">
             <Package2 className="h-6 w-6" />
             <span className="text-lg font-semibold">ZinGo Ride</span>
@@ -44,8 +46,12 @@ export function CustomerHeader() {
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ahmad Ali</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Ride History</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/customer/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/customer/my-rides">My Rides</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
