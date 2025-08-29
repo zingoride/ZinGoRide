@@ -39,7 +39,7 @@ export function InProgressRide() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
-      <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
+      <div className="lg:col-span-2 h-[450px] lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative bg-muted flex items-center justify-center">
         <Image
           src={isNavigating ? "https://picsum.photos/seed/map-route/1600/1200" : "https://picsum.photos/seed/map-view/1600/1200"}
           alt="Map with route"
@@ -47,6 +47,9 @@ export function InProgressRide() {
           style={{objectFit:"cover"}}
           data-ai-hint={isNavigating ? "navigation route map" : "street map"}
         />
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <p className="text-white text-lg font-semibold bg-black/50 px-4 py-2 rounded-lg">Live Map Placeholder</p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-6">
