@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { MapPin, DollarSign, Clock, ArrowRight } from "lucide-react";
 import {
   Card,
@@ -30,17 +29,7 @@ export function RideRequest() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="relative h-64 md:h-96">
-          <Image
-            src="https://picsum.photos/800/600"
-            alt="Car waiting for a ride"
-            fill
-            className="object-cover"
-            data-ai-hint="modern car"
-          />
-        </div>
-        <div className="p-6 text-sm">
+      <CardContent className="p-6 text-sm">
           <div className="grid gap-4">
             <div className="flex items-center">
               <MapPin className="h-5 w-5 text-primary mr-3" />
@@ -73,7 +62,6 @@ export function RideRequest() {
               </div>
             </div>
           </div>
-        </div>
       </CardContent>
     </Card>
   );
