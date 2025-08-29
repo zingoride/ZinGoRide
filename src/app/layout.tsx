@@ -9,6 +9,7 @@ import { RideProvider } from "@/context/RideContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LogoProvider } from "@/context/LogoContext";
+import { ThemeColorProvider } from "@/context/ThemeColorContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -36,15 +37,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LanguageProvider>
-            <LogoProvider>
-              <RiderStatusProvider>
-                <RideProvider>
-                  {children}
-                </RideProvider>
-              </RiderStatusProvider>
-            </LogoProvider>
-          </LanguageProvider>
+          <ThemeColorProvider>
+            <LanguageProvider>
+              <LogoProvider>
+                <RiderStatusProvider>
+                  <RideProvider>
+                    {children}
+                  </RideProvider>
+                </RiderStatusProvider>
+              </LogoProvider>
+            </LanguageProvider>
+          </ThemeColorProvider>
           <Toaster />
         </ThemeProvider>
       </body>

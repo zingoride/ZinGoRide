@@ -11,8 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useThemeColor } from "@/context/ThemeColorContext";
 
 const translations = {
   ur: {
@@ -32,7 +33,13 @@ const translations = {
     saveButton: "Tabdeelian Mehfooz Karein",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Aapki tabdeelian mehfooz kar li gayi hain.",
-    uploadLogo: "Logo Upload Karein"
+    uploadLogo: "Logo Upload Karein",
+    colorTheme: "Color Theme",
+    colorThemeDesc: "Application ke liye apni pasandeeda color scheme chunein.",
+    themeBlue: "Blue",
+    themeGreen: "Green",
+    themeOrange: "Orange",
+    themeRose: "Rose",
   },
   en: {
     settings: "Settings",
@@ -51,7 +58,13 @@ const translations = {
     saveButton: "Save Changes",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Your changes have been saved successfully.",
-    uploadLogo: "Upload Logo"
+    uploadLogo: "Upload Logo",
+    colorTheme: "Color Theme",
+    colorThemeDesc: "Choose your preferred color scheme for the application.",
+    themeBlue: "Blue",
+    themeGreen: "Green",
+    themeOrange: "Orange",
+    themeRose: "Rose",
   },
 };
 
@@ -62,11 +75,19 @@ const logoOptions = [
     { name: 'Bike', icon: Bike },
 ];
 
+const colorOptions = [
+    { name: 'Blue', value: 'theme-blue', color: 'bg-sky-500' },
+    { name: 'Green', value: 'theme-green', color: 'bg-green-500' },
+    { name: 'Orange', value: 'theme-orange', color: 'bg-orange-500' },
+    { name: 'Rose', value: 'theme-rose', color: 'bg-rose-500' },
+]
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
     const { logo, setLogo, LogoComponent } = useLogo();
+    const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
     const t = translations[language];
 
@@ -122,6 +143,32 @@ export default function AdminSettingsPage() {
                             </div>
                         </RadioGroup>
                     </div>
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.colorTheme}</CardTitle>
+                    <CardDescription>{t.colorThemeDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RadioGroup 
+                        value={themeColor} 
+                        onValueChange={(value) => setThemeColor(value as any)}
+                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                    >
+                        {colorOptions.map((option) => (
+                            <div key={option.value}>
+                                <RadioGroupItem value={option.value} id={option.value} className="peer sr-only" />
+                                <Label htmlFor={option.value} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`h-6 w-6 rounded-full ${option.color}`} />
+                                        <span>{option.name}</span>
+                                    </div>
+                                </Label>
+                            </div>
+                        ))}
+                    </RadioGroup>
                 </CardContent>
             </Card>
 
