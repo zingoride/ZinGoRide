@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { RideRequest } from '@/components/ride-request';
 import { TipCalculator } from '@/components/tip-calculator';
+import { useRiderStatus } from '@/context/RiderStatusContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { WifiOff } from 'lucide-react';
 
 const initialRideRequests = [
   {
@@ -112,18 +116,50 @@ function generateNewRide(existingIds: Set<string>) {
 
 export default function Home() {
   const [rideRequests, setRideRequests] = useState(initialRideRequests);
+  const { isOnline, toggleStatus } = useRiderStatus();
 
   useEffect(() => {
+    if (!isOnline) {
+      return;
+    }
     const interval = setInterval(() => {
       setRideRequests((prevRequests) => {
         const existingIds = new Set(prevRequests.map((r) => r.id));
         const newRide = generateNewRide(existingIds);
-        return [newRide, ...prevRequests];
+        // Keep the list from growing indefinitely
+        const updatedRequests = [newRide, ...prevRequests];
+        if (updatedRequests.length > 20) {
+          updatedRequests.pop();
+        }
+        return updatedRequests;
       });
     }, 10000); // 10 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isOnline]);
+
+  if (!isOnline) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-center gap-2">
+              <WifiOff className="h-8 w-8 text-destructive" />
+              <span>Aap Offline Hain</span>
+            </CardTitle>
+            <CardDescription>
+              Nayi ride requests hasil karne ke liye online jayen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={toggleStatus} size="lg" className="w-full">
+              Go Online
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
