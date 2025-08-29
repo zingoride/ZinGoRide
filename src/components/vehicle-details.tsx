@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Bike, Car } from "lucide-react"
+import { Bike, Car, Upload } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
 const translations = {
@@ -26,6 +26,8 @@ const translations = {
         model: "Model",
         licensePlate: "License Plate",
         saveButton: "Gaari Ki Maloomat Save Karein",
+        regBook: "Registration Book",
+        uploadRegBook: "Registration Book Upload Karein",
     },
     en: {
         title: "My Vehicle",
@@ -35,6 +37,8 @@ const translations = {
         model: "Model",
         licensePlate: "License Plate",
         saveButton: "Save Vehicle Information",
+        regBook: "Registration Book",
+        uploadRegBook: "Upload Registration Book",
     }
 }
 
@@ -85,6 +89,14 @@ export function VehicleDetails() {
                 <Label htmlFor="license-plate">{t.licensePlate}</Label>
                 <Input id="license-plate" defaultValue="KHI-1234" />
             </div>
+             <div className="grid gap-2">
+                <Label htmlFor="registration-book">{t.regBook}</Label>
+                <Button variant="outline" className="w-full">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t.uploadRegBook}
+                </Button>
+                <Input id="registration-book" type="file" className="hidden" />
+             </div>
         </div>
       </CardContent>
        <CardFooter className="border-t px-6 py-4">

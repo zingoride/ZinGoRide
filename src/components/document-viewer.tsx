@@ -12,20 +12,10 @@ import {
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
+import type { User } from '@/app/(admin)/admin/users/page';
+import { Separator } from './ui/separator';
 
 type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected';
-
-interface Document {
-  name: string;
-  url: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  documents: Document[];
-  approvalStatus: ApprovalStatus;
-}
 
 interface DocumentViewerProps {
   user: User;
@@ -56,7 +46,22 @@ export function DocumentViewer({ user, isOpen, onOpenChange, onApprovalChange }:
             Review the documents submitted by the rider. Current status: {user.approvalStatus}
           </DialogDescription>
         </DialogHeader>
-        <div className="my-4">
+        <div className="my-4 space-y-6">
+            {user.vehicle && (
+              <div>
+                <h4 className="font-semibold mb-2 text-center text-lg">Vehicle Information</h4>
+                <Card className="bg-muted/50">
+                  <CardContent className="p-4 grid grid-cols-3 gap-2 text-sm">
+                    <div><span className="font-semibold">Make:</span> {user.vehicle.make}</div>
+                    <div><span className="font-semibold">Model:</span> {user.vehicle.model}</div>
+                    <div><span className="font-semibold">License:</span> {user.vehicle.licensePlate}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            <Separator />
+            
             <Carousel className="w-full">
               <CarouselContent>
                 {user.documents.map((doc, index) => (

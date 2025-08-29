@@ -25,7 +25,13 @@ interface Document {
   url: string;
 }
 
-interface User {
+interface Vehicle {
+  make: string;
+  model: string;
+  licensePlate: string;
+}
+
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -33,6 +39,7 @@ interface User {
   status: UserStatus;
   approvalStatus: ApprovalStatus;
   documents: Document[];
+  vehicle?: Vehicle;
 }
 
 const initialUsers: User[] = [
@@ -55,8 +62,10 @@ const initialUsers: User[] = [
     documents: [
       { name: 'CNIC Front', url: 'https://picsum.photos/seed/cnic1/400/250' },
       { name: 'CNIC Back', url: 'https://picsum.photos/seed/cnic2/400/250' },
-      { name: 'Driving License', url: 'https://picsum.photos/seed/license/400/250' }
-    ] 
+      { name: 'Driving License', url: 'https://picsum.photos/seed/license/400/250' },
+      { name: 'Vehicle Registration', url: 'https://picsum.photos/seed/registration1/400/250' }
+    ],
+    vehicle: { make: 'Honda', model: 'Civic', licensePlate: 'ABC-123' }
   },
   { 
     id: 'USR-003', 
@@ -77,8 +86,10 @@ const initialUsers: User[] = [
     documents: [
       { name: 'CNIC Front', url: 'https://picsum.photos/seed/cnic3/400/250' },
       { name: 'CNIC Back', url: 'https://picsum.photos/seed/cnic4/400/250' },
-      { name: 'Driving License', url: 'https://picsum.photos/seed/license2/400/250' }
-    ] 
+      { name: 'Driving License', url: 'https://picsum.photos/seed/license2/400/250' },
+      { name: 'Vehicle Registration', url: 'https://picsum.photos/seed/registration2/400/250' }
+    ],
+    vehicle: { make: 'Toyota', model: 'Corolla', licensePlate: 'KHI-456' }
   },
   { 
     id: 'USR-005', 
@@ -99,8 +110,10 @@ const initialUsers: User[] = [
     documents: [
       { name: 'CNIC Front', url: 'https://picsum.photos/seed/cnic5/400/250' },
       { name: 'CNIC Back', url: 'https://picsum.photos/seed/cnic6/400/250' },
-      { name: 'Driving License', url: 'https://picsum.photos/seed/license3/400/250' }
-    ] 
+      { name: 'Driving License', url: 'https://picsum.photos/seed/license3/400/250' },
+      { name: 'Vehicle Registration', url: 'https://picsum.photos/seed/registration3/400/250' }
+    ],
+    vehicle: { make: 'Suzuki', model: 'Alto', licensePlate: 'LHE-789' }
   },
 ];
 
