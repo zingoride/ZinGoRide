@@ -23,6 +23,10 @@ export default function CustomerPage() {
     const handleCancelRide = () => {
         setPageState('booking');
     }
+    
+    if (pageState === 'confirmed') {
+        return <CustomerRideStatus onCancel={handleCancelRide} />;
+    }
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -43,7 +47,6 @@ export default function CustomerPage() {
             <div className="bg-background p-4 flex flex-col gap-4">
                 {pageState === 'booking' && <RideBookingForm onFindRide={handleFindRide} />}
                 {pageState === 'rides_available' && <AvailableRides onConfirmRide={handleConfirmRide} />}
-                {pageState === 'confirmed' && <CustomerRideStatus onCancel={handleCancelRide} />}
             </div>
         </div>
     );
