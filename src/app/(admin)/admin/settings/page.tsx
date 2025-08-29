@@ -46,6 +46,8 @@ const translations = {
     themeCyan: "Cyan",
     themePink: "Pink",
     themeSlate: "Slate",
+    templates: "Application Templates",
+    templatesDesc: "Select a pre-defined template to quickly set the look and feel.",
   },
   en: {
     settings: "Settings",
@@ -77,6 +79,8 @@ const translations = {
     themeCyan: "Cyan",
     themePink: "Pink",
     themeSlate: "Slate",
+    templates: "Application Templates",
+    templatesDesc: "Select a pre-defined template to quickly set the look and feel.",
   },
 };
 
@@ -104,6 +108,19 @@ const colorOptions = [
     { name: 'Cyan', value: 'theme-cyan', color: 'bg-cyan-500' },
     { name: 'Pink', value: 'theme-pink', color: 'bg-pink-500' },
     { name: 'Slate', value: 'theme-slate', color: 'bg-slate-500' },
+];
+
+const templateOptions = [
+    { name: 'Corporate Blue', color: 'theme-blue', logo: 'Shield', icon: Shield, colorClass: 'bg-sky-500' },
+    { name: 'Eco Green', color: 'theme-green', logo: 'Bike', icon: Bike, colorClass: 'bg-green-500' },
+    { name: 'Vibrant Orange', color: 'theme-orange', logo: 'Rocket', icon: Rocket, colorClass: 'bg-orange-500' },
+    { name: 'Royal Violet', color: 'theme-violet', logo: 'Bot', icon: Bot, colorClass: 'bg-violet-500' },
+    { name: 'Sunny Yellow', color: 'theme-yellow', logo: 'Bus', icon: Bus, colorClass: 'bg-yellow-500' },
+    { name: 'Electric Lime', color: 'theme-lime', logo: 'Car', icon: Car, colorClass: 'bg-lime-500' },
+    { name: 'Aqua Cyan', color: 'theme-cyan', logo: 'Ship', icon: Ship, colorClass: 'bg-cyan-500' },
+    { name: 'Hot Pink', color: 'theme-pink', logo: 'Plane', icon: Plane, colorClass: 'bg-pink-500' },
+    { name: 'Elegant Rose', color: 'theme-rose', logo: 'Default', icon: Package2, colorClass: 'bg-rose-500' },
+    { name: 'Modern Slate', color: 'theme-slate', logo: 'Train', icon: Train, colorClass: 'bg-slate-500' },
 ]
 
 export default function AdminSettingsPage() {
@@ -113,6 +130,7 @@ export default function AdminSettingsPage() {
     const { logo, setLogo, LogoComponent } = useLogo();
     const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
+    const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
     const t = translations[language];
 
     useEffect(() => {
@@ -125,6 +143,25 @@ export default function AdminSettingsPage() {
             description: t.saveSuccessDesc,
         });
     };
+    
+    const handleTemplateChange = (templateName: string) => {
+        const selected = templateOptions.find(t => t.name === templateName);
+        if (selected) {
+            setThemeColor(selected.color as any);
+            setLogo(selected.logo as any);
+            setActiveTemplate(templateName);
+        }
+    };
+
+    useEffect(() => {
+        const currentTemplate = templateOptions.find(t => t.color === themeColor && t.logo === logo);
+        if (currentTemplate) {
+            setActiveTemplate(currentTemplate.name);
+        } else {
+            setActiveTemplate(null);
+        }
+    }, [themeColor, logo]);
+
 
     if (!mounted) {
         return null;
@@ -134,6 +171,37 @@ export default function AdminSettingsPage() {
         <div className="flex flex-col gap-8">
             <h1 className="text-2xl font-bold">{t.settings}</h1>
             
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.templates}</CardTitle>
+                    <CardDescription>{t.templatesDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <RadioGroup 
+                        value={activeTemplate || ''} 
+                        onValueChange={handleTemplateChange}
+                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+                    >
+                        {templateOptions.map((template) => {
+                            const Icon = template.icon;
+                            return (
+                                <div key={template.name}>
+                                    <RadioGroupItem value={template.name} id={template.name} className="peer sr-only" />
+                                    <Label htmlFor={template.name} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary aspect-square">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className={`h-8 w-8 rounded-full ${template.colorClass} flex items-center justify-center`}>
+                                                 <Icon className="h-5 w-5 text-white" />
+                                            </div>
+                                            <span className="text-center text-sm">{template.name}</span>
+                                        </div>
+                                    </Label>
+                                </div>
+                            )
+                        })}
+                    </RadioGroup>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>{t.display}</CardTitle>
@@ -187,7 +255,7 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor={option.value} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                     <div className="flex items-center gap-3">
                                         <div className={`h-6 w-6 rounded-full ${option.color}`} />
-                                        <span>{option.name}</span>
+                                        <span>{t[option.name.toLowerCase() as keyof typeof t] || option.name}</span>
                                     </div>
                                 </Label>
                             </div>
