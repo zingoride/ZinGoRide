@@ -1,5 +1,8 @@
 
+'use client';
+
 import Link from "next/link"
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +18,13 @@ import { Package2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push('/customer');
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4">
         <div className="flex items-center gap-2 mb-6">
@@ -28,25 +38,27 @@ export default function LoginPage() {
             Login karne ke liye apna email aur password darj karein.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
-          </div>
-           <Button type="submit" className="w-full">
-            Login
-          </Button>
+        <CardContent>
+          <form onSubmit={handleLogin} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="m@example.com" required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" required />
+            </div>
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+          </form>
             <div className="mt-4 text-center text-sm">
                 Naya account banana hai?{" "}
                 <Link href="/signup" className="underline">
                     Sign up
                 </Link>
             </div>
-             <Separator />
+             <Separator className="my-4" />
              <div className="text-center text-sm">
                  <Link href="/rider-login" className="underline">
                     Rider ho? Yahan login karein.
