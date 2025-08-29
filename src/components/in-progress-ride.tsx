@@ -41,10 +41,10 @@ export function InProgressRide() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
       <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
         <Image
-          src={isNavigating ? "https://placehold.co/1600x1200/e2e8f0/475569?text=Navigation+Route" : "https://placehold.co/1600x1200/e2e8f0/475569?text=Map+View"}
+          src={isNavigating ? "https://picsum.photos/seed/map-route/1600/1200" : "https://picsum.photos/seed/map-view/1600/1200"}
           alt="Map with route"
           fill
-          objectFit="cover"
+          style={{objectFit:"cover"}}
           data-ai-hint={isNavigating ? "navigation route map" : "street map"}
         />
       </div>
