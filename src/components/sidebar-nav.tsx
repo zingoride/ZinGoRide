@@ -40,7 +40,7 @@ export function SidebarNav() {
   const t = translations[language];
 
   const menuItems = [
-    { href: "/", label: t.dashboard, icon: Home },
+    { href: "/dashboard", label: t.dashboard, icon: Home },
     { href: "/earnings", label: t.earnings, icon: BarChart3 },
     { href: "/history", label: t.history, icon: History },
     { href: "/profile", label: t.profile, icon: User },
@@ -49,7 +49,7 @@ export function SidebarNav() {
   return (
     <div className="flex h-full max-h-screen flex-col gap-2">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6" />
           <span className="">ZinGo Ride</span>
         </Link>

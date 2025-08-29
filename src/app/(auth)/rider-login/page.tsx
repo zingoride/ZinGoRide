@@ -50,7 +50,7 @@ export default function RiderLoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (
