@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Package2 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
 
 export default function SignupPage() {
   return (
@@ -21,7 +22,7 @@ export default function SignupPage() {
         </div>
         <Card className="w-full max-w-sm">
         <CardHeader>
-            <CardTitle className="text-xl">Sign Up</CardTitle>
+            <CardTitle className="text-xl">Customer Sign Up</CardTitle>
             <CardDescription>
             Naya account banane ke liye apni maloomat darj karein.
             </CardDescription>
@@ -30,7 +31,7 @@ export default function SignupPage() {
             <div className="grid gap-4">
             <div className="grid gap-2">
                 <Label htmlFor="full-name">Poora Naam</Label>
-                <Input id="full-name" placeholder="Ali Khan" required />
+                <Input id="full-name" placeholder="Ahmad Ali" required />
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -50,10 +51,16 @@ export default function SignupPage() {
             </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-            Pehle se account hai?{" "}
-            <Link href="/login" className="underline">
-                Login
-            </Link>
+                Pehle se account hai?{" "}
+                <Link href="/login" className="underline">
+                    Login
+                </Link>
+            </div>
+            <Separator className="my-4" />
+             <div className="text-center text-sm">
+                 <Link href="/rider-signup" className="underline">
+                    Rider ho? Yahan signup karein.
+                </Link>
             </div>
         </CardContent>
         </Card>

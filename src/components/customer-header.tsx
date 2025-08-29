@@ -24,7 +24,7 @@ export function CustomerHeader() {
         </Link>
         
         <div className="flex items-center gap-4">
-             <Link href="/login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hidden sm:block">
+             <Link href="/rider-login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hidden sm:block">
                 Driver Portal
             </Link>
             <DropdownMenu>
@@ -51,7 +51,9 @@ export function CustomerHeader() {
                 <DropdownMenuItem>Ride History</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Login / Signup</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Login / Signup</Link>
+                </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

@@ -21,9 +21,9 @@ export default function LoginPage() {
         </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Rider Login</CardTitle>
+          <CardTitle className="text-2xl">Customer Login</CardTitle>
           <CardDescription>
-            Apna email aur password darj karein.
+            Login karne ke liye apna email aur password darj karein.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -38,13 +38,19 @@ export default function LoginPage() {
            <Button type="submit" className="w-full">
             Login
           </Button>
+            <div className="mt-4 text-center text-sm">
+                Naya account banana hai?{" "}
+                <Link href="/signup" className="underline">
+                    Sign up
+                </Link>
+            </div>
+             <Separator />
+             <div className="text-center text-sm">
+                 <Link href="/rider-login" className="underline">
+                    Rider ho? Yahan login karein.
+                </Link>
+            </div>
         </CardContent>
-        <div className="mt-4 text-center text-sm p-6 pt-0">
-          Customer hain?{" "}
-          <Link href="/customer" className="underline">
-            Ride book karein
-          </Link>
-        </div>
       </Card>
     </div>
   )
