@@ -21,7 +21,7 @@ export default function LoginPage() {
         </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Rider Login</CardTitle>
           <CardDescription>
             Apna email aur password darj karein.
           </CardDescription>
@@ -40,9 +40,9 @@ export default function LoginPage() {
           </Button>
         </CardContent>
         <div className="mt-4 text-center text-sm p-6 pt-0">
-          Account nahi hai?{" "}
-          <Link href="/signup" className="underline">
-            Sign up
+          Customer hain?{" "}
+          <Link href="/customer" className="underline">
+            Ride book karein
           </Link>
         </div>
       </Card>
