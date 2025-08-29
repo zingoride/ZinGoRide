@@ -178,9 +178,11 @@ export default function UsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={approvalConfig.variant as any} className={approvalConfig.className}>
-                      {approvalConfig.label}
-                    </Badge>
+                    {user.type === 'Driver' && (
+                      <Badge variant={approvalConfig.variant as any} className={approvalConfig.className}>
+                        {approvalConfig.label}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     {user.type === 'Driver' && (
