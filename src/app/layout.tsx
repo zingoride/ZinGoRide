@@ -8,6 +8,7 @@ import { RiderStatusProvider } from "@/context/RiderStatusContext";
 import { RideProvider } from "@/context/RideContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LogoProvider } from "@/context/LogoContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -36,11 +37,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            <RiderStatusProvider>
-              <RideProvider>
-                {children}
-              </RideProvider>
-            </RiderStatusProvider>
+            <LogoProvider>
+              <RiderStatusProvider>
+                <RideProvider>
+                  {children}
+                </RideProvider>
+              </RiderStatusProvider>
+            </LogoProvider>
           </LanguageProvider>
           <Toaster />
         </ThemeProvider>

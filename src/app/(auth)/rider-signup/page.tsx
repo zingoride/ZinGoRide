@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Package2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/context/LanguageContext";
+import { useLogo } from "@/context/LogoContext";
 
 const translations = {
   ur: {
@@ -46,12 +46,13 @@ const translations = {
 
 export default function RiderSignupPage() {
   const { language } = useLanguage();
+  const { LogoComponent } = useLogo();
   const t = translations[language];
 
   return (
      <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4">
         <div className="flex items-center gap-2 mb-6">
-            <Package2 className="h-8 w-8" />
+            <LogoComponent className="h-8 w-8" />
             <span className="text-2xl font-semibold">ZinGo Ride</span>
         </div>
         <Card className="w-full">

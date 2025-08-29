@@ -6,12 +6,12 @@ import { usePathname } from "next/navigation";
 import {
   Car,
   Users,
-  Package2,
   Settings,
   LayoutDashboard
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
+import { useLogo } from "@/context/LogoContext";
 
 const translations = {
   ur: {
@@ -31,6 +31,7 @@ const translations = {
 export function AdminSidebar() {
   const pathname = usePathname();
   const { language } = useLanguage();
+  const { LogoComponent } = useLogo();
   const t = translations[language];
 
   const menuItems = [
@@ -44,7 +45,7 @@ export function AdminSidebar() {
     <div className="flex h-full max-h-screen flex-col gap-2">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
-          <Package2 className="h-6 w-6" />
+          <LogoComponent className="h-6 w-6" />
           <span className="">ZinGo Admin</span>
         </Link>
       </div>

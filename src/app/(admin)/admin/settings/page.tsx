@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
+import { useLogo } from "@/context/LogoContext";
+import { Car, Rocket, Bike, Package2 } from "lucide-react";
 
 const translations = {
   ur: {
@@ -24,6 +26,8 @@ const translations = {
     languageDesc: "Application ke liye apni pasandeeda zubaan chunein.",
     languageLabel: "Language",
     selectLanguage: "Zubaan chunein",
+    logoTitle: "Application Logo",
+    logoDesc: "Poori application ke liye logo tabdeel karein.",
     saveButton: "Tabdeelian Mehfooz Karein",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Aapki tabdeelian mehfooz kar li gayi hain.",
@@ -40,16 +44,26 @@ const translations = {
     languageDesc: "Choose your preferred language for the application.",
     languageLabel: "Language",
     selectLanguage: "Select Language",
+    logoTitle: "Application Logo",
+    logoDesc: "Change the logo for the entire application.",
     saveButton: "Save Changes",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Your changes have been saved successfully.",
   },
 };
 
+const logoOptions = [
+    { name: 'Default', icon: Package2 },
+    { name: 'Car', icon: Car },
+    { name: 'Rocket', icon: Rocket },
+    { name: 'Bike', icon: Bike },
+];
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
+    const { logo, setLogo } = useLogo();
     const [mounted, setMounted] = useState(false);
     const t = translations[language];
 
@@ -105,6 +119,30 @@ export default function AdminSettingsPage() {
                             </div>
                         </RadioGroup>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.logoTitle}</CardTitle>
+                    <CardDescription>{t.logoDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RadioGroup 
+                        value={logo} 
+                        onValueChange={(value) => setLogo(value as any)}
+                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                    >
+                        {logoOptions.map(({ name, icon: Icon }) => (
+                             <div key={name}>
+                                <RadioGroupItem value={name} id={name.toLowerCase()} className="peer sr-only" />
+                                <Label htmlFor={name.toLowerCase()} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    <Icon className="h-8 w-8 mb-2" />
+                                    {name}
+                                </Label>
+                            </div>
+                        ))}
+                    </RadioGroup>
                 </CardContent>
             </Card>
 
