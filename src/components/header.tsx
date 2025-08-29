@@ -11,15 +11,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, Search } from 'lucide-react';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Bell, Menu, Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { SheetTrigger } from './ui/sheet';
 
 const translations = {
   ur: {
+    toggleMenu: "Menu Kholein",
     search: "Search...",
     online: "Online",
     offline: "Offline",
@@ -30,6 +31,7 @@ const translations = {
     logout: "Logout",
   },
   en: {
+    toggleMenu: "Toggle Menu",
     search: "Search...",
     online: "Online",
     offline: "Offline",
@@ -49,7 +51,12 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <SidebarTrigger className="-translate-x-4" />
+       <SheetTrigger asChild>
+        <Button size="icon" variant="outline">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">{t.toggleMenu}</span>
+        </Button>
+      </SheetTrigger>
       <div className="relative ml-auto flex-1 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <input
