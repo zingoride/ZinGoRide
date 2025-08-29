@@ -6,7 +6,8 @@ import { TipCalculator } from '@/components/tip-calculator';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, DollarSign, Wallet, Goal } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 const initialRideRequests = [
   {
@@ -140,7 +141,7 @@ export default function Home() {
 
   if (!isOnline) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2">
@@ -157,6 +158,46 @@ export default function Home() {
             </Button>
           </CardContent>
         </Card>
+        
+        <div className="grid w-full max-w-4xl gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Aaj Ki Kamai</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">PKR 4,250</div>
+                <p className="text-xs text-muted-foreground">
+                  +15% pichle din se
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Is Haftay Ki Kamai</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">PKR 21,800</div>
+                <p className="text-xs text-muted-foreground">
+                  +8% pichle haftay se
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Haftawar Had</CardTitle>
+                <Goal className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">PKR 30,000</div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  72% hadaf mukammal
+                </p>
+                <Progress value={72} aria-label="72% complete" />
+              </CardContent>
+            </Card>
+        </div>
       </div>
     );
   }
