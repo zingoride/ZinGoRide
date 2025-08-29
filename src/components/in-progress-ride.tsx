@@ -26,13 +26,19 @@ export function InProgressRide() {
 
   const { pickup, dropoff, rider } = activeRide;
 
+  const handleCall = () => {
+    if (rider?.phone) {
+      window.location.href = `tel:${rider.phone}`;
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
       <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
         <Image
           src="https://picsum.photos/seed/map/1600/1200"
           alt="Map with route"
-          layout="fill"
+          fill
           objectFit="cover"
           data-ai-hint="street map"
         />
@@ -64,7 +70,7 @@ export function InProgressRide() {
                     </div>
                 </div>
                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" onClick={handleCall}>
                         <Phone className="h-5 w-5" />
                     </Button>
                     <Button variant="outline" size="icon">

@@ -12,6 +12,7 @@ export interface RideDetails {
     name: string;
     rating: number;
     avatarUrl: string;
+    phone: string;
   };
 }
 
@@ -32,6 +33,7 @@ export function RideProvider({ children }: { children: ReactNode }) {
       name: 'Ahmad Ali',
       rating: 4.8,
       avatarUrl: 'https://picsum.photos/100/100?random=1',
+      phone: '+923001234567', // Dummy phone number
     };
     setActiveRide({ ...ride, rider: mockRider });
   };
