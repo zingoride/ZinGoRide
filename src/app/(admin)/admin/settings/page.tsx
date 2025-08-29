@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 
@@ -85,6 +85,12 @@ const logoOptions = [
     { name: 'Car', icon: Car },
     { name: 'Rocket', icon: Rocket },
     { name: 'Bike', icon: Bike },
+    { name: 'Shield', icon: Shield },
+    { name: 'Ship', icon: Ship },
+    { name: 'Bus', icon: Bus },
+    { name: 'Train', icon: Train },
+    { name: 'Plane', icon: Plane },
+    { name: 'Bot', icon: Bot },
 ];
 
 const colorOptions = [
@@ -215,7 +221,7 @@ export default function AdminSettingsPage() {
                     <RadioGroup 
                         value={logo} 
                         onValueChange={(value) => setLogo(value as any)}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        className="grid grid-cols-2 md:grid-cols-5 gap-4"
                     >
                         {logoOptions.map(({ name, icon: Icon }) => (
                              <div key={name}>
@@ -257,3 +263,5 @@ export default function AdminSettingsPage() {
         </div>
     )
 }
+
+    

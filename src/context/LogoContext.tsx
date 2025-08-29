@@ -2,9 +2,9 @@
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, ComponentType } from 'react';
-import { Package2, Car, Rocket, Bike } from 'lucide-react';
+import { Package2, Car, Rocket, Bike, Shield, Ship, Bus, Train, Plane, Bot } from 'lucide-react';
 
-type LogoType = 'Default' | 'Car' | 'Rocket' | 'Bike';
+type LogoType = 'Default' | 'Car' | 'Rocket' | 'Bike' | 'Shield' | 'Ship' | 'Bus' | 'Train' | 'Plane' | 'Bot';
 
 interface LogoContextType {
   logo: LogoType;
@@ -17,6 +17,12 @@ const logoMap: Record<LogoType, ComponentType<{ className?: string }>> = {
     Car: Car,
     Rocket: Rocket,
     Bike: Bike,
+    Shield: Shield,
+    Ship: Ship,
+    Bus: Bus,
+    Train: Train,
+    Plane: Plane,
+    Bot: Bot,
 };
 
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
@@ -55,3 +61,5 @@ export function useLogo() {
   }
   return context;
 }
+
+    
