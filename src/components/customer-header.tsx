@@ -24,9 +24,6 @@ export function CustomerHeader() {
         </Link>
         
         <div className="flex items-center gap-4">
-             <Link href="/rider-login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hidden sm:block">
-                Rider Portal
-            </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button
@@ -45,14 +42,14 @@ export function CustomerHeader() {
                 </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Mera Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Ahmad Ali</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Ride History</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/login">Login / Signup</Link>
+                  <Link href="/login">Logout</Link>
                 </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
