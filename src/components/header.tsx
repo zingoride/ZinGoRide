@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { SheetTrigger } from './ui/sheet';
+import Link from 'next/link';
 
 const translations = {
   ur: {
@@ -52,7 +53,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
        <SheetTrigger asChild>
-        <Button size="icon" variant="outline">
+        <Button size="icon" variant="outline" className="sm:hidden">
           <Menu className="h-5 w-5" />
           <span className="sr-only">{t.toggleMenu}</span>
         </Button>
@@ -100,7 +101,9 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{t.myAccount}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>{t.settings}</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">{t.settings}</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>{t.support}</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem>{t.logout}</DropdownMenuItem>

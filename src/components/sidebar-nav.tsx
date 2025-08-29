@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bell,
   History,
+  Settings,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const translations = {
     earnings: "Kamai",
     history: "Tareekh",
     profile: "Profile",
+    settings: "Settings",
     notifications: "Ittila'at",
   },
   en: {
@@ -30,6 +32,7 @@ const translations = {
     earnings: "Earnings",
     history: "History",
     profile: "Profile",
+    settings: "Settings",
     notifications: "Notifications",
   },
 };
@@ -44,6 +47,7 @@ export function SidebarNav() {
     { href: "/earnings", label: t.earnings, icon: BarChart3 },
     { href: "/history", label: t.history, icon: History },
     { href: "/profile", label: t.profile, icon: User },
+    { href: "/settings", label: t.settings, icon: Settings },
   ];
 
   return (
