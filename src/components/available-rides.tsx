@@ -39,7 +39,7 @@ const rideOptions = [
   },
 ];
 
-export function AvailableRides() {
+export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void }) {
   const [selectedRide, setSelectedRide] = useState('Car');
   const { toast } = useToast();
 
@@ -48,6 +48,7 @@ export function AvailableRides() {
       title: "Ride Confirmed!",
       description: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
     });
+    onConfirmRide();
   };
 
   return (

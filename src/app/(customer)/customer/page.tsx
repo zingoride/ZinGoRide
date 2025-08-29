@@ -4,14 +4,25 @@
 import { useState } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
+import { CustomerRideStatus } from "@/components/customer-ride-status";
 import Image from "next/image";
 
+type PageState = 'booking' | 'rides_available' | 'confirmed';
+
 export default function CustomerPage() {
-    const [showRides, setShowRides] = useState(false);
+    const [pageState, setPageState] = useState<PageState>('booking');
 
     const handleFindRide = () => {
-        setShowRides(true);
+        setPageState('rides_available');
     };
+
+    const handleConfirmRide = () => {
+        setPageState('confirmed');
+    };
+
+    const handleCancelRide = () => {
+        setPageState('booking');
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 h-[calc(100vh-4rem)]">
@@ -30,8 +41,9 @@ export default function CustomerPage() {
                 </div>
             </div>
             <div className="col-span-1 bg-background p-4 flex flex-col gap-4 overflow-y-auto">
-                <RideBookingForm onFindRide={handleFindRide} />
-                {showRides && <AvailableRides />}
+                {pageState === 'booking' && <RideBookingForm onFindRide={handleFindRide} />}
+                {pageState === 'rides_available' && <AvailableRides onConfirmRide={handleConfirmRide} />}
+                {pageState === 'confirmed' && <CustomerRideStatus onCancel={handleCancelRide} />}
             </div>
         </div>
     );
