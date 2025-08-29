@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { WifiOff, DollarSign, Wallet, Goal } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useRide } from '@/context/RideContext';
+import { InProgressRide } from '@/components/in-progress-ride';
 
 const initialRideRequests = [
   {
@@ -118,6 +120,7 @@ function generateNewRide(existingIds: Set<string>) {
 export default function Home() {
   const [rideRequests, setRideRequests] = useState(initialRideRequests);
   const { isOnline, toggleStatus } = useRiderStatus();
+  const { activeRide } = useRide();
 
   useEffect(() => {
     if (!isOnline) {
@@ -200,6 +203,10 @@ export default function Home() {
         </div>
       </div>
     );
+  }
+
+  if (activeRide) {
+    return <InProgressRide />;
   }
 
   return (

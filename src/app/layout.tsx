@@ -11,6 +11,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { Toaster } from "@/components/ui/toaster";
 import { RiderStatusProvider } from "@/context/RiderStatusContext";
 import { Header } from "@/components/header";
+import { RideProvider } from "@/context/RideContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -33,17 +34,19 @@ export default function RootLayout({
         )}
       >
         <RiderStatusProvider>
-          <SidebarProvider>
-            <Sidebar>
-              <SidebarNav />
-            </Sidebar>
-            <SidebarInset>
-              <Header />
-              <main className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
+          <RideProvider>
+            <SidebarProvider>
+              <Sidebar>
+                <SidebarNav />
+              </Sidebar>
+              <SidebarInset>
+                <Header />
+                <main className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+                  {children}
+                </main>
+              </SidebarInset>
+            </SidebarProvider>
+          </RideProvider>
         </RiderStatusProvider>
         <Toaster />
       </body>

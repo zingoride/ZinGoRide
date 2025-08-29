@@ -12,18 +12,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useRide, RideDetails } from "@/context/RideContext";
 
-interface RideRequestProps {
-  id: string;
-  pickup: string;
-  dropoff: string;
-  fare: number;
-  eta: string;
-}
 
-export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps) {
+export function RideRequest(props: RideDetails) {
+  const { id, pickup, dropoff, fare, eta } = props;
   const [timeLeft, setTimeLeft] = useState(10);
   const [isExpired, setIsExpired] = useState(false);
+  const { acceptRide } = useRide();
+
 
   useEffect(() => {
     if (timeLeft === 0) {
@@ -38,6 +35,10 @@ export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps
     return () => clearInterval(timer);
   }, [timeLeft]);
   
+  const handleAccept = () => {
+    acceptRide(props);
+  };
+
   return (
     <Card className={`overflow-hidden shadow-lg transition-opacity duration-500 ${isExpired ? 'opacity-50' : ''}`}>
       <CardHeader className="flex flex-row items-start bg-muted/50">
@@ -54,7 +55,7 @@ export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps
           <Button size="sm" variant="outline" className="h-8 gap-1" disabled={isExpired}>
             Mustarad Karein
           </Button>
-          <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700" disabled={isExpired}>
+          <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700" disabled={isExpired} onClick={handleAccept}>
             Qubool Karein
           </Button>
         </div>
