@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "next-themes";
 
 const translations = {
   ur: {
@@ -47,6 +48,7 @@ const translations = {
 export default function CustomerSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
+    const { theme, setTheme } = useTheme();
     const t = translations[language];
 
     const handleSave = () => {
@@ -69,7 +71,11 @@ export default function CustomerSettingsPage() {
                     <CardContent>
                         <div className="grid gap-4">
                             <Label htmlFor="theme">{t.theme}</Label>
-                            <RadioGroup defaultValue="light" className="grid grid-cols-3 gap-4">
+                            <RadioGroup 
+                                defaultValue={theme} 
+                                onValueChange={setTheme}
+                                className="grid grid-cols-3 gap-4"
+                            >
                                 <div>
                                     <RadioGroupItem value="light" id="light" className="peer sr-only" />
                                     <Label htmlFor="light" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">

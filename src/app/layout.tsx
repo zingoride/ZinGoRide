@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { RiderStatusProvider } from "@/context/RiderStatusContext";
 import { RideProvider } from "@/context/RideContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -28,14 +29,21 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <LanguageProvider>
-          <RiderStatusProvider>
-            <RideProvider>
-              {children}
-            </RideProvider>
-          </RiderStatusProvider>
-        </LanguageProvider>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LanguageProvider>
+            <RiderStatusProvider>
+              <RideProvider>
+                {children}
+              </RideProvider>
+            </RiderStatusProvider>
+          </LanguageProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
