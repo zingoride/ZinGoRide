@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { MapPin, DollarSign, Clock, ArrowRight } from "lucide-react";
 import {
   Card,
@@ -19,8 +22,24 @@ interface RideRequestProps {
 }
 
 export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps) {
+  const [timeLeft, setTimeLeft] = useState(10);
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      setIsExpired(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+  
   return (
-    <Card className="overflow-hidden shadow-lg">
+    <Card className={`overflow-hidden shadow-lg transition-opacity duration-500 ${isExpired ? 'opacity-50' : ''}`}>
       <CardHeader className="flex flex-row items-start bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
@@ -29,10 +48,13 @@ export function RideRequest({ id, pickup, dropoff, fare, eta }: RideRequestProps
           <CardDescription>Ride ID: #{id}</CardDescription>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+              {timeLeft}
+            </div>
+          <Button size="sm" variant="outline" className="h-8 gap-1" disabled={isExpired}>
             Mustarad Karein
           </Button>
-          <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700">
+          <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700" disabled={isExpired}>
             Qubool Karein
           </Button>
         </div>
