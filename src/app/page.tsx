@@ -10,6 +10,7 @@ import { WifiOff, DollarSign, Wallet, Goal } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
+import { RideInvoice } from '@/components/ride-invoice';
 
 const initialRideRequests = [
   {
@@ -120,7 +121,7 @@ function generateNewRide(existingIds: Set<string>) {
 export default function Home() {
   const [rideRequests, setRideRequests] = useState(initialRideRequests);
   const { isOnline, toggleStatus } = useRiderStatus();
-  const { activeRide } = useRide();
+  const { activeRide, completedRide } = useRide();
 
   useEffect(() => {
     if (!isOnline) {
@@ -141,6 +142,10 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [isOnline]);
+
+  if (completedRide) {
+    return <RideInvoice ride={completedRide} />;
+  }
 
   if (!isOnline) {
     return (

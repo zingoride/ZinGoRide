@@ -18,15 +18,18 @@ export interface RideDetails {
 
 type RideContextType = {
   activeRide: RideDetails | null;
+  completedRide: RideDetails | null;
   acceptRide: (ride: RideDetails) => void;
   completeRide: () => void;
   cancelRide: () => void;
+  closeInvoice: () => void;
 };
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
 
 export function RideProvider({ children }: { children: ReactNode }) {
   const [activeRide, setActiveRide] = useState<RideDetails | null>(null);
+  const [completedRide, setCompletedRide] = useState<RideDetails | null>(null);
 
   const acceptRide = (ride: RideDetails) => {
     const mockRider = {
@@ -35,19 +38,27 @@ export function RideProvider({ children }: { children: ReactNode }) {
       avatarUrl: 'https://picsum.photos/100/100?random=1',
       phone: '+923001234567', // Dummy phone number
     };
+    setCompletedRide(null);
     setActiveRide({ ...ride, rider: mockRider });
   };
 
   const completeRide = () => {
-    setActiveRide(null);
+    if (activeRide) {
+      setCompletedRide(activeRide);
+      setActiveRide(null);
+    }
   };
   
   const cancelRide = () => {
     setActiveRide(null);
   }
 
+  const closeInvoice = () => {
+    setCompletedRide(null);
+  }
+
   return (
-    <RideContext.Provider value={{ activeRide, acceptRide, completeRide, cancelRide }}>
+    <RideContext.Provider value={{ activeRide, completedRide, acceptRide, completeRide, cancelRide, closeInvoice }}>
       {children}
     </RideContext.Provider>
   );
