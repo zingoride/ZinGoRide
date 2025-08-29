@@ -34,6 +34,13 @@ export function InProgressRide() {
     }
   };
   
+  const handleNavigate = () => {
+    if (pickup) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickup)}`;
+      window.open(mapsUrl, '_blank');
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
       <div className="lg:col-span-2 h-96 lg:h-[calc(100vh-10rem)] rounded-lg overflow-hidden relative">
@@ -101,7 +108,7 @@ export function InProgressRide() {
                 <p className="font-semibold">{dropoff}</p>
               </div>
             </div>
-            <Button size="lg" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="w-full mt-4 bg-blue-600 hover:bg-blue-700" onClick={handleNavigate}>
                 <Navigation className="mr-2 h-5 w-5" />
                 Navigate to Pickup
             </Button>
