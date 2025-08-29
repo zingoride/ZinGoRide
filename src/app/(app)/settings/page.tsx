@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -48,7 +50,12 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const t = translations[language];
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleSave = () => {
         toast({
@@ -56,6 +63,10 @@ export default function SettingsPage() {
             description: t.saveSuccessDesc,
         });
     };
+
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col gap-8">
@@ -70,7 +81,7 @@ export default function SettingsPage() {
                     <div className="grid gap-4">
                         <Label htmlFor="theme">{t.theme}</Label>
                         <RadioGroup 
-                            defaultValue={theme} 
+                            value={theme} 
                             onValueChange={setTheme}
                             className="grid grid-cols-3 gap-4"
                         >

@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -49,7 +50,12 @@ export default function CustomerSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const t = translations[language];
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleSave = () => {
         toast({
@@ -57,6 +63,10 @@ export default function CustomerSettingsPage() {
             description: t.saveSuccessDesc,
         });
     };
+
+    if (!mounted) {
+        return null; // or a skeleton loader
+    }
 
     return (
         <div className="flex flex-col h-full">
@@ -72,25 +82,25 @@ export default function CustomerSettingsPage() {
                         <div className="grid gap-4">
                             <Label htmlFor="theme">{t.theme}</Label>
                             <RadioGroup 
-                                defaultValue={theme} 
+                                value={theme} 
                                 onValueChange={setTheme}
                                 className="grid grid-cols-3 gap-4"
                             >
                                 <div>
-                                    <RadioGroupItem value="light" id="light" className="peer sr-only" />
-                                    <Label htmlFor="light" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="light" id="light-customer" className="peer sr-only" />
+                                    <Label htmlFor="light-customer" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {t.light}
                                     </Label>
                                 </div>
                                 <div>
-                                    <RadioGroupItem value="dark" id="dark" className="peer sr-only" />
-                                    <Label htmlFor="dark" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="dark" id="dark-customer" className="peer sr-only" />
+                                    <Label htmlFor="dark-customer" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {t.dark}
                                     </Label>
                                 </div>
                                 <div>
-                                    <RadioGroupItem value="system" id="system" className="peer sr-only" />
-                                    <Label htmlFor="system" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="system" id="system-customer" className="peer sr-only" />
+                                    <Label htmlFor="system-customer" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {t.system}
                                     </Label>
                                 </div>
