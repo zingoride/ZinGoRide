@@ -13,12 +13,12 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, CheckCircle, XCircle } from "lucide-react";
+import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
 
 type UserStatus = 'Active' | 'Inactive';
 type UserType = 'Customer' | 'Driver';
-type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected';
+type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Blocked';
 
 interface Document {
   name: string;
@@ -115,19 +115,35 @@ const initialUsers: User[] = [
     ],
     vehicle: { make: 'Suzuki', model: 'Alto', licensePlate: 'LHE-789' }
   },
+  { 
+    id: 'USR-007', 
+    name: 'Usman Sharif', 
+    email: 'usman.sharif@example.com', 
+    type: 'Driver', 
+    status: 'Inactive',
+    approvalStatus: 'Blocked',
+    documents: [
+      { name: 'CNIC Front', url: 'https://picsum.photos/seed/cnic7/400/250' },
+      { name: 'CNIC Back', url: 'https://picsum.photos/seed/cnic8/400/250' },
+      { name: 'Driving License', url: 'https://picsum.photos/seed/license4/400/250' },
+      { name: 'Vehicle Registration', url: 'https://picsum.photos/seed/registration4/400/250' }
+    ],
+    vehicle: { make: 'Kia', model: 'Sportage', licensePlate: 'ISB-101' }
+  },
 ];
 
 const approvalStatusConfig = {
   Pending: { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
   Approved: { variant: 'default', className: 'bg-green-100 text-green-800', label: 'Approved' },
   Rejected: { variant: 'destructive', className: 'bg-red-100 text-red-800', label: 'Rejected' },
+  Blocked: { variant: 'destructive', className: 'bg-red-200 text-red-900', label: 'Blocked' },
 };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const handleApprovalChange = (userId: string, newStatus: ApprovalStatus) => {
+  const handleStatusChange = (userId: string, newStatus: ApprovalStatus) => {
     setUsers(users.map(user => user.id === userId ? { ...user, approvalStatus: newStatus } : user));
   };
   
@@ -144,7 +160,7 @@ export default function UsersPage() {
           user={selectedUser} 
           isOpen={!!selectedUser} 
           onOpenChange={(isOpen) => !isOpen && setSelectedUser(null)}
-          onApprovalChange={handleApprovalChange}
+          onApprovalChange={handleStatusChange}
         />
       )}
       <Card>
@@ -198,14 +214,34 @@ export default function UsersPage() {
                               <FileText className="mr-2 h-4 w-4" />
                               <span>View Documents</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleApprovalChange(user.id, 'Approved')}>
-                             <CheckCircle className="mr-2 h-4 w-4" />
-                            <span>Approve</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleApprovalChange(user.id, 'Rejected')}>
-                             <XCircle className="mr-2 h-4 w-4" />
-                            <span>Reject</span>
-                          </DropdownMenuItem>
+
+                          {user.approvalStatus === 'Pending' && (
+                            <>
+                                <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    <span>Approve</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Rejected')}>
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    <span>Reject</span>
+                                </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {user.approvalStatus === 'Approved' && (
+                             <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Blocked')}>
+                                <Ban className="mr-2 h-4 w-4" />
+                                <span>Block</span>
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {(user.approvalStatus === 'Rejected' || user.approvalStatus === 'Blocked') && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                <span>Approve</span>
+                            </DropdownMenuItem>
+                          )}
+                          
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}

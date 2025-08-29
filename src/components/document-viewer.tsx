@@ -14,8 +14,10 @@ import Image from 'next/image';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
 import type { User } from '@/app/(admin)/admin/users/page';
 import { Separator } from './ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected';
+
+type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Blocked';
 
 interface DocumentViewerProps {
   user: User;
@@ -109,6 +111,3 @@ export function DocumentViewer({ user, isOpen, onOpenChange, onApprovalChange }:
     </Dialog>
   );
 }
-
-// Add these imports to your component if they are missing
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
