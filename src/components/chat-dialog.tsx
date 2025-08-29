@@ -64,8 +64,8 @@ export function ChatDialog({ riderName }: { riderName: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <MessageSquare className="h-5 w-5" />
+        <Button variant="outline" className="w-full">
+          <MessageSquare className="mr-2 h-4 w-4" /> Message
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[70vh]">

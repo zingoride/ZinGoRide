@@ -4,16 +4,18 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, MessageSquare, Star, User, Car, X } from 'lucide-react';
+import { Loader2, Phone, Star, User, Car, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
+import { ChatDialog } from './chat-dialog';
 
 const driverDetails = {
     name: 'Ali Khan',
     rating: 4.9,
     vehicle: 'Toyota Corolla - ABC-123',
     eta: '5 minutes',
-    avatar: 'https://picsum.photos/100/100?random=driver'
+    avatar: 'https://picsum.photos/100/100?random=driver',
+    phone: '+923001234567'
 }
 
 export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
@@ -36,6 +38,12 @@ export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
             }
         }
     }, [status]);
+
+    const handleCall = () => {
+        if (driverDetails.phone) {
+            window.location.href = `tel:${driverDetails.phone}`;
+        }
+    };
 
 
     return (
@@ -78,12 +86,10 @@ export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
                         </Card>
 
                         <div className="flex w-full gap-2 mt-4">
-                            <Button variant="outline" className="w-full">
+                            <Button variant="outline" className="w-full" onClick={handleCall}>
                                 <Phone className="mr-2 h-4 w-4" /> Call
                             </Button>
-                             <Button variant="outline" className="w-full">
-                                <MessageSquare className="mr-2 h-4 w-4" /> Message
-                            </Button>
+                             <ChatDialog riderName={driverDetails.name} />
                         </div>
                     </div>
                 )}
