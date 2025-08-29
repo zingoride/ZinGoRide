@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2 } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const translations = {
   ur: {
@@ -31,6 +32,7 @@ const translations = {
     saveButton: "Tabdeelian Mehfooz Karein",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Aapki tabdeelian mehfooz kar li gayi hain.",
+    uploadLogo: "Logo Upload Karein"
   },
   en: {
     settings: "Settings",
@@ -49,6 +51,7 @@ const translations = {
     saveButton: "Save Changes",
     saveSuccessTitle: "Changes Saved",
     saveSuccessDesc: "Your changes have been saved successfully.",
+    uploadLogo: "Upload Logo"
   },
 };
 
@@ -63,7 +66,7 @@ export default function AdminSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
-    const { logo, setLogo } = useLogo();
+    const { logo, setLogo, LogoComponent } = useLogo();
     const [mounted, setMounted] = useState(false);
     const t = translations[language];
 
@@ -127,7 +130,23 @@ export default function AdminSettingsPage() {
                     <CardTitle>{t.logoTitle}</CardTitle>
                     <CardDescription>{t.logoDesc}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                            <AvatarImage src="/logo.png" alt="App Logo" />
+                            <AvatarFallback>
+                                <LogoComponent className="h-10 w-10" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <Button asChild variant="outline">
+                            <label htmlFor="logo-upload" className="cursor-pointer">
+                                <Upload className="mr-2 h-4 w-4" />
+                                {t.uploadLogo}
+                            </label>
+                        </Button>
+                        <input id="logo-upload" type="file" className="hidden" />
+                    </div>
+
                     <RadioGroup 
                         value={logo} 
                         onValueChange={(value) => setLogo(value as any)}
