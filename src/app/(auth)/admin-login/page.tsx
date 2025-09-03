@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link"
@@ -59,7 +58,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="admin@example.com" required />
+              <Input id="email" type="email" placeholder="info@zingoride.vercel.app" required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
@@ -79,4 +78,3 @@ export default function AdminLoginPage() {
     </div>
   )
 }
-
