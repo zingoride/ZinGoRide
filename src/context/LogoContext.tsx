@@ -28,8 +28,8 @@ const logoMap: Record<LogoType, ComponentType<{ className?: string }>> = {
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
-  const [logo, setLogo] = useState<LogoType>('Default');
-  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Package2);
+  const [logo, setLogo] = useState<LogoType>('Car');
+  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Car);
 
   useEffect(() => {
     const storedLogo = localStorage.getItem('appLogo') as LogoType;
@@ -61,5 +61,3 @@ export function useLogo() {
   }
   return context;
 }
-
-    
