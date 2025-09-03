@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
@@ -57,6 +57,10 @@ const translations = {
     perKmRate: "Fi Kilo Meter Rate (PKR)",
     perMinRate: "Fi Minute Rate (PKR)",
     fareSavedSuccess: "Kiraye ki settings mehfooz kar li gayi hain.",
+    commissionManagement: "کمیشن اور فیس",
+    commissionManagementDesc: "کمیشن کا فیصد اور سروس فیس مقرر کریں۔",
+    commissionRate: "کمیشن کی شرح (%)",
+    serviceFee: "سروس فیس (PKR)",
   },
   en: {
     settings: "Settings",
@@ -96,6 +100,10 @@ const translations = {
     perKmRate: "Per Kilometer Rate (PKR)",
     perMinRate: "Per Minute Rate (PKR)",
     fareSavedSuccess: "Fare settings have been saved successfully.",
+    commissionManagement: "Commission & Fees",
+    commissionManagementDesc: "Set commission percentage and service fees.",
+    commissionRate: "Commission Rate (%)",
+    serviceFee: "Service Fee (PKR)",
   },
 };
 
@@ -441,6 +449,29 @@ export default function AdminSettingsPage() {
                             </div>
                         </TabsContent>
                     </Tabs>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.commissionManagement}</CardTitle>
+                    <CardDescription>{t.commissionManagementDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="commission-rate">{t.commissionRate}</Label>
+                        <div className="relative">
+                            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="commission-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
+                        </div>
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="service-fee">{t.serviceFee}</Label>
+                         <div className="relative">
+                            <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="service-fee" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
             
