@@ -14,6 +14,7 @@ import { useLogo } from "@/context/LogoContext";
 import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
+import { cn } from "@/lib/utils";
 
 const translations = {
   ur: {
@@ -84,7 +85,13 @@ const translations = {
   },
 };
 
+const ZRLogoComponent = ({ className }: { className?: string }) => (
+  <span className={cn("font-bold text-xl tracking-tighter", className)}>ZR</span>
+);
+
+
 const logoOptions = [
+    { name: 'ZR', icon: ZRLogoComponent },
     { name: 'Default', icon: Package2 },
     { name: 'Car', icon: Car },
     { name: 'Rocket', icon: Rocket },
@@ -331,5 +338,3 @@ export default function AdminSettingsPage() {
         </div>
     )
 }
-
-    

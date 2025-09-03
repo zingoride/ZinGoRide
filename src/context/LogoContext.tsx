@@ -4,7 +4,11 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, ComponentType } from 'react';
 import { Package2, Car, Rocket, Bike, Shield, Ship, Bus, Train, Plane, Bot } from 'lucide-react';
 
-type LogoType = 'Default' | 'Car' | 'Rocket' | 'Bike' | 'Shield' | 'Ship' | 'Bus' | 'Train' | 'Plane' | 'Bot';
+const ZRLogoComponent = ({ className }: { className?: string }) => (
+  <span className={cn("font-bold text-xl tracking-tighter", className)}>ZR</span>
+);
+
+type LogoType = 'Default' | 'Car' | 'Rocket' | 'Bike' | 'Shield' | 'Ship' | 'Bus' | 'Train' | 'Plane' | 'Bot' | 'ZR';
 
 interface LogoContextType {
   logo: LogoType;
@@ -23,13 +27,14 @@ const logoMap: Record<LogoType, ComponentType<{ className?: string }>> = {
     Train: Train,
     Plane: Plane,
     Bot: Bot,
+    ZR: ZRLogoComponent,
 };
 
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
-  const [logo, setLogo] = useState<LogoType>('Car');
-  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Car);
+  const [logo, setLogo] = useState<LogoType>('ZR');
+  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => ZRLogoComponent);
 
   useEffect(() => {
     const storedLogo = localStorage.getItem('appLogo') as LogoType;
@@ -37,9 +42,9 @@ export function LogoProvider({ children }: { children: ReactNode }) {
       setLogo(storedLogo);
       setLogoComponent(() => logoMap[storedLogo]);
     } else {
-      // If nothing is stored, default to Car
-      setLogo('Car');
-      setLogoComponent(() => Car);
+      // If nothing is stored, default to ZR
+      setLogo('ZR');
+      setLogoComponent(() => ZRLogoComponent);
     }
   }, []);
 
