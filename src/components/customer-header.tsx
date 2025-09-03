@@ -15,6 +15,9 @@ import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { SheetTrigger } from './ui/sheet';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 const translations = {
   ur: {
@@ -37,7 +40,14 @@ const translations = {
 
 export function CustomerHeader() {
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const router = useRouter();
   const t = translations[language];
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
@@ -63,16 +73,16 @@ export function CustomerHeader() {
           >
               <Avatar>
               <AvatarImage
-                  src="https://picsum.photos/100/100?random=2"
+                  src={user?.photoURL || "https://picsum.photos/100/100?random=2"}
                   alt="Customer Avatar"
                   data-ai-hint="portrait woman"
               />
-              <AvatarFallback>C</AvatarFallback>
+              <AvatarFallback>{user?.displayName?.charAt(0) || 'C'}</AvatarFallback>
               </Avatar>
           </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t.myAccount}</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.displayName || t.myAccount}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/customer/profile">{t.profile}</Link>
@@ -84,8 +94,8 @@ export function CustomerHeader() {
             <Link href="/customer/settings">{t.settings}</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/login">{t.logout}</Link>
+          <DropdownMenuItem onClick={handleLogout}>
+            {t.logout}
           </DropdownMenuItem>
           </DropdownMenuContent>
       </DropdownMenu>

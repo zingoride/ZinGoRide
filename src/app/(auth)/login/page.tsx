@@ -3,6 +3,9 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +20,8 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const translations = {
   ur: {
@@ -29,6 +34,8 @@ const translations = {
     signupLink: "Sign up",
     riderPrompt: "Rider ho?",
     riderLink: "Yahan login karein.",
+    loginSuccess: "Kamyabi se login ho gaya!",
+    loginError: "Login karne mein masla hua.",
   },
   en: {
     title: "Customer Login",
@@ -40,6 +47,8 @@ const translations = {
     signupLink: "Sign up",
     riderPrompt: "Are you a rider?",
     riderLink: "Login here.",
+    loginSuccess: "Logged in successfully!",
+    loginError: "Error logging in.",
   },
 };
 
@@ -47,11 +56,31 @@ export default function LoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { LogoComponent } = useLogo();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const t = translations[language];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/customer');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: t.loginSuccess,
+      });
+      router.push('/customer');
+    } catch (error: any) {
+       console.error(error);
+      toast({
+        variant: "destructive",
+        title: t.loginError,
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,13 +98,14 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t.loginButton}
             </Button>
           </form>

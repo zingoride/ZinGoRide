@@ -10,6 +10,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LogoProvider } from "@/context/LogoContext";
 import { ThemeColorProvider } from "@/context/ThemeColorContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -39,13 +40,15 @@ export default function RootLayout({
         >
           <ThemeColorProvider>
             <LanguageProvider>
-              <LogoProvider>
-                <RiderStatusProvider>
-                  <RideProvider>
-                    {children}
-                  </RideProvider>
-                </RiderStatusProvider>
-              </LogoProvider>
+              <AuthProvider>
+                <LogoProvider>
+                  <RiderStatusProvider>
+                    <RideProvider>
+                      {children}
+                    </RideProvider>
+                  </RiderStatusProvider>
+                </LogoProvider>
+              </AuthProvider>
             </LanguageProvider>
           </ThemeColorProvider>
           <Toaster />
