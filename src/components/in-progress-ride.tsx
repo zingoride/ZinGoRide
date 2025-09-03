@@ -20,7 +20,7 @@ import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useToast } from './ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const translations = {
     ur: {
