@@ -3,6 +3,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, ComponentType } from 'react';
 import { Package2, Car, Rocket, Bike, Shield, Ship, Bus, Train, Plane, Bot } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ZRLogoComponent = ({ className }: { className?: string }) => (
   <span className={cn("font-bold text-xl tracking-tighter", className)}>ZR</span>
