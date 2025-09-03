@@ -35,6 +35,8 @@ const translations = {
     paymentToastDesc: "Raqam rider se cash mein leni hai.",
     done: "Done",
     earningsAdded: "Aapki kamai wallet mein jama kar di gayi hai.",
+    commission: "Commission (15%)",
+    netEarnings: "Aapki Kamai",
   },
   en: {
     title: "Ride Complete!",
@@ -51,6 +53,8 @@ const translations = {
     paymentToastDesc: "Collect cash from the rider.",
     done: "Done",
     earningsAdded: "Your earnings have been added to your wallet.",
+    commission: "Commission (15%)",
+    netEarnings: "Your Earnings",
   },
 };
 
@@ -62,15 +66,19 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const t = translations[language];
 
   const tip = 50; // Dummy tip for now
-  const total = (ride.fare || 0) + tip;
+  const commissionRate = 0.15; // 15%
+  const fare = ride.fare || 0;
+  const commission = fare * commissionRate;
+  const netEarnings = fare - commission;
+  const totalPayable = fare + tip;
 
   useEffect(() => {
-    // Add ride earnings to the wallet when invoice is shown
-    if (ride.fare) {
-      addFunds(ride.fare);
+    // Add only the net earnings to the wallet when invoice is shown
+    if (netEarnings > 0) {
+      addFunds(netEarnings);
       toast({
-        title: "Earnings Added",
-        description: t.earningsAdded
+        title: t.earningsAdded,
+        description: `PKR ${netEarnings.toFixed(2)} credited.`,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,23 +134,27 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.fare}</span>
-              <span>PKR {(ride.fare || 0).toFixed(2)}</span>
+              <span>PKR {fare.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
+             <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.commission}</span>
+              <span className="text-red-600">- PKR {commission.toFixed(2)}</span>
+            </div>
+             <div className="flex justify-between font-semibold">
+              <span className="text-muted-foreground">{t.netEarnings}</span>
+              <span>PKR {netEarnings.toFixed(2)}</span>
+            </div>
+             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.tip}</span>
               <span>PKR {tip.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.discount}</span>
-              <span className='text-green-600'>- PKR 0.00</span>
             </div>
           </div>
 
           <Separator />
 
           <div className="flex justify-between font-bold text-lg">
-            <span>{t.total}</span>
-            <span>PKR {total.toFixed(2)}</span>
+            <span>{t.total} (Payable by Customer)</span>
+            <span>PKR {totalPayable.toFixed(2)}</span>
           </div>
            <div className='flex justify-center'>
              <Badge onClick={handlePaymentMethodClick} className="cursor-pointer">{t.paymentMethod}</Badge>

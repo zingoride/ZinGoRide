@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Car, DollarSign, Wallet } from "lucide-react";
+import { Users, Car, DollarSign, Wallet, Percent } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -26,7 +26,8 @@ const translations = {
     totalUsers: "Kul Sarfeen",
     totalDrivers: "Kul Drivers",
     monthlyOverview: "Mahanah Jaiza",
-    ridesAndRevenue: "Rides aur Aamdani"
+    ridesAndRevenue: "Rides aur Aamdani",
+    totalCommission: "Kul Commission",
   },
   en: {
     dashboard: "Admin Dashboard",
@@ -36,7 +37,8 @@ const translations = {
     totalUsers: "Total Users",
     totalDrivers: "Total Drivers",
     monthlyOverview: "Monthly Overview",
-    ridesAndRevenue: "Rides and Revenue"
+    ridesAndRevenue: "Rides and Revenue",
+    totalCommission: "Total Commission",
   }
 };
 
@@ -60,6 +62,16 @@ export default function AdminDashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t.totalCommission}</CardTitle>
+            <Percent className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">PKR 187,500</div>
+            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalRides}</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -76,16 +88,6 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">+573</div>
             <p className="text-xs text-muted-foreground">+19% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalDrivers}</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+234</div>
-            <p className="text-xs text-muted-foreground">+21% from last month</p>
           </CardContent>
         </Card>
       </div>
@@ -111,4 +113,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
