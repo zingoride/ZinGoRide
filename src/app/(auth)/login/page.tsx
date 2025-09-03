@@ -29,8 +29,6 @@ const translations = {
     signupLink: "Sign up",
     riderPrompt: "Rider ho?",
     riderLink: "Yahan login karein.",
-    adminPrompt: "Admin ho?",
-    adminLink: "Yahan login karein.",
   },
   en: {
     title: "Customer Login",
@@ -42,8 +40,6 @@ const translations = {
     signupLink: "Sign up",
     riderPrompt: "Are you a rider?",
     riderLink: "Login here.",
-    adminPrompt: "Are you an admin?",
-    adminLink: "Login here.",
   },
 };
 
@@ -90,12 +86,9 @@ export default function LoginPage() {
                 </Link>
             </div>
              <Separator className="my-4" />
-             <div className="grid grid-cols-2 gap-4 text-center text-sm">
+             <div className="text-center text-sm">
                  <Link href="/rider-login" className="underline">
                     {t.riderPrompt} {t.riderLink}
-                </Link>
-                 <Link href="/admin-login" className="underline">
-                    {t.adminPrompt} {t.adminLink}
                 </Link>
             </div>
         </CardContent>
