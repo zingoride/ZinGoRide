@@ -36,6 +36,10 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     if (storedLogo && logoMap[storedLogo]) {
       setLogo(storedLogo);
       setLogoComponent(() => logoMap[storedLogo]);
+    } else {
+      // If nothing is stored, default to Car
+      setLogo('Car');
+      setLogoComponent(() => Car);
     }
   }, []);
 
