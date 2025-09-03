@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link"
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Package2, Shield } from "lucide-react"
+import { Shield } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext";
 
 const translations = {
@@ -40,7 +41,12 @@ export default function AdminLoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/admin');
+    // In a real app, you'd perform authentication here.
+    // For now, we'll just set a dummy session item and redirect.
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_logged_in', 'true');
+    }
+    router.push('/admin/dashboard');
   };
 
   return (
@@ -49,7 +55,7 @@ export default function AdminLoginPage() {
             <Shield className="h-8 w-8 text-primary" />
             <span className="text-2xl font-semibold">ZinGo Admin</span>
         </div>
-      <Card className="w-full">
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">{t.title}</CardTitle>
           <CardDescription>{t.description}</CardDescription>
@@ -78,3 +84,4 @@ export default function AdminLoginPage() {
     </div>
   )
 }
+

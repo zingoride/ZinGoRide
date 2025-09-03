@@ -15,6 +15,7 @@ import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { SheetTrigger } from './ui/sheet';
 import { useLanguage } from '@/context/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 const translations = {
   ur: {
@@ -33,7 +34,15 @@ const translations = {
 
 export function AdminHeader() {
   const { language } = useLanguage();
+  const router = useRouter();
   const t = translations[language];
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_logged_in');
+    }
+    router.push('/admin/login');
+  };
 
   return (
     <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
@@ -74,8 +83,8 @@ export function AdminHeader() {
             <Link href="/admin/settings">{t.settings}</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/login">{t.logout}</Link>
+          <DropdownMenuItem onClick={handleLogout}>
+            {t.logout}
           </DropdownMenuItem>
           </DropdownMenuContent>
       </DropdownMenu>
