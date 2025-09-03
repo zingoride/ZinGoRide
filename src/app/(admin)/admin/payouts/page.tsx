@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type PayoutStatus = 'Pending' | 'Completed' | 'Failed';
-type PayoutMethod = 'Easypaisa' | 'Jazzcash';
+type PayoutMethod = 'Easypaisa' | 'Jazzcash' | 'Bank Transfer';
 
 interface PayoutRequest {
   id: string;
@@ -50,14 +50,6 @@ const initialPayouts: PayoutRequest[] = [
     status: 'Completed',
     date: new Date(new Date().setDate(new Date().getDate() - 5)),
   },
-  {
-    id: 'PO-003',
-    amount: 10000,
-    method: 'Easypaisa',
-    accountNumber: '03001234567',
-    status: 'Failed',
-    date: new Date(new Date().setDate(new Date().getDate() - 7)),
-  },
 ];
 
 const statusConfig = {
@@ -81,8 +73,10 @@ const translations = {
     payoutId: "Payout ID",
     date: "Tareekh",
     status: "Status",
-    requestSuccess: "Payout request kamyabi se bhej di gayi hai!",
+    requestSuccess: "Payout request kamyabi se process ho gayi hai!",
     requestError: "Request bhejne mein masla hua.",
+    insufficientFunds: "Aapke paas na-kafi commission balance hai.",
+    payoutSuccessDesc: (amount: number, method: string) => `PKR ${amount} aapke ${method} account mein transfer kar diye gaye hain.`,
   },
   en: {
     title: "Payouts",
@@ -98,22 +92,58 @@ const translations = {
     payoutId: "Payout ID",
     date: "Date",
     status: "Status",
-    requestSuccess: "Payout request sent successfully!",
+    requestSuccess: "Payout request processed successfully!",
     requestError: "Error sending request.",
+    insufficientFunds: "You have insufficient commission balance.",
+     payoutSuccessDesc: (amount: number, method: string) => `PKR ${amount} has been transferred to your ${method} account.`,
   }
 };
 
 export default function PayoutsPage() {
   const [payouts, setPayouts] = useState<PayoutRequest[]>(initialPayouts);
+  const [totalCommission, setTotalCommission] = useState(187500);
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod | ''>('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [amount, setAmount] = useState('');
+
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
 
   const handleRequestPayout = (e: React.FormEvent) => {
     e.preventDefault();
+    const payoutAmount = parseFloat(amount);
+
+    if (payoutAmount > totalCommission) {
+        toast({
+            variant: "destructive",
+            title: t.requestError,
+            description: t.insufficientFunds,
+        });
+        return;
+    }
+    
+    const newPayout: PayoutRequest = {
+        id: `PO-${String(payouts.length + 1).padStart(3, '0')}`,
+        amount: payoutAmount,
+        method: payoutMethod as PayoutMethod,
+        accountNumber,
+        status: 'Completed', // Simulating instant completion
+        date: new Date(),
+    };
+
+    setTotalCommission(prev => prev - payoutAmount);
+    setPayouts(prev => [newPayout, ...prev]);
+
     toast({
         title: t.requestSuccess,
+        description: t.payoutSuccessDesc(payoutAmount, newPayout.method),
     });
+
+    // Reset form
+    setPayoutMethod('');
+    setAccountNumber('');
+    setAmount('');
   };
 
   return (
@@ -126,7 +156,7 @@ export default function PayoutsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold">PKR 187,500</p>
+          <p className="text-4xl font-bold">PKR {totalCommission.toFixed(2)}</p>
         </CardContent>
       </Card>
 
@@ -139,26 +169,26 @@ export default function PayoutsPage() {
             <form onSubmit={handleRequestPayout} className="space-y-4">
                <div className="grid gap-2">
                 <Label htmlFor="payout-method">{t.payoutMethod}</Label>
-                <Select>
+                <Select value={payoutMethod} onValueChange={(value) => setPayoutMethod(value as PayoutMethod)}>
                     <SelectTrigger id="payout-method">
                         <SelectValue placeholder={t.selectMethod} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="easypaisa">Easypaisa</SelectItem>
-                        <SelectItem value="jazzcash">Jazzcash</SelectItem>
-                        <SelectItem value="bank">Bank Transfer</SelectItem>
+                        <SelectItem value="Easypaisa">Easypaisa</SelectItem>
+                        <SelectItem value="Jazzcash">Jazzcash</SelectItem>
+                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
                     </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="account-number">{t.accountNumber}</Label>
-                <Input id="account-number" placeholder="e.g., 03001234567" required />
+                <Input id="account-number" placeholder="e.g., 03001234567" required value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="amount">{t.amount}</Label>
-                <Input id="amount" type="number" placeholder="e.g., 5000" required />
+                <Input id="amount" type="number" placeholder="e.g., 5000" required value={amount} onChange={(e) => setAmount(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={!payoutMethod || !accountNumber || !amount}>
                 <Send className="mr-2 h-4 w-4" />
                 {t.submitRequest}
               </Button>
@@ -185,7 +215,7 @@ export default function PayoutsPage() {
                     return (
                     <TableRow key={payout.id}>
                         <TableCell className="font-medium">{payout.id}</TableCell>
-                        <TableCell>{format(payout.date, 'PP')}</TableCell>
+                        <TableCell>{format(payout.date, 'PPp')}</TableCell>
                         <TableCell>
                         <Badge variant={config.variant as any} className={config.className}>
                             {language === 'ur' ? config.labelUr : config.label}
