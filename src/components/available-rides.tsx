@@ -9,13 +9,16 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+import type { RideRequest } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const rideOptions = [
   {
     type: 'Bike',
     icon: Bike,
     eta: '5 min',
-    price: 'PKR 150',
+    price: '150',
     seats: 1,
     image: 'https://picsum.photos/seed/bike/200/150',
     imageHint: 'motorcycle side view'
@@ -24,7 +27,7 @@ const rideOptions = [
     type: 'Car',
     icon: Car,
     eta: '8 min',
-    price: 'PKR 350',
+    price: '350',
     seats: 4,
     image: 'https://picsum.photos/seed/car/200/150',
     imageHint: 'white car side view'
@@ -33,7 +36,7 @@ const rideOptions = [
     type: 'Rickshaw',
     icon: PersonStanding,
     eta: '6 min',
-    price: 'PKR 200',
+    price: '200',
     seats: 3,
     image: 'https://picsum.photos/seed/rickshaw/200/150',
     imageHint: 'auto rickshaw'
@@ -48,6 +51,7 @@ const translations = {
         confirmRide: "Ride Confirm Karein",
         rideConfirmedTitle: "Ride Confirmed!",
         rideConfirmedDesc: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
+        rideUpdateError: "Ride confirm karne mein masla hua."
     },
     en: {
         chooseRide: "Choose a Ride",
@@ -56,21 +60,43 @@ const translations = {
         confirmRide: "Confirm Ride",
         rideConfirmedTitle: "Ride Confirmed!",
         rideConfirmedDesc: "Your ride has been booked. The driver will contact you shortly.",
+        rideUpdateError: "Error confirming ride."
     }
 }
 
-export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void }) {
+export function AvailableRides({ ride, onConfirmRide }: { ride: RideRequest, onConfirmRide: () => void }) {
   const [selectedRide, setSelectedRide] = useState('Car');
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { language } = useLanguage();
   const t = translations[language];
 
-  const handleConfirmRide = () => {
-    toast({
-      title: t.rideConfirmedTitle,
-      description: t.rideConfirmedDesc,
-    });
-    onConfirmRide();
+  const handleConfirmRide = async () => {
+    setLoading(true);
+    try {
+        const rideRef = doc(db, "rides", ride.id);
+        const selectedRideDetails = rideOptions.find(r => r.type === selectedRide);
+        
+        await updateDoc(rideRef, {
+            status: 'booked',
+            vehicleType: selectedRide,
+            fare: selectedRideDetails?.price ? parseFloat(selectedRideDetails.price) : 0,
+        });
+
+        toast({
+            title: t.rideConfirmedTitle,
+            description: t.rideConfirmedDesc,
+        });
+        onConfirmRide();
+    } catch (error) {
+        console.error("Error updating ride: ", error);
+        toast({
+            variant: 'destructive',
+            title: t.rideUpdateError,
+        });
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -104,7 +130,7 @@ export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void })
                         <ride.icon className="h-5 w-5" />
                         <p className="font-bold text-md">{ride.type}</p>
                     </div>
-                    <p className="font-bold text-md">{ride.price}</p>
+                    <p className="font-bold text-md">PKR {ride.price}</p>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
                      <p>{t.eta}: {ride.eta}</p>
@@ -114,8 +140,8 @@ export function AvailableRides({ onConfirmRide }: { onConfirmRide: () => void })
               </div>
             ))}
           </div>
-          <Button className="w-full" size="lg" onClick={handleConfirmRide}>
-            {t.confirmRide}
+          <Button className="w-full" size="lg" onClick={handleConfirmRide} disabled={loading}>
+            {loading ? "Confirming..." : t.confirmRide}
           </Button>
         </CardContent>
       </Card>

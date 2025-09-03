@@ -10,6 +10,10 @@ import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import type { RideRequest } from '@/lib/types';
+
 
 const driverDetails = {
     name: 'Ali Khan',
@@ -29,7 +33,8 @@ const translations = {
         findingDriver: "Driver dhoonda ja raha hai...",
         call: "Call",
         cancelRide: "Ride Cancel Karein",
-        mapPlaceholder: "Live Map Placeholder"
+        mapPlaceholder: "Live Map Placeholder",
+        cancelling: "Cancelling...",
     },
     en: {
         rideStatus: "Ride Status",
@@ -38,13 +43,15 @@ const translations = {
         findingDriver: "Finding a driver...",
         call: "Call",
         cancelRide: "Cancel Ride",
-        mapPlaceholder: "Live Map Placeholder"
+        mapPlaceholder: "Live Map Placeholder",
+        cancelling: "Cancelling...",
     }
 };
 
-export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
+export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCancel: () => void }) {
     const [status, setStatus] = useState<'finding' | 'enroute'>('finding');
     const [progress, setProgress] = useState(10);
+    const [loading, setLoading] = useState(false);
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -70,6 +77,22 @@ export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
             window.location.href = `tel:${driverDetails.phone}`;
         }
     };
+    
+    const handleCancelRide = async () => {
+        setLoading(true);
+        try {
+            const rideRef = doc(db, "rides", ride.id);
+            await updateDoc(rideRef, {
+                status: 'cancelled_by_customer',
+            });
+            onCancel();
+        } catch (error) {
+            console.error("Error cancelling ride: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const mapImageUrl = status === 'enroute' 
         ? "https://picsum.photos/seed/driver-route/800/600"
@@ -144,8 +167,17 @@ export function CustomerRideStatus({ onCancel }: { onCancel: () => void }) {
                     )}
                 </CardContent>
                 <div className='p-4 border-t'>
-                    <Button variant="destructive" className="w-full" onClick={onCancel}>
-                        <X className="mr-2 h-4 w-4" /> {t.cancelRide}
+                    <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t.cancelling}
+                            </>
+                        ) : (
+                             <>
+                                <X className="mr-2 h-4 w-4" /> {t.cancelRide}
+                            </>
+                        )}
                     </Button>
                 </div>
             </Card>
