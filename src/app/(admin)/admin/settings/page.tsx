@@ -11,12 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock, Building, Settings2, CreditCard, LifeBuoy, Phone, Mail } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 const translations = {
   ur: {
@@ -68,6 +69,26 @@ const translations = {
     confirmNewPassword: "Naye Password Ki Tasdeeq Karein",
     updatePasswordButton: "Password Update Karein",
     passwordUpdateSuccess: "Password kamyabi se update ho gaya hai.",
+    appSettings: "Application Settings",
+    appSettingsDesc: "Poori application ke liye aam settings.",
+    appName: "Application ka Naam",
+    appNamePlaceholder: "e.g., ZinGo Ride",
+    appCurrency: "Application ki Currency",
+    appCurrencyPlaceholder: "e.g., PKR",
+    rideSettings: "Ride Settings",
+    rideSettingsDesc: "Riders aur customers ke liye ride ke makhsoos options.",
+    rideRequestTimeout: "Ride Request Timeout (seconds)",
+    rideRequestTimeoutDesc: "Driver ko request accept karne ke liye kitna waqt milna chahiye.",
+    enableAiTips: "AI Tip Suggestions ko Enable Karein",
+    enableAiTipsDesc: "Drivers ko AI-powered tip suggestions dikhayein.",
+    paymentSettings: "Payment Settings",
+    paymentSettingsDesc: "Customers ke liye dastyab payment methods manage karein.",
+    enableCash: "Cash Payments Enable Karein",
+    enableWallet: "Wallet Payments Enable Karein",
+    supportSettings: "Support Settings",
+    supportSettingsDesc: "Users ke liye support contact information set karein.",
+    supportPhone: "Support Phone Number",
+    supportEmail: "Support Email Address",
   },
   en: {
     settings: "Settings",
@@ -118,6 +139,26 @@ const translations = {
     confirmNewPassword: "Confirm New Password",
     updatePasswordButton: "Update Password",
     passwordUpdateSuccess: "Password updated successfully.",
+    appSettings: "Application Settings",
+    appSettingsDesc: "General settings for the entire application.",
+    appName: "Application Name",
+    appNamePlaceholder: "e.g., ZinGo Ride",
+    appCurrency: "Application Currency",
+    appCurrencyPlaceholder: "e.g., PKR",
+    rideSettings: "Ride Settings",
+    rideSettingsDesc: "Ride-specific options for riders and customers.",
+    rideRequestTimeout: "Ride Request Timeout (seconds)",
+    rideRequestTimeoutDesc: "How long a driver has to accept a ride request.",
+    enableAiTips: "Enable AI Tip Suggestions",
+    enableAiTipsDesc: "Show drivers AI-powered tip suggestions.",
+    paymentSettings: "Payment Settings",
+    paymentSettingsDesc: "Manage available payment methods for customers.",
+    enableCash: "Enable Cash Payments",
+    enableWallet: "Enable Wallet Payments",
+    supportSettings: "Support Settings",
+    supportSettingsDesc: "Set up support contact information for users.",
+    supportPhone: "Support Phone Number",
+    supportEmail: "Support Email Address",
   },
 };
 
@@ -378,6 +419,93 @@ export default function AdminSettingsPage() {
                                 <SelectItem value="en">English</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.appSettings}</CardTitle>
+                    <CardDescription>{t.appSettingsDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="app-name">{t.appName}</Label>
+                        <div className="relative">
+                           <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                           <Input id="app-name" placeholder={t.appNamePlaceholder} defaultValue="ZinGo Ride" className="pl-8" />
+                        </div>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="app-currency">{t.appCurrency}</Label>
+                        <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="app-currency" placeholder={t.appCurrencyPlaceholder} defaultValue="PKR" className="pl-8" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>{t.rideSettings}</CardTitle>
+                    <CardDescription>{t.rideSettingsDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="ride-request-timeout">{t.rideRequestTimeout}</Label>
+                         <div className="relative">
+                            <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="ride-request-timeout" type="number" placeholder="e.g., 30" defaultValue="10" className="pl-8" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">{t.rideRequestTimeoutDesc}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Switch id="ai-tips-switch" defaultChecked />
+                        <Label htmlFor="ai-tips-switch" className="flex flex-col space-y-1">
+                            <span>{t.enableAiTips}</span>
+                            <span className="font-normal leading-snug text-muted-foreground">{t.enableAiTipsDesc}</span>
+                        </Label>
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>{t.paymentSettings}</CardTitle>
+                    <CardDescription>{t.paymentSettingsDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch id="cash-payment-switch" defaultChecked />
+                        <Label htmlFor="cash-payment-switch">{t.enableCash}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Switch id="wallet-payment-switch" defaultChecked />
+                        <Label htmlFor="wallet-payment-switch">{t.enableWallet}</Label>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.supportSettings}</CardTitle>
+                    <CardDescription>{t.supportSettingsDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="support-phone">{t.supportPhone}</Label>
+                        <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="support-phone" type="tel" placeholder="+92 300 1234567" className="pl-8" />
+                        </div>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="support-email">{t.supportEmail}</Label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="support-email" type="email" placeholder="support@zingo.com" className="pl-8" />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
