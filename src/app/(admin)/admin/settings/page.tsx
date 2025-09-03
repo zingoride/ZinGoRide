@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
@@ -61,6 +61,13 @@ const translations = {
     commissionManagementDesc: "کمیشن کا فیصد اور سروس فیس مقرر کریں۔",
     commissionRate: "کمیشن کی شرح (%)",
     serviceFee: "سروس فیس (PKR)",
+    passwordManagement: "Password Ka Intezam",
+    passwordManagementDesc: "Apna admin password tabdeel karein.",
+    currentPassword: "Mojooda Password",
+    newPassword: "Naya Password",
+    confirmNewPassword: "Naye Password Ki Tasdeeq Karein",
+    updatePasswordButton: "Password Update Karein",
+    passwordUpdateSuccess: "Password kamyabi se update ho gaya hai.",
   },
   en: {
     settings: "Settings",
@@ -104,6 +111,13 @@ const translations = {
     commissionManagementDesc: "Set commission percentage and service fees.",
     commissionRate: "Commission Rate (%)",
     serviceFee: "Service Fee (PKR)",
+    passwordManagement: "Password Management",
+    passwordManagementDesc: "Change your admin password.",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    updatePasswordButton: "Update Password",
+    passwordUpdateSuccess: "Password updated successfully.",
   },
 };
 
@@ -170,6 +184,13 @@ export default function AdminSettingsPage() {
         toast({
             title: t.saveSuccessTitle,
             description: t.saveSuccessDesc,
+        });
+    };
+    
+    const handlePasswordUpdate = () => {
+        toast({
+            title: t.saveSuccessTitle,
+            description: t.passwordUpdateSuccess,
         });
     };
 
@@ -470,6 +491,36 @@ export default function AdminSettingsPage() {
                          <div className="relative">
                             <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input id="service-fee" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>{t.passwordManagement}</CardTitle>
+                    <CardDescription>{t.passwordManagementDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="current-password">{t.currentPassword}</Label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="current-password" type="password" className="pl-8" />
+                        </div>
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="new-password">{t.newPassword}</Label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="new-password" type="password" className="pl-8" />
+                        </div>
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="confirm-password">{t.confirmNewPassword}</Label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="confirm-password" type="password" className="pl-8" />
                         </div>
                     </div>
                 </CardContent>
