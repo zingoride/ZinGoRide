@@ -17,6 +17,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useWallet } from "@/context/WalletContext";
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
 type UserType = 'Customer' | 'Driver';
@@ -99,6 +100,7 @@ const translations = {
     requestRejected: "Request mustarad kar di gayi!",
     driver: "Driver",
     customer: "Customer",
+    fundsAdded: (amount: number, name: string) => `${amount} PKR ${name} ke wallet mein shamil kar diye gaye hain.`
   },
   en: {
     title: "Wallet Requests",
@@ -117,6 +119,7 @@ const translations = {
     requestRejected: "Request has been rejected!",
     driver: "Driver",
     customer: "Customer",
+    fundsAdded: (amount: number, name: string) => `PKR ${amount} has been added to ${name}'s wallet.`
   }
 };
 
@@ -124,14 +127,27 @@ export default function WalletRequestsPage() {
   const [requests, setRequests] = useState<TopUpRequest[]>(initialRequests);
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { addFunds } = useWallet();
   const t = translations[language];
 
   const handleStatusChange = (requestId: string, newStatus: RequestStatus) => {
+    const request = requests.find(req => req.id === requestId);
+    if (!request) return;
+
+    if (newStatus === 'Approved') {
+        addFunds(request.amount);
+         toast({
+            title: "Success",
+            description: t.fundsAdded(request.amount, request.userName),
+        })
+    } else {
+         toast({
+            title: "Success",
+            description: t.requestRejected,
+        })
+    }
+    
     setRequests(requests.map(req => req.id === requestId ? { ...req, status: newStatus } : req));
-    toast({
-        title: "Success",
-        description: newStatus === 'Approved' ? t.requestApproved : t.requestRejected,
-    })
   };
 
   return (
