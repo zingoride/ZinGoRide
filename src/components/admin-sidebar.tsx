@@ -9,6 +9,7 @@ import {
   Settings,
   LayoutDashboard,
   CreditCard,
+  Banknote,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const translations = {
     users: "Users",
     settings: "Settings",
     walletRequests: "Wallet Requests",
+    payouts: "Payouts",
   },
   en: {
     dashboard: "Dashboard",
@@ -28,6 +30,7 @@ const translations = {
     users: "Users",
     settings: "Settings",
     walletRequests: "Wallet Requests",
+    payouts: "Payouts",
   },
 };
 
@@ -42,6 +45,7 @@ export function AdminSidebar() {
     { href: "/admin/rides", label: t.rides, icon: Car },
     { href: "/admin/users", label: t.users, icon: Users },
     { href: "/admin/wallet-requests", label: t.walletRequests, icon: CreditCard },
+    { href: "/admin/payouts", label: t.payouts, icon: Banknote },
     { href: "/admin/settings", label: t.settings, icon: Settings },
   ];
 
@@ -73,5 +77,3 @@ export function AdminSidebar() {
     </div>
   );
 }
-
-    
