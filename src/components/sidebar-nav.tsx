@@ -9,11 +9,14 @@ import {
   BarChart3,
   History,
   Settings,
+  Wallet,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
+import { useWallet } from "@/context/WalletContext";
+import { Badge } from "./ui/badge";
 
 const translations = {
   ur: {
@@ -23,6 +26,7 @@ const translations = {
     profile: "Profile",
     settings: "Settings",
     notifications: "Ittila'at",
+    walletBalance: "Wallet Balance",
   },
   en: {
     dashboard: "Dashboard",
@@ -31,6 +35,7 @@ const translations = {
     profile: "Profile",
     settings: "Settings",
     notifications: "Notifications",
+    walletBalance: "Wallet Balance",
   },
 };
 
@@ -38,6 +43,7 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { language } = useLanguage();
   const { LogoComponent } = useLogo();
+  const { balance } = useWallet();
   const t = translations[language];
 
   const menuItems = [
@@ -72,6 +78,17 @@ export function SidebarNav() {
             </Link>
           ))}
         </nav>
+      </div>
+       <div className="mt-auto p-4">
+        <div className="rounded-lg border bg-card p-3 text-center text-sm">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Wallet className="h-5 w-5" />
+                    <span className="font-semibold">{t.walletBalance}</span>
+                </div>
+                <Badge variant={balance < 300 ? "destructive" : "secondary"}>PKR {balance.toFixed(2)}</Badge>
+            </div>
+        </div>
       </div>
     </div>
   );

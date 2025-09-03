@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useRide, RideDetails } from "@/context/RideContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useWallet } from "@/context/WalletContext";
+import { useToast } from "@/hooks/use-toast";
 
 
 const translations = {
@@ -27,6 +29,8 @@ const translations = {
         dropoffLocation: "Manzil",
         estimatedFare: "Andazan Kiraya",
         eta: "Pohanchne ka Waqt",
+        lowBalanceTitle: "Wallet Balance Kam Hai",
+        lowBalanceDesc: "Ride accept karne ke liye aapke wallet mein kam az kam 300 PKR hone chahiye.",
     },
     en: {
         newRideRequest: "New Ride Request",
@@ -37,6 +41,8 @@ const translations = {
         dropoffLocation: "Destination",
         estimatedFare: "Estimated Fare",
         eta: "ETA",
+        lowBalanceTitle: "Low Wallet Balance",
+        lowBalanceDesc: "You need at least PKR 300 in your wallet to accept a ride.",
     }
 }
 
@@ -46,6 +52,8 @@ export function RideRequest(props: RideDetails) {
   const [isExpired, setIsExpired] = useState(false);
   const { acceptRide } = useRide();
   const { language } = useLanguage();
+  const { balance } = useWallet();
+  const { toast } = useToast();
   const t = translations[language];
 
 
@@ -63,6 +71,14 @@ export function RideRequest(props: RideDetails) {
   }, [timeLeft]);
   
   const handleAccept = () => {
+    if (balance < 300) {
+        toast({
+            variant: "destructive",
+            title: t.lowBalanceTitle,
+            description: t.lowBalanceDesc,
+        });
+        return;
+    }
     acceptRide(props);
   };
 

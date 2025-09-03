@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LogoProvider } from "@/context/LogoContext";
 import { ThemeColorProvider } from "@/context/ThemeColorContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { WalletProvider } from "@/context/WalletContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -42,11 +43,13 @@ export default function RootLayout({
             <LanguageProvider>
               <AuthProvider>
                 <LogoProvider>
-                  <RiderStatusProvider>
-                    <RideProvider>
-                      {children}
-                    </RideProvider>
-                  </RiderStatusProvider>
+                    <WalletProvider>
+                        <RiderStatusProvider>
+                            <RideProvider>
+                            {children}
+                            </RideProvider>
+                        </RiderStatusProvider>
+                    </WalletProvider>
                 </LogoProvider>
               </AuthProvider>
             </LanguageProvider>
