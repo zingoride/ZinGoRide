@@ -43,7 +43,7 @@ export function LogoProvider({ children }: { children: ReactNode }) {
       setLogo(storedLogo);
       setLogoComponent(() => logoMap[storedLogo]);
     } else {
-      // If nothing is stored, default to ZR
+      // If nothing is stored, or stored logo is invalid, default to ZR
       setLogo('ZR');
       setLogoComponent(() => ZRLogoComponent);
     }
