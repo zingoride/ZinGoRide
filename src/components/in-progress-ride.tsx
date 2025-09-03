@@ -18,6 +18,9 @@ import { useRide } from '@/context/RideContext';
 import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from './ui/use-toast';
 
 const translations = {
     ur: {
@@ -33,6 +36,9 @@ const translations = {
         startRide: "Start Ride",
         completeRide: "Ride Mukammal Karein",
         cancelRide: "Ride Mansookh Karein",
+        rideStarted: "Safar shuru ho gaya!",
+        rideCompleted: "Safar mukammal ho gaya!",
+        errorUpdating: "Status update karne mein masla hua.",
     },
     en: {
         toPickup: "On the way to Pickup",
@@ -47,6 +53,9 @@ const translations = {
         startRide: "Start Ride",
         completeRide: "Complete Ride",
         cancelRide: "Cancel Ride",
+        rideStarted: "Ride has started!",
+        rideCompleted: "Ride completed!",
+        errorUpdating: "Error updating status.",
     }
 }
 
@@ -55,14 +64,15 @@ export function InProgressRide() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
   const { language } = useLanguage();
+  const { toast } = useToast();
   const t = translations[language];
 
   if (!activeRide) {
     return null;
   }
-
+  
   const { pickup, dropoff, rider } = activeRide;
-
+  
   const handleCall = () => {
     if (rider?.phone) {
       window.location.href = `tel:${rider.phone}`;
@@ -72,10 +82,41 @@ export function InProgressRide() {
   const handleNavigate = () => {
     setIsNavigating(true);
   };
+
+  const updateRideStatus = async (status: 'in_progress' | 'completed' | 'cancelled_by_driver') => {
+     try {
+      const rideRef = doc(db, "rides", activeRide.id);
+      await updateDoc(rideRef, { status: status });
+      return true;
+    } catch (error) {
+      console.error("Error updating ride status: ", error);
+       toast({
+        variant: "destructive",
+        title: t.errorUpdating,
+      });
+      return false;
+    }
+  };
   
-  const handleStartRide = () => {
-    setRideStage('dropoff');
-    setIsNavigating(true); // Automatically start navigation to dropoff
+  const handleStartRide = async () => {
+    if (await updateRideStatus('in_progress')) {
+        setRideStage('dropoff');
+        setIsNavigating(true); // Automatically start navigation to dropoff
+        toast({ title: t.rideStarted });
+    }
+  }
+
+  const handleCompleteRide = async () => {
+    if (await updateRideStatus('completed')) {
+        completeRide();
+        toast({ title: t.rideCompleted });
+    }
+  };
+
+  const handleCancelRide = async () => {
+    if (await updateRideStatus('cancelled_by_driver')) {
+        cancelRide();
+    }
   }
 
   const mapImageUrl = isNavigating 
@@ -177,10 +218,10 @@ export function InProgressRide() {
         </Card>
         
         <div className='space-y-2'>
-            <Button size="lg" className="w-full" onClick={completeRide} disabled={rideStage === 'pickup'}>
+            <Button size="lg" className="w-full" onClick={handleCompleteRide} disabled={rideStage === 'pickup'}>
                 {t.completeRide}
             </Button>
-             <Button variant="destructive" size="lg" className="w-full" onClick={cancelRide}>
+             <Button variant="destructive" size="lg" className="w-full" onClick={handleCancelRide}>
                 <X className="mr-2 h-5 w-5" />
                 {t.cancelRide}
             </Button>

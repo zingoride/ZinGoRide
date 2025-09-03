@@ -64,7 +64,7 @@ const translations = {
     }
 }
 
-export function AvailableRides({ ride, onConfirmRide }: { ride: RideRequest, onConfirmRide: () => void }) {
+export function AvailableRides({ ride }: { ride: RideRequest }) {
   const [selectedRide, setSelectedRide] = useState('Car');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -87,7 +87,7 @@ export function AvailableRides({ ride, onConfirmRide }: { ride: RideRequest, onC
             title: t.rideConfirmedTitle,
             description: t.rideConfirmedDesc,
         });
-        onConfirmRide();
+        // No longer calling onConfirmRide, state is now managed by parent via Firestore listener
     } catch (error) {
         console.error("Error updating ride: ", error);
         toast({

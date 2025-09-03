@@ -16,6 +16,8 @@ import { Badge } from './ui/badge';
 import { CheckCircle2, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+import { useWallet } from '@/context/WalletContext';
+import { useEffect } from 'react';
 
 const translations = {
   ur: {
@@ -32,6 +34,7 @@ const translations = {
     paymentToastTitle: "Cash Payment",
     paymentToastDesc: "Raqam rider se cash mein leni hai.",
     done: "Done",
+    earningsAdded: "Aapki kamai wallet mein jama kar di gayi hai.",
   },
   en: {
     title: "Ride Complete!",
@@ -47,6 +50,7 @@ const translations = {
     paymentToastTitle: "Cash Payment",
     paymentToastDesc: "Collect cash from the rider.",
     done: "Done",
+    earningsAdded: "Your earnings have been added to your wallet.",
   },
 };
 
@@ -54,10 +58,23 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const { closeInvoice } = useRide();
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { addFunds } = useWallet();
   const t = translations[language];
 
-  const tip = 50; // Dummy tip
-  const total = ride.fare + tip;
+  const tip = 50; // Dummy tip for now
+  const total = (ride.fare || 0) + tip;
+
+  useEffect(() => {
+    // Add ride earnings to the wallet when invoice is shown
+    if (ride.fare) {
+      addFunds(ride.fare);
+      toast({
+        title: "Earnings Added",
+        description: t.earningsAdded
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ride.fare]);
 
   const handlePaymentMethodClick = () => {
     toast({
@@ -94,13 +111,13 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
           <Separator />
           
           <div className="space-y-2">
-             <div className="flex justify-between">
+             <div className="flex justify-between text-right">
               <span className="text-muted-foreground">{t.pickup}</span>
-              <span className="font-medium text-right">{ride.pickup}</span>
+              <span className="font-medium">{ride.pickup}</span>
             </div>
-             <div className="flex justify-between">
+             <div className="flex justify-between text-right">
               <span className="text-muted-foreground">{t.dropoff}</span>
-              <span className="font-medium text-right">{ride.dropoff}</span>
+              <span className="font-medium">{ride.dropoff}</span>
             </div>
           </div>
           
@@ -109,7 +126,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.fare}</span>
-              <span>PKR {ride.fare.toFixed(2)}</span>
+              <span>PKR {(ride.fare || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.tip}</span>

@@ -1,38 +1,55 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
 import type { RideRequest } from '@/lib/types';
-
-type PageState = 'booking' | 'rides_available' | 'confirmed';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { CustomerInvoice } from '@/components/customer-invoice';
 
 export default function CustomerPage() {
-    const [pageState, setPageState] = useState<PageState>('booking');
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
+    const [rideId, setRideId] = useState<string | null>(null);
 
-    const handleFindRide = (rideDetails: RideRequest) => {
-        setCurrentRide(rideDetails);
-        setPageState('rides_available');
-    };
+    useEffect(() => {
+        if (!rideId) return;
 
-    const handleConfirmRide = () => {
-        setPageState('confirmed');
-    };
+        const unsub = onSnapshot(doc(db, "rides", rideId), (doc) => {
+            if (doc.exists()) {
+                setCurrentRide({ id: doc.id, ...doc.data() } as RideRequest);
+            } else {
+                // Ride document might have been deleted
+                setCurrentRide(null);
+                setRideId(null);
+            }
+        });
 
-    const handleCancelRide = () => {
-        setPageState('booking');
-        setCurrentRide(null);
-    }
+        // Cleanup subscription on unmount
+        return () => unsub();
+    }, [rideId]);
     
-    if (pageState === 'confirmed' && currentRide) {
-        return <CustomerRideStatus ride={currentRide} onCancel={handleCancelRide} />;
-    }
 
-    if (pageState === 'rides_available' && currentRide) {
-        return <AvailableRides ride={currentRide} onConfirmRide={handleConfirmRide} />
+    const handleFindRide = (ride: RideRequest) => {
+        setRideId(ride.id);
+        setCurrentRide(ride);
+    };
+    
+    const handleReset = () => {
+        setCurrentRide(null);
+        setRideId(null);
+    };
+
+    if (currentRide) {
+        if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
+            return <CustomerInvoice ride={currentRide} onDone={handleReset} />
+        }
+        if (currentRide.status === 'pending') {
+             return <AvailableRides ride={currentRide} />
+        }
+        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
     }
 
     return (
