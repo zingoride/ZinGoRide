@@ -1,7 +1,9 @@
 
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
 export default function AdminLayout({
     children,
@@ -14,14 +16,25 @@ export default function AdminLayout({
                <AdminSidebar />
             </div>
             <div className="flex flex-col">
-                <Sheet>
+                 <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+                     <Sheet>
+                        <SheetTrigger asChild>
+                            <Button
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0 md:hidden"
+                            >
+                            <Menu className="h-5 w-5" />
+                            <span className="sr-only">Toggle navigation menu</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="flex flex-col p-0 sm:max-w-xs">
+                            <AdminSidebar />
+                        </SheetContent>
+                    </Sheet>
+                    <div className="flex-1"></div>
                     <AdminHeader />
-                    <SheetContent side="left" className="p-0 flex flex-col sm:max-w-xs">
-                        <SheetTitle className="sr-only">Admin Menu</SheetTitle>
-                        <SheetDescription className="sr-only">Main navigation menu for the admin portal.</SheetDescription>
-                        <AdminSidebar />
-                    </SheetContent>
-                </Sheet>
+                </header>
                  <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {children}
                 </main>
@@ -29,3 +42,5 @@ export default function AdminLayout({
         </div>
     )
 }
+
+    

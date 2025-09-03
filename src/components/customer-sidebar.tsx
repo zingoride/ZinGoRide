@@ -8,10 +8,17 @@ import {
   User,
   History,
   Settings,
+  Wallet,
+  PlusCircle,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 import { useLogo } from "@/context/LogoContext";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { WalletTopUpDialog } from "./wallet-top-up-dialog";
+import { useWallet } from "@/context/WalletContext";
+
 
 const translations = {
   ur: {
@@ -19,12 +26,16 @@ const translations = {
     myRides: "My Rides",
     profile: "Profile",
     settings: "Settings",
+    walletBalance: "Wallet Balance",
+    addFunds: "Raqam Shamil Karein",
   },
   en: {
     bookARide: "Book a Ride",
     myRides: "My Rides",
     profile: "Profile",
     settings: "Settings",
+    walletBalance: "Wallet Balance",
+    addFunds: "Add Funds",
   },
 };
 
@@ -32,6 +43,7 @@ export function CustomerSidebar() {
   const pathname = usePathname();
   const { language } = useLanguage();
   const { LogoComponent } = useLogo();
+  const { balance } = useWallet();
   const t = translations[language];
 
   const menuItems = [
@@ -66,9 +78,24 @@ export function CustomerSidebar() {
           ))}
         </nav>
       </div>
-      <div className="mt-auto p-4">
-        {/* This area can be used for other items if needed in the future */}
+      <div className="mt-auto p-4 space-y-3">
+         <WalletTopUpDialog trigger={
+            <Button variant="outline" className="w-full">
+              <PlusCircle className="mr-2 h-4 w-4" /> {t.addFunds}
+            </Button>
+          }/>
+        <div className="rounded-lg border bg-card p-3 text-sm">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Wallet className="h-5 w-5" />
+                    <span className="font-semibold">{t.walletBalance}</span>
+                </div>
+                <Badge variant="secondary">PKR {balance.toFixed(2)}</Badge>
+            </div>
+        </div>
       </div>
     </div>
   );
 }
+
+    

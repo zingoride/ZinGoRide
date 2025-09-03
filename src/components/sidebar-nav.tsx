@@ -10,6 +10,7 @@ import {
   History,
   Settings,
   Wallet,
+  PlusCircle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -17,6 +18,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
 import { useWallet } from "@/context/WalletContext";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { WalletTopUpDialog } from "./wallet-top-up-dialog";
 
 const translations = {
   ur: {
@@ -27,6 +30,7 @@ const translations = {
     settings: "Settings",
     notifications: "Ittila'at",
     walletBalance: "Wallet Balance",
+    addFunds: "Raqam Shamil Karein",
   },
   en: {
     dashboard: "Dashboard",
@@ -36,6 +40,7 @@ const translations = {
     settings: "Settings",
     notifications: "Notifications",
     walletBalance: "Wallet Balance",
+    addFunds: "Add Funds",
   },
 };
 
@@ -79,8 +84,13 @@ export function SidebarNav() {
           ))}
         </nav>
       </div>
-       <div className="mt-auto p-4">
-        <div className="rounded-lg border bg-card p-3 text-center text-sm">
+       <div className="mt-auto p-4 space-y-3">
+         <WalletTopUpDialog trigger={
+            <Button variant="outline" className="w-full">
+              <PlusCircle className="mr-2 h-4 w-4" /> {t.addFunds}
+            </Button>
+          }/>
+        <div className="rounded-lg border bg-card p-3 text-sm">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <Wallet className="h-5 w-5" />
@@ -93,3 +103,5 @@ export function SidebarNav() {
     </div>
   );
 }
+
+    
