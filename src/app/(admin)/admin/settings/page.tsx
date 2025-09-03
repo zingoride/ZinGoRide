@@ -11,10 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const translations = {
   ur: {
@@ -49,6 +51,12 @@ const translations = {
     themeSlate: "Slate",
     templates: "Application Templates",
     templatesDesc: "Select a pre-defined template to quickly set the look and feel.",
+    fareManagement: "Kiraya Ka Intezam",
+    fareManagementDesc: "Mukhtalif gariyon ke liye kiraye ki settings adjust karein.",
+    baseFare: "Bunyadi Kiraya (PKR)",
+    perKmRate: "Fi Kilo Meter Rate (PKR)",
+    perMinRate: "Fi Minute Rate (PKR)",
+    fareSavedSuccess: "Kiraye ki settings mehfooz kar li gayi hain.",
   },
   en: {
     settings: "Settings",
@@ -82,6 +90,12 @@ const translations = {
     themeSlate: "Slate",
     templates: "Application Templates",
     templatesDesc: "Select a pre-defined template to quickly set the look and feel.",
+    fareManagement: "Fare Management",
+    fareManagementDesc: "Adjust fare settings for different vehicle types.",
+    baseFare: "Base Fare (PKR)",
+    perKmRate: "Per Kilometer Rate (PKR)",
+    perMinRate: "Per Minute Rate (PKR)",
+    fareSavedSuccess: "Fare settings have been saved successfully.",
   },
 };
 
@@ -148,6 +162,13 @@ export default function AdminSettingsPage() {
         toast({
             title: t.saveSuccessTitle,
             description: t.saveSuccessDesc,
+        });
+    };
+
+     const handleSaveFares = () => {
+        toast({
+            title: t.saveSuccessTitle,
+            description: t.fareSavedSuccess,
         });
     };
     
@@ -329,6 +350,97 @@ export default function AdminSettingsPage() {
                             </SelectContent>
                         </Select>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.fareManagement}</CardTitle>
+                    <CardDescription>{t.fareManagementDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="car" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="car"><Car className="mr-2" /> Car</TabsTrigger>
+                            <TabsTrigger value="bike"><Bike className="mr-2" /> Bike</TabsTrigger>
+                            <TabsTrigger value="rickshaw">Rickshaw</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="car" className="mt-4">
+                            <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="car-base-fare">{t.baseFare}</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="car-base-fare" type="number" placeholder="e.g., 100" defaultValue="100" className="pl-8" />
+                                    </div>
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="car-km-rate">{t.perKmRate}</Label>
+                                     <div className="relative">
+                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="car-km-rate" type="number" placeholder="e.g., 25" defaultValue="25" className="pl-8" />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="car-min-rate">{t.perMinRate}</Label>
+                                    <div className="relative">
+                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="car-min-rate" type="number" placeholder="e.g., 5" defaultValue="5" className="pl-8" />
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="bike" className="mt-4">
+                             <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bike-base-fare">{t.baseFare}</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="bike-base-fare" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
+                                    </div>
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="bike-km-rate">{t.perKmRate}</Label>
+                                     <div className="relative">
+                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="bike-km-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bike-min-rate">{t.perMinRate}</Label>
+                                     <div className="relative">
+                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="bike-min-rate" type="number" placeholder="e.g., 3" defaultValue="3" className="pl-8" />
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="rickshaw" className="mt-4">
+                            <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="rickshaw-base-fare">{t.baseFare}</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="rickshaw-base-fare" type="number" placeholder="e.g., 70" defaultValue="70" className="pl-8" />
+                                    </div>
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="rickshaw-km-rate">{t.perKmRate}</Label>
+                                    <div className="relative">
+                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="rickshaw-km-rate" type="number" placeholder="e.g., 20" defaultValue="20" className="pl-8" />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="rickshaw-min-rate">{t.perMinRate}</Label>
+                                    <div className="relative">
+                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="rickshaw-min-rate" type="number" placeholder="e.g., 4" defaultValue="4" className="pl-8" />
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
             </Card>
             
