@@ -5,7 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { setDoc, doc } from "firebase/firestore"; 
 
 import { Button } from "@/components/ui/button"
 import {
@@ -72,7 +73,17 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: fullName });
+      const user = userCredential.user;
+      await updateProfile(user, { displayName: fullName });
+
+      // Create a user document in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name: fullName,
+        email: email,
+        type: 'Customer',
+        status: 'Active',
+        createdAt: new Date(),
+      });
       
       toast({
         title: t.signupSuccess,
@@ -104,7 +115,7 @@ export default function SignupPage() {
             <LogoComponent className="h-8 w-8" />
             <span className="text-2xl font-semibold">ZinGo Ride</span>
         </div>
-        <Card className="w-full">
+        <Card className="w-full max-w-md">
         <CardHeader>
             <CardTitle className="text-xl">{t.title}</CardTitle>
             <CardDescription>{t.description}</CardDescription>

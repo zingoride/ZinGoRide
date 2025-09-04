@@ -5,7 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { setDoc, doc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -72,7 +73,19 @@ export default function RiderSignupPage() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: fullName });
+      const user = userCredential.user;
+      await updateProfile(user, { displayName: fullName });
+      
+      // Create a user document in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name: fullName,
+        email: email,
+        type: 'Driver',
+        status: 'Active',
+        approvalStatus: 'Pending',
+        createdAt: new Date(),
+        walletBalance: 250, // Initial balance
+      });
       
       toast({
         title: t.signupSuccess,

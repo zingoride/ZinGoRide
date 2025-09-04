@@ -27,7 +27,7 @@ export default function AdminRidesPage() {
         <CardDescription>{t.description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <RideHistoryTable />
+        <RideHistoryTable userType="admin" />
       </CardContent>
     </Card>
   )

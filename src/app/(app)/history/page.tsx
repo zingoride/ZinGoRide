@@ -28,7 +28,7 @@ export default function HistoryPage() {
           <CardDescription>{t.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <RideHistoryTable />
+          <RideHistoryTable userType="rider" />
         </CardContent>
       </Card>
     </div>

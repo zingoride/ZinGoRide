@@ -1,30 +1,38 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface WalletContextType {
   balance: number;
-  addFunds: (amount: number) => void;
-  deductFunds: (amount: number) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  // Set initial balance to 250 to test the minimum balance logic
-  const [balance, setBalance] = useState(250); 
+  const { user } = useAuth();
+  const [balance, setBalance] = useState(0); 
 
-  const addFunds = (amount: number) => {
-    setBalance(prev => prev + amount);
-  };
+  useEffect(() => {
+    if (user) {
+      const userDocRef = doc(db, "users", user.uid);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          setBalance(doc.data().walletBalance || 0);
+        }
+      });
 
-  const deductFunds = (amount: number) => {
-    setBalance(prev => (prev >= amount ? prev - amount : prev));
-  };
+      return () => unsubscribe();
+    } else {
+      setBalance(0);
+    }
+  }, [user]);
 
   return (
-    <WalletContext.Provider value={{ balance, addFunds, deductFunds }}>
+    <WalletContext.Provider value={{ balance }}>
       {children}
     </WalletContext.Provider>
   );

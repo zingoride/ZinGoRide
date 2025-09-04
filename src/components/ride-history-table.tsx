@@ -11,7 +11,12 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/context/LanguageContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import type { RideRequest } from "@/lib/types";
+import { format } from "date-fns";
 
 const translations = {
   ur: {
@@ -20,9 +25,10 @@ const translations = {
     pickup: "Uthanay ki Jagah",
     dropoff: "Manzil",
     fare: "Kiraya (PKR)",
-    tip: "Tip (PKR)",
-    total: "Kul (PKR)",
     status: "Status",
+    completed: "Mukammal",
+    cancelled: "Mansookh",
+    noHistory: "Koi ride history nahi hai.",
   },
   en: {
     rideId: "Ride ID",
@@ -30,16 +36,70 @@ const translations = {
     pickup: "Pickup",
     dropoff: "Dropoff",
     fare: "Fare (PKR)",
-    tip: "Tip (PKR)",
-    total: "Total (PKR)",
     status: "Status",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    noHistory: "No ride history available.",
   },
 };
 
-export function RideHistoryTable() {
+const statusConfig = {
+    completed: { variant: 'secondary', className: 'bg-green-100 text-green-800' },
+    cancelled_by_driver: { variant: 'destructive', className: 'bg-red-100 text-red-800' },
+    cancelled_by_customer: { variant: 'destructive', className: 'bg-red-100 text-red-800' },
+}
+
+export function RideHistoryTable({ userType = 'rider' }: { userType?: 'rider' | 'customer' | 'admin' }) {
   const { language } = useLanguage();
-  const [rides, setRides] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [rides, setRides] = useState<RideRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const t = translations[language];
+
+  useEffect(() => {
+    const fetchRides = async () => {
+        if (!user && userType !== 'admin') {
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            let q;
+            const ridesRef = collection(db, "rides");
+
+            if (userType === 'admin') {
+                q = query(ridesRef, where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+            } else if (userType === 'rider') {
+                 q = query(ridesRef, where("driverId", "==", user?.uid), where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+            } else { // customer
+                 q = query(ridesRef, where("customerId", "==", user?.uid), where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+            }
+
+            const querySnapshot = await getDocs(q);
+            const ridesData = querySnapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(),
+                createdAt: (doc.data().createdAt as Timestamp)?.toDate() || new Date()
+            })) as RideRequest[];
+            setRides(ridesData);
+        } catch (error) {
+            console.error("Error fetching ride history: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchRides();
+  }, [user, userType]);
+
+  const getStatusLabel = (status: RideRequest['status']) => {
+    if (status === 'completed') return t.completed;
+    return t.cancelled;
+  }
+
+  if (loading) {
+    return <div className="text-center text-muted-foreground py-16">Loading history...</div>
+  }
 
   return (
     <div className="w-full border rounded-lg">
@@ -52,31 +112,30 @@ export function RideHistoryTable() {
               <TableHead>{t.pickup}</TableHead>
               <TableHead>{t.dropoff}</TableHead>
               <TableHead className="text-right">{t.fare}</TableHead>
-              <TableHead className="text-right">{t.tip}</TableHead>
-              <TableHead className="text-right">{t.total}</TableHead>
               <TableHead className="text-center">{t.status}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rides.map((ride) => (
-              <TableRow key={ride.id}>
-                <TableCell className="font-medium">{ride.id}</TableCell>
-                <TableCell>{ride.date}</TableCell>
-                <TableCell>{ride.pickup}</TableCell>
-                <TableCell>{ride.dropoff}</TableCell>
-                <TableCell className="text-right">{ride.fare.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{ride.tip.toFixed(2)}</TableCell>
-                <TableCell className="text-right font-semibold">{(ride.fare + ride.tip).toFixed(2)}</TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">{language === 'ur' ? ride.statusUr : ride.statusEn}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+            {rides.map((ride) => {
+               const config = statusConfig[ride.status as keyof typeof statusConfig] || { variant: 'default', className: '' };
+               return (
+                  <TableRow key={ride.id}>
+                    <TableCell className="font-medium">{ride.id.substring(0, 8)}</TableCell>
+                    <TableCell>{format(new Date(ride.createdAt as any), 'PP')}</TableCell>
+                    <TableCell>{ride.pickup}</TableCell>
+                    <TableCell>{ride.dropoff}</TableCell>
+                    <TableCell className="text-right">{(ride.fare || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={config.variant as any} className={config.className}>{getStatusLabel(ride.status)}</Badge>
+                    </TableCell>
+                  </TableRow>
+               )
+            })}
           </TableBody>
         </Table>
       ) : (
         <div className="text-center text-muted-foreground py-16">
-          No ride history available.
+          {t.noHistory}
         </div>
       )}
     </div>

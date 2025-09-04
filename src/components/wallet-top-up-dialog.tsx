@@ -17,8 +17,11 @@ import { useLanguage } from '@/context/LanguageContext';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
-import { Copy } from 'lucide-react';
+import { Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const paymentDetails = {
     easypaisa: '03001234567',
@@ -36,6 +39,7 @@ const translations = {
         amount: "Raqam (PKR)",
         transactionId: "Transaction ID",
         submitRequest: "Request Jama Karein",
+        submitting: "Requesting...",
         requestSent: "Aapki request bhej di gayi hai.",
         requestSentDesc: "Admin approval ke baad raqam aapke wallet mein shamil kar di jayegi.",
         error: "Ghalti",
@@ -53,6 +57,7 @@ const translations = {
         amount: "Amount (PKR)",
         transactionId: "Transaction ID",
         submitRequest: "Submit Request",
+        submitting: "Requesting...",
         requestSent: "Request Sent Successfully",
         requestSentDesc: "Funds will be added to your wallet after admin approval.",
         error: "Error",
@@ -62,11 +67,13 @@ const translations = {
     }
 }
 
-export function WalletTopUpDialog({ trigger }: { trigger: React.ReactNode }) {
+export function WalletTopUpDialog({ trigger, userType }: { trigger: React.ReactNode, userType?: 'Driver' | 'Customer' }) {
     const { language } = useLanguage();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState('');
+    const [loading, setLoading] = useState(false);
     const t = translations[language];
 
     const handleCopy = (text: string, type: string) => {
@@ -75,14 +82,41 @@ export function WalletTopUpDialog({ trigger }: { trigger: React.ReactNode }) {
         setTimeout(() => setCopied(''), 2000); // Reset after 2 seconds
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Here you would normally send the request to your backend
-        toast({
-            title: t.requestSent,
-            description: t.requestSentDesc,
-        });
-        setOpen(false);
+        if (!user) return;
+
+        setLoading(true);
+        const formData = new FormData(e.currentTarget);
+        const amount = Number(formData.get('amount'));
+        const transactionId = formData.get('transactionId') as string;
+
+        try {
+            await addDoc(collection(db, "walletRequests"), {
+                userId: user.uid,
+                userName: user.displayName,
+                userType: userType || 'Driver', // Default to driver if not specified
+                amount: amount,
+                transactionId: transactionId,
+                status: 'Pending',
+                createdAt: serverTimestamp(),
+            });
+
+            toast({
+                title: t.requestSent,
+                description: t.requestSentDesc,
+            });
+            setOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: t.error,
+                description: t.errorDesc,
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -122,18 +156,19 @@ export function WalletTopUpDialog({ trigger }: { trigger: React.ReactNode }) {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="amount">{t.amount}</Label>
-                            <Input id="amount" type="number" placeholder={t.amountPlaceholder} required />
+                            <Input id="amount" name="amount" type="number" placeholder={t.amountPlaceholder} required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="transactionId">{t.transactionId}</Label>
-                            <Input id="transactionId" type="text" placeholder={t.trxPlaceholder} required />
+                            <Input id="transactionId" name="transactionId" type="text" placeholder={t.trxPlaceholder} required />
                         </div>
-                        <Button type="submit" className="w-full">{t.submitRequest}</Button>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {loading ? t.submitting : t.submitRequest}
+                        </Button>
                     </form>
                 </div>
             </DialogContent>
         </Dialog>
     );
 }
-
-    

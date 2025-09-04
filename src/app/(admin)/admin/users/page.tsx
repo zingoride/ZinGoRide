@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, updateDoc, onSnapshot, query, where } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+
 
 type UserStatus = 'Active' | 'Inactive';
 type UserType = 'Customer' | 'Driver';
@@ -29,6 +33,7 @@ interface Vehicle {
   make: string;
   model: string;
   licensePlate: string;
+  type: string;
 }
 
 export interface User {
@@ -38,7 +43,7 @@ export interface User {
   type: UserType;
   status: UserStatus;
   approvalStatus: ApprovalStatus;
-  documents: Document[];
+  documents?: Document[];
   vehicle?: Vehicle;
 }
 
@@ -52,9 +57,42 @@ const approvalStatusConfig = {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleStatusChange = (userId: string, newStatus: ApprovalStatus) => {
-    setUsers(users.map(user => user.id === userId ? { ...user, approvalStatus: newStatus } : user));
+  useEffect(() => {
+      const q = query(collection(db, "users"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          const usersData: User[] = [];
+          querySnapshot.forEach((doc) => {
+              usersData.push({ id: doc.id, ...doc.data() } as User);
+          });
+          setUsers(usersData);
+          setLoading(false);
+      });
+
+      return () => unsubscribe();
+  }, []);
+
+
+  const handleStatusChange = async (userId: string, newStatus: ApprovalStatus) => {
+    const userRef = doc(db, "users", userId);
+    try {
+        await updateDoc(userRef, { approvalStatus: newStatus });
+        toast({
+            title: "Status Updated",
+            description: `User status changed to ${newStatus}`,
+        });
+        if (selectedUser?.id === userId) {
+            setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
+        }
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update user status.",
+        });
+    }
   };
   
   const handleViewDocuments = (user: User) => {
@@ -62,6 +100,10 @@ export default function UsersPage() {
       setSelectedUser(user);
     }
   };
+
+  if (loading) {
+      return <div className="text-center text-muted-foreground py-16">Loading users...</div>
+  }
 
   return (
     <>
@@ -93,10 +135,10 @@ export default function UsersPage() {
                 </TableHeader>
                 <TableBody>
                 {users.map((user) => {
-                    const approvalConfig = approvalStatusConfig[user.approvalStatus];
+                    const approvalConfig = approvalStatusConfig[user.approvalStatus] || approvalStatusConfig.Pending;
                     return (
                     <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.id}</TableCell>
+                    <TableCell className="font-medium">{user.id.substring(0, 8)}</TableCell>
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
@@ -121,10 +163,12 @@ export default function UsersPage() {
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewDocuments(user)}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                <span>View Documents</span>
-                            </DropdownMenuItem>
+                            {user.documents && user.documents.length > 0 && (
+                                <DropdownMenuItem onClick={() => handleViewDocuments(user)}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>View Documents</span>
+                                </DropdownMenuItem>
+                            )}
 
                             {user.approvalStatus === 'Pending' && (
                                 <>
@@ -149,7 +193,7 @@ export default function UsersPage() {
                             {(user.approvalStatus === 'Rejected' || user.approvalStatus === 'Blocked') && (
                                 <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
                                     <CheckCircle className="mr-2 h-4 w-4" />
-                                    <span>Approve</span>
+                                    <span>Re-Approve</span>
                                 </DropdownMenuItem>
                             )}
                             

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,7 +17,10 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { useWallet } from "@/context/WalletContext";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, doc, updateDoc, increment, query, orderBy } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
+
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
 type UserType = 'Customer' | 'Driver';
@@ -82,30 +85,67 @@ const translations = {
 
 export default function WalletRequestsPage() {
   const [requests, setRequests] = useState<TopUpRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { addFunds } = useWallet();
   const t = translations[language];
 
-  const handleStatusChange = (requestId: string, newStatus: RequestStatus) => {
+  useEffect(() => {
+    const q = query(collection(db, "walletRequests"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const requestsData: TopUpRequest[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            requestsData.push({ 
+                id: doc.id,
+                ...data,
+                date: (data.createdAt as Timestamp).toDate(),
+             } as TopUpRequest);
+        });
+        setRequests(requestsData);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
     const request = requests.find(req => req.id === requestId);
     if (!request) return;
 
-    if (newStatus === 'Approved') {
-        addFunds(request.amount);
-         toast({
-            title: "Success",
-            description: t.fundsAdded(request.amount, request.userName),
-        })
-    } else {
-         toast({
-            title: "Success",
-            description: t.requestRejected,
-        })
-    }
+    const requestRef = doc(db, "walletRequests", requestId);
     
-    setRequests(requests.map(req => req.id === requestId ? { ...req, status: newStatus } : req));
+    try {
+        await updateDoc(requestRef, { status: newStatus });
+
+        if (newStatus === 'Approved') {
+            const userRef = doc(db, "users", request.userId);
+            await updateDoc(userRef, {
+                walletBalance: increment(request.amount)
+            });
+            toast({
+                title: "Success",
+                description: t.fundsAdded(request.amount, request.userName),
+            })
+        } else { // Rejected
+            toast({
+                title: "Success",
+                description: t.requestRejected,
+            })
+        }
+    } catch (error) {
+        console.error("Error updating wallet request: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not process the request.",
+        });
+    }
   };
+
+  if (loading) {
+    return <div className="text-center text-muted-foreground py-16">Loading requests...</div>;
+  }
 
   return (
     <Card>
@@ -133,7 +173,7 @@ export default function WalletRequestsPage() {
                 const config = statusConfig[request.status];
                 return (
                 <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.id}</TableCell>
+                  <TableCell className="font-medium">{request.id.substring(0,8)}</TableCell>
                   <TableCell>{request.userName}</TableCell>
                   <TableCell>
                     <Badge variant={request.userType === 'Driver' ? 'secondary' : 'outline'}>

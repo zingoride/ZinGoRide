@@ -79,7 +79,7 @@ export function CustomerSidebar() {
         </nav>
       </div>
       <div className="mt-auto p-4 space-y-3">
-         <WalletTopUpDialog trigger={
+         <WalletTopUpDialog userType="Customer" trigger={
             <Button variant="outline" className="w-full">
               <PlusCircle className="mr-2 h-4 w-4" /> {t.addFunds}
             </Button>
@@ -97,5 +97,3 @@ export function CustomerSidebar() {
     </div>
   );
 }
-
-    
