@@ -37,6 +37,7 @@ const translations = {
     riderLink: "Yahan signup karein.",
     signupSuccess: "Account kamyabi se ban gaya!",
     signupError: "Account banane mein masla hua.",
+    emailInUse: "Yeh email pehle se istemal mein hai. Baraye meharbani login karein.",
   },
   en: {
     title: "Customer Sign Up",
@@ -51,6 +52,7 @@ const translations = {
     riderLink: "Sign up here.",
     signupSuccess: "Account created successfully!",
     signupError: "Error creating account.",
+    emailInUse: "This email is already in use. Please login instead.",
   },
 };
 
@@ -78,11 +80,19 @@ export default function SignupPage() {
       router.push('/customer');
     } catch (error: any) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: t.signupError,
-        description: error.message,
-      });
+      if (error.code === 'auth/email-already-in-use') {
+        toast({
+            variant: "destructive",
+            title: t.signupError,
+            description: t.emailInUse,
+        });
+      } else {
+        toast({
+            variant: "destructive",
+            title: t.signupError,
+            description: error.message,
+        });
+      }
     } finally {
       setLoading(false);
     }
