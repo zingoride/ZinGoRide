@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <div className="flex items-center gap-2 mb-6">
             <Shield className="h-8 w-8 text-primary" />
             <span className="text-2xl font-semibold">ZinGo Admin</span>

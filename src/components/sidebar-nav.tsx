@@ -60,22 +60,22 @@ export function SidebarNav() {
   ];
 
   return (
-    <div className="flex h-full max-h-screen flex-col gap-2">
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+    <div className="flex h-full max-h-screen flex-col gap-2 bg-sidebar text-sidebar-foreground">
+      <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <LogoComponent className="h-6 w-6" />
           <span className="">ZinGo Ride</span>
         </Link>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto">
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
           {menuItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname === href && "bg-muted text-primary"
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                pathname === href && "bg-sidebar-accent text-sidebar-accent-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -84,15 +84,15 @@ export function SidebarNav() {
           ))}
         </nav>
       </div>
-       <div className="mt-auto p-4 space-y-3">
+       <div className="mt-auto border-t border-sidebar-border p-4 space-y-3">
          <WalletTopUpDialog userType="Driver" trigger={
-            <Button variant="outline" className="w-full">
+            <Button variant="secondary" className="w-full">
               <PlusCircle className="mr-2 h-4 w-4" /> {t.addFunds}
             </Button>
           }/>
-        <div className="rounded-lg border bg-card p-3 text-sm">
+        <div className="rounded-lg border border-sidebar-border bg-sidebar p-3 text-sm">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
                     <span className="font-semibold">{t.walletBalance}</span>
                 </div>

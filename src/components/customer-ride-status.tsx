@@ -105,8 +105,8 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
     return (
         <div className="flex flex-col h-full">
-             <div className="flex-1 bg-muted flex items-center justify-center p-4">
-                 <div className="w-full h-full relative shadow-lg rounded-lg overflow-hidden">
+             <div className="flex-1 bg-muted flex items-center justify-center relative">
+                 <div className="w-full h-full relative">
                     <Image
                         src={mapImageUrl}
                         alt="Map of city"
@@ -114,12 +114,9 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                         style={{objectFit:"cover"}}
                         data-ai-hint={mapImageHint}
                     />
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                        <p className="text-white text-sm font-semibold bg-black/50 px-3 py-1.5 rounded-md">{t.mapPlaceholder}</p>
-                    </div>
                 </div>
             </div>
-            <Card className="w-full h-full flex flex-col rounded-t-2xl -mt-4 z-10">
+            <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
                 <CardHeader>
                     <CardTitle>{t.rideStatus}</CardTitle>
                     <CardDescription>
@@ -148,7 +145,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                                 </div>
                             </div>
                         
-                            <Card className='w-full bg-muted/50'>
+                            <Card className='w-full bg-muted/50 border-dashed'>
                                 <CardContent className='p-3'>
                                     <div className="flex items-center justify-center gap-2">
                                         <Car className='h-6 w-6' />

@@ -47,8 +47,8 @@ export default function AdminDashboardPage() {
   const t = translations[language];
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold">{t.dashboard}</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl md:text-3xl font-bold">{t.dashboard}</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
               <Tooltip />
               <Legend />
               <Bar dataKey="rides" fill="hsl(var(--primary))" />
-              <Bar dataKey="revenue" fill="hsl(var(--accent))" />
+              <Bar dataKey="revenue" fill="hsl(var(--secondary))" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

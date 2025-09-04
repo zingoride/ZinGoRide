@@ -12,11 +12,11 @@ export default function AdminLayout({
 }) {
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-            <div className="hidden border-r bg-muted/40 md:block">
+            <div className="hidden border-r bg-sidebar md:block">
                <AdminSidebar />
             </div>
             <div className="flex flex-col">
-                 <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+                 <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
                      <Sheet>
                         <SheetTrigger asChild>
                             <Button
@@ -28,7 +28,7 @@ export default function AdminLayout({
                             <span className="sr-only">Toggle navigation menu</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="flex flex-col p-0 sm:max-w-xs">
+                        <SheetContent side="left" className="flex flex-col p-0 sm:max-w-xs bg-sidebar">
                             <AdminSidebar />
                         </SheetContent>
                     </Sheet>
@@ -42,5 +42,3 @@ export default function AdminLayout({
         </div>
     )
 }
-
-    

@@ -49,14 +49,12 @@ export default function CustomerPage() {
         if (currentRide.status === 'pending') {
              return <AvailableRides ride={currentRide} />
         }
-        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
+        return <div className='h-full md:h-[calc(100vh-8rem)]'><CustomerRideStatus ride={currentRide} onCancel={handleReset} /></div>;
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] p-4">
-            <div className="flex-1 flex flex-col justify-center items-center">
-                 <RideBookingForm onFindRide={handleFindRide} />
-            </div>
+        <div className="flex flex-col items-center justify-center h-full p-4 md:p-8">
+            <RideBookingForm onFindRide={handleFindRide} />
         </div>
     );
 }
