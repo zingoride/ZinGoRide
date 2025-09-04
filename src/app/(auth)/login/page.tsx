@@ -89,7 +89,7 @@ export default function LoginPage() {
             <LogoComponent className="h-8 w-8" />
             <span className="text-2xl font-semibold">ZinGo Ride</span>
         </div>
-      <Card className="w-full">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">{t.title}</CardTitle>
           <CardDescription>{t.description}</CardDescription>

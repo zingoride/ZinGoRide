@@ -33,25 +33,6 @@ interface PayoutRequest {
   date: Date;
 }
 
-const initialPayouts: PayoutRequest[] = [
-  {
-    id: 'PO-001',
-    amount: 15000,
-    method: 'Easypaisa',
-    accountNumber: '03001234567',
-    status: 'Completed',
-    date: new Date(new Date().setDate(new Date().getDate() - 2)),
-  },
-  {
-    id: 'PO-002',
-    amount: 25000,
-    method: 'Jazzcash',
-    accountNumber: '03017654321',
-    status: 'Completed',
-    date: new Date(new Date().setDate(new Date().getDate() - 5)),
-  },
-];
-
 const statusConfig = {
   Pending: { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800', label: 'Pending', labelUr: 'Pending' },
   Completed: { variant: 'default', className: 'bg-green-100 text-green-800', label: 'Completed', labelUr: 'Mukammal' },
@@ -100,7 +81,7 @@ const translations = {
 };
 
 export default function PayoutsPage() {
-  const [payouts, setPayouts] = useState<PayoutRequest[]>(initialPayouts);
+  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
   const [totalCommission, setTotalCommission] = useState(187500);
   const [payoutMethod, setPayoutMethod] = useState<PayoutMethod | ''>('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -200,32 +181,36 @@ export default function PayoutsPage() {
                 <CardTitle>{t.payoutHistory}</CardTitle>
             </CardHeader>
             <CardContent>
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>{t.payoutId}</TableHead>
-                    <TableHead>{t.date}</TableHead>
-                    <TableHead>{t.status}</TableHead>
-                    <TableHead className="text-right">{t.amount}</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {payouts.map((payout) => {
-                    const config = statusConfig[payout.status];
-                    return (
-                    <TableRow key={payout.id}>
-                        <TableCell className="font-medium">{payout.id}</TableCell>
-                        <TableCell>{format(payout.date, 'PPp')}</TableCell>
-                        <TableCell>
-                        <Badge variant={config.variant as any} className={config.className}>
-                            {language === 'ur' ? config.labelUr : config.label}
-                        </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">PKR {payout.amount.toFixed(2)}</TableCell>
-                    </TableRow>
-                    )})}
-                </TableBody>
-                </Table>
+                 {payouts.length > 0 ? (
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>{t.payoutId}</TableHead>
+                        <TableHead>{t.date}</TableHead>
+                        <TableHead>{t.status}</TableHead>
+                        <TableHead className="text-right">{t.amount}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {payouts.map((payout) => {
+                        const config = statusConfig[payout.status];
+                        return (
+                        <TableRow key={payout.id}>
+                            <TableCell className="font-medium">{payout.id}</TableCell>
+                            <TableCell>{format(payout.date, 'PPp')}</TableCell>
+                            <TableCell>
+                            <Badge variant={config.variant as any} className={config.className}>
+                                {language === 'ur' ? config.labelUr : config.label}
+                            </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">PKR {payout.amount.toFixed(2)}</TableCell>
+                        </TableRow>
+                        )})}
+                    </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center text-muted-foreground py-8">No payout history yet.</div>
+                )}
             </CardContent>
         </Card>
       </div>

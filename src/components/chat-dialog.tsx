@@ -28,45 +28,11 @@ const translations = {
         message: "Message",
         chatWith: "Chat with",
         typeMessage: "Type a message...",
-        initialMessages: [
-            {
-                sender: 'rider',
-                text: 'Aap kahan tak pohanchay?',
-                timestamp: '10:30 AM',
-            },
-            {
-                sender: 'driver',
-                text: 'Bas 5 minute mein aa raha hoon.',
-                timestamp: '10:31 AM',
-            },
-            {
-                sender: 'rider',
-                text: 'Theek hai, main intezar kar raha hoon.',
-                timestamp: '10:32 AM',
-            },
-        ]
     },
     en: {
         message: "Message",
         chatWith: "Chat with",
         typeMessage: "Type a message...",
-        initialMessages: [
-            {
-                sender: 'rider',
-                text: 'How far are you?',
-                timestamp: '10:30 AM',
-            },
-            {
-                sender: 'driver',
-                text: 'Just 5 minutes away.',
-                timestamp: '10:31 AM',
-            },
-            {
-                sender: 'rider',
-                text: 'Okay, I am waiting.',
-                timestamp: '10:32 AM',
-            },
-        ]
     }
 }
 
@@ -75,7 +41,7 @@ export function ChatDialog({ riderName }: { riderName: string }) {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const [messages, setMessages] = useState<ChatMessage[]>(t.initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -108,7 +74,7 @@ export function ChatDialog({ riderName }: { riderName: string }) {
         </DialogHeader>
         <ScrollArea className="flex-1 p-4 bg-muted/50 rounded-lg">
            <div className="space-y-4">
-            {messages.map((msg, index) => (
+            {messages.length > 0 ? messages.map((msg, index) => (
               <div
                 key={index}
                 className={`flex items-end gap-2 ${
@@ -136,7 +102,9 @@ export function ChatDialog({ riderName }: { riderName: string }) {
                   }`}>{msg.timestamp}</p>
                 </div>
               </div>
-            ))}
+            )) : (
+                <div className="text-center text-muted-foreground py-8">No messages yet.</div>
+            )}
           </div>
         </ScrollArea>
         <DialogFooter>

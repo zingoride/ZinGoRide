@@ -3,6 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,8 +15,9 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield } from "lucide-react"
+import { Shield, Loader2 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 const translations = {
   ur: {
@@ -24,6 +26,8 @@ const translations = {
     emailLabel: "Email",
     passwordLabel: "Password",
     loginButton: "Login",
+    loginSuccess: "Admin kamyabi se login ho gaya!",
+    loginError: "Ghalat email ya password.",
   },
   en: {
     title: "Admin Login",
@@ -31,22 +35,43 @@ const translations = {
     emailLabel: "Email",
     passwordLabel: "Password",
     loginButton: "Login",
+    loginSuccess: "Admin logged in successfully!",
+    loginError: "Incorrect email or password.",
   },
 };
+
+const ADMIN_EMAIL = "info@zingoride.vercel.app";
+const ADMIN_PASS = "admin123";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const t = translations[language];
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd perform authentication here.
-    // For now, we'll just set a dummy session item and redirect.
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('admin_logged_in', 'true');
-    }
-    router.push('/admin/dashboard');
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('admin_logged_in', 'true');
+        }
+        toast({ title: t.loginSuccess });
+        router.push('/admin/dashboard');
+      } else {
+        toast({
+          variant: "destructive",
+          title: t.loginError,
+        });
+      }
+      setLoading(false);
+    }, 1000);
   };
 
   return (
@@ -64,13 +89,14 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="info@zingoride.vercel.app" required />
+              <Input id="email" type="email" placeholder="info@zingoride.vercel.app" required value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t.loginButton}
             </Button>
           </form>
@@ -84,4 +110,3 @@ export default function AdminLoginPage() {
     </div>
   )
 }
-
