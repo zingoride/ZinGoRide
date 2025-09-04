@@ -7,13 +7,13 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyD10S57n2TnmHVs3EhTAp3EwCxHdCi-ezA",
-  authDomain: "zingo-ride.firebaseapp.com",
-  projectId: "zingo-ride",
-  storageBucket: "zingo-ride.appspot.com",
-  messagingSenderId: "32409199639",
-  appId: "1:32409199639:web:0f867b422f3cc7cde52852",
-  measurementId: "G-MZ8WKSV82J"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
