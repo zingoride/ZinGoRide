@@ -40,7 +40,7 @@ const translations = {
   },
 };
 
-const ADMIN_EMAIL = "info@zingoride.vercel.app";
+const ADMIN_EMAIL = "admin@example.com";
 const ADMIN_PASS = "admin123";
 
 export default function AdminLoginPage() {
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="info@zingoride.vercel.app" required value={email} onChange={e => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="admin@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
