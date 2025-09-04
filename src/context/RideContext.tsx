@@ -2,20 +2,12 @@
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
+import type { RideRequest } from '@/lib/types';
+import { useAuth } from './AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
-export interface RideDetails {
-  id: string;
-  pickup: string;
-  dropoff: string;
-  fare: number;
-  eta: string;
-  rider?: {
-    name: string;
-    rating: number;
-    avatarUrl: string;
-    phone: string;
-  };
-}
+export type RideDetails = RideRequest;
 
 type RideContextType = {
   activeRide: RideDetails | null;
@@ -31,16 +23,22 @@ const RideContext = createContext<RideContextType | undefined>(undefined);
 export function RideProvider({ children }: { children: ReactNode }) {
   const [activeRide, setActiveRide] = useState<RideDetails | null>(null);
   const [completedRide, setCompletedRide] = useState<RideDetails | null>(null);
+  const { user } = useAuth();
 
-  const acceptRide = (ride: RideDetails) => {
-    const mockRider = {
-      name: 'Ahmad Ali',
-      rating: 4.8,
-      avatarUrl: 'https://picsum.photos/100/100?random=1',
-      phone: '+923001234567', // Dummy phone number
-    };
-    setCompletedRide(null);
-    setActiveRide({ ...ride, rider: mockRider });
+  const acceptRide = async (ride: RideDetails) => {
+    if (!user) return;
+    try {
+        const rideRef = doc(db, "rides", ride.id);
+        await updateDoc(rideRef, { 
+            status: 'accepted',
+            driverId: user.uid,
+            driverName: user.displayName,
+        });
+        setCompletedRide(null);
+        setActiveRide({ ...ride, driverId: user.uid, driverName: user.displayName || 'Driver' });
+    } catch (error) {
+        console.error("Failed to accept ride:", error);
+    }
   };
 
   const completeRide = () => {

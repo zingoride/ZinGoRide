@@ -14,12 +14,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Bike, Car, Upload, Loader2 } from "lucide-react"
+import { Bike, Car, Loader2 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { useAuth } from "@/context/AuthContext"
-import { db, storage } from "@/lib/firebase"
-import { doc, updateDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { db } from "@/lib/firebase"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -33,10 +32,9 @@ const translations = {
         licensePlate: "License Plate",
         saveButton: "Gaari Ki Maloomat Save Karein",
         saving: "Saving...",
-        regBook: "Registration Book",
-        uploadRegBook: "Registration Book Upload Karein",
         vehicleUpdated: "Gaari ki maloomat update ho gayi.",
         updateError: "Update karne mein masla hua.",
+        loadingError: "Gaari ki maloomat load karne mein masla hua."
     },
     en: {
         title: "My Vehicle",
@@ -47,10 +45,9 @@ const translations = {
         licensePlate: "License Plate",
         saveButton: "Save Vehicle Information",
         saving: "Saving...",
-        regBook: "Registration Book",
-        uploadRegBook: "Upload Registration Book",
         vehicleUpdated: "Vehicle information updated.",
         updateError: "Failed to update information.",
+        loadingError: "Failed to load vehicle information."
     }
 }
 
@@ -65,6 +62,29 @@ export function VehicleDetails() {
   const [model, setModel] = useState("");
   const [licensePlate, setLicensePlate] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+        if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists() && docSnap.data().vehicle) {
+                    const vehicle = docSnap.data().vehicle;
+                    setVehicleType(vehicle.type || 'car');
+                    setMake(vehicle.make || '');
+                    setModel(vehicle.model || '');
+                    setLicensePlate(vehicle.licensePlate || '');
+                }
+            } catch (error) {
+                console.error("Error fetching vehicle data: ", error);
+                toast({ variant: "destructive", title: t.loadingError });
+            }
+        }
+    };
+    fetchVehicleData();
+  }, [user, toast, t.loadingError]);
+
 
   const handleSaveVehicleInfo = async () => {
       if (!user) return;

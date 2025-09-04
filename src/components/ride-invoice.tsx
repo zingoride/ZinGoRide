@@ -18,10 +18,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWallet } from '@/context/WalletContext';
 import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const translations = {
   ur: {
-    title: "Ride Mukammal!",
+    title: "Safar Mukammal!",
     rideId: "Ride ID",
     rider: "Rider",
     pickup: "Uthanay ki Jagah",
@@ -63,6 +64,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const { toast } = useToast();
   const { language } = useLanguage();
   const { addFunds } = useWallet();
+  const { user } = useAuth();
   const t = translations[language];
 
   const tip = 50; // Dummy tip for now
@@ -74,7 +76,8 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
 
   useEffect(() => {
     // Add only the net earnings to the wallet when invoice is shown
-    if (netEarnings > 0) {
+    // This should only run for the driver. We assume if this component is shown, the user is a driver.
+    if (netEarnings > 0 && user?.uid === ride.driverId) {
       addFunds(netEarnings);
       toast({
         title: t.earningsAdded,
@@ -82,7 +85,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ride.fare]);
+  }, [ride.fare, user, ride.driverId]);
 
   const handlePaymentMethodClick = () => {
     toast({
@@ -99,7 +102,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
             <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
             <DialogTitle className="text-2xl">{t.title}</DialogTitle>
             <DialogDescription>
-              {t.rideId}: {ride.id}
+              {t.rideId}: {ride.id.substring(0,8)}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -108,11 +111,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">{t.rider}</span>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{ride.rider?.name}</span>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span>{ride.rider?.rating.toFixed(1)}</span>
-              </div>
+              <span className="font-semibold">{ride.customerName}</span>
             </div>
           </div>
           

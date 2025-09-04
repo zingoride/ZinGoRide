@@ -1,13 +1,14 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, increment } from 'firebase/firestore';
 
 interface WalletContextType {
   balance: number;
+  addFunds: (amount: number) => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -31,8 +32,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const addFunds = useCallback(async (amount: number) => {
+    if (!user) return;
+    const userDocRef = doc(db, "users", user.uid);
+    await updateDoc(userDocRef, {
+        walletBalance: increment(amount)
+    });
+  }, [user]);
+
   return (
-    <WalletContext.Provider value={{ balance }}>
+    <WalletContext.Provider value={{ balance, addFunds }}>
       {children}
     </WalletContext.Provider>
   );

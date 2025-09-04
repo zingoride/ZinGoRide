@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -31,7 +30,7 @@ const translations = {
         drivingLicense: "Driving License",
         upload: "Upload Karein",
         uploading: "Uploading...",
-        saveButton: "Dastavezaat Mehfooz Karein",
+        saveButton: "Dastavezaat Upload Karein",
         saveSuccess: "Dastavezaat kamyabi se upload ho gaye.",
         saveError: "Dastavezaat upload karne mein masla hua.",
         selectFile: "Pehle file chunein",
@@ -44,9 +43,9 @@ const translations = {
         drivingLicense: "Driving License",
         upload: "Upload",
         uploading: "Uploading...",
-        saveButton: "Save Documents",
-        saveSuccess: "Documents uploaded successfully.",
-        saveError: "Error uploading documents.",
+        saveButton: "Upload Document",
+        saveSuccess: "Document uploaded successfully.",
+        saveError: "Error uploading document.",
         selectFile: "Please select a file first",
     }
 }
@@ -100,7 +99,9 @@ export function DocumentUploadForm() {
           url: downloadURL,
           uploadedAt: new Date(),
       };
-
+      
+      // We use arrayUnion to add to the array without duplicating.
+      // For a more robust solution, one might first read the doc, filter out old docs of the same type, then update.
       await updateDoc(userDocRef, {
         documents: arrayUnion(documentData)
       });

@@ -2,8 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RideRequest } from '@/components/ride-request';
-import { TipCalculator } from '@/components/tip-calculator';
+import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,39 +12,10 @@ import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import type { RideRequest } from '@/lib/types';
 
-const nearbyPickups = [
-  'Tariq Road',
-  'Bahadurabad',
-  'Saddar',
-  'Clifton',
-  'DHA Phase 5',
-];
-const nearbyDropoffs = [
-  'Gulshan-e-Iqbal',
-  'North Nazimabad',
-  'PECHS',
-  'I.I. Chundrigar Road',
-  'Sea View',
-];
-
-function generateNewRide(existingIds: Set<string>) {
-  let newIdNumber;
-  let newId;
-  do {
-    newIdNumber = Math.floor(Math.random() * 90000) + 10000;
-    newId = `ZR-${newIdNumber}`;
-  } while (existingIds.has(newId));
-
-  const pickup =
-    nearbyPickups[Math.floor(Math.random() * nearbyPickups.length)];
-  const dropoff =
-    nearbyDropoffs[Math.floor(Math.random() * nearbyDropoffs.length)];
-  const fare = 200 + Math.floor(Math.random() * 6) * 50; // 200 to 450
-  const eta = `${5 + Math.floor(Math.random() * 10)} Minutes`;
-
-  return { id: newId, pickup, dropoff, fare, eta };
-}
 
 const translations = {
   ur: {
@@ -73,7 +43,7 @@ const translations = {
 }
 
 export default function Dashboard() {
-  const [rideRequests, setRideRequests] = useState<any[]>([]);
+  const [rideRequests, setRideRequests] = useState<RideRequest[]>([]);
   const { isOnline, toggleStatus } = useRiderStatus();
   const { activeRide, completedRide } = useRide();
   const { language } = useLanguage();
@@ -84,19 +54,18 @@ export default function Dashboard() {
       setRideRequests([]);
       return;
     }
-    const interval = setInterval(() => {
-      setRideRequests((prevRequests) => {
-        const existingIds = new Set(prevRequests.map((r) => r.id));
-        const newRide = generateNewRide(existingIds);
-        const updatedRequests = [newRide, ...prevRequests];
-        if (updatedRequests.length > 20) {
-          updatedRequests.pop();
-        }
-        return updatedRequests;
-      });
-    }, 10000); // 10 seconds
 
-    return () => clearInterval(interval);
+    const q = query(collection(db, "rides"), where("status", "==", "booked"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const requests: RideRequest[] = [];
+        querySnapshot.forEach((doc) => {
+            requests.push({ id: doc.id, ...doc.data() } as RideRequest);
+        });
+        setRideRequests(requests);
+    });
+
+    return () => unsubscribe();
   }, [isOnline]);
 
   if (completedRide) {
@@ -176,7 +145,7 @@ export default function Dashboard() {
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
           <div className="grid gap-4">
             {rideRequests.map((request) => (
-              <RideRequest key={request.id} {...request} />
+              <RideRequestComponent key={request.id} {...request} />
             ))}
           </div>
         </div>
