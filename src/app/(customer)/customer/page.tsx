@@ -11,8 +11,6 @@ import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Star, Tag, MapPin } from 'lucide-react';
 
 export default function CustomerPage() {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
@@ -84,37 +82,12 @@ export default function CustomerPage() {
                     data-ai-hint="street map aerial"
                 />
             </div>
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 space-y-4">
-                 <Card className="shadow-lg backdrop-blur-sm bg-background/80">
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                 <Card className="shadow-lg rounded-t-2xl">
                     <CardContent className="p-4">
                         <RideBookingForm onFindRide={handleFindRide} />
                     </CardContent>
                  </Card>
-                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <Card className='shadow-lg backdrop-blur-sm bg-background/80'>
-                        <CardContent className='p-3 flex items-center gap-3'>
-                            <div className='p-2 bg-primary/10 rounded-lg'>
-                                <Tag className='h-6 w-6 text-primary' />
-                            </div>
-                            <div>
-                                <p className='font-bold'>Promotions</p>
-                                <p className='text-sm text-muted-foreground'>Get discounts on your next ride</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                     <Card className='shadow-lg backdrop-blur-sm bg-background/80'>
-                        <CardContent className='p-3 flex items-center gap-3'>
-                           <div className='p-2 bg-primary/10 rounded-lg'>
-                                <Star className='h-6 w-6 text-primary' />
-                            </div>
-                            <div>
-                                <p className='font-bold'>Saved Places</p>
-                                <p className='text-sm text-muted-foreground'>Add your home or work for faster booking</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                 </div>
             </div>
         </div>
     );
