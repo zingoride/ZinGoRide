@@ -1,27 +1,28 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users can read and write their own document.
+    // Users can read and update their own document, but not delete it.
     // New users can be created by anyone who is authenticated.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      allow read, update: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null;
-    }
-
-    // Ride documents can be created by any authenticated user.
-    // They can be read or updated by the customer who created it, or the assigned driver.
-    match /rides/{rideId} {
-      allow create: if request.auth != null;
-      allow read, update: if request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId;
     }
 
     // Wallet requests can be created by any authenticated user.
-    // Admin backend will handle approvals.
+    // They can be read/updated by authenticated users (simplification for now, should be admin only).
     match /walletRequests/{requestId} {
       allow create: if request.auth != null;
-      // No client should read all requests.
-      allow read, update, delete: if false;
+      allow read, update: if request.auth != null;
+    }
+
+    // Rides can be created by the customer.
+    // The ride can be read by the customer or the assigned driver.
+    // The ride can be updated by the customer (e.g., to cancel) or the driver (e.g., to accept/complete).
+    match /rides/{rideId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.customerId;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
+      allow update: if request.auth != null && (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
     }
   }
 }

@@ -18,7 +18,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc } from "firebase/firestore";
+import {FieldValue} from "firebase/firestore";
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -125,9 +126,11 @@ export default function WalletRequestsPage() {
 
     if (newStatus === 'Approved') {
         const userRef = doc(db, "users", request.userId);
-        // This is a simplified increment. For production, use FieldValue.increment(request.amount).
-        // We are reading the doc first to avoid this for now.
-        batch.update(userRef, { walletBalance: request.amount });
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+             const currentBalance = userDoc.data().walletBalance || 0;
+             batch.update(userRef, { walletBalance: currentBalance + request.amount });
+        }
     }
 
     try {
