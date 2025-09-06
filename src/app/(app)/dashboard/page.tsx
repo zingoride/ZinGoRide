@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,9 @@ import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc, setDoc, GeoPoint } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const translations = {
   ur: {
@@ -29,7 +31,9 @@ const translations = {
     weeklyGoal: "Haftawar Had",
     goalCompleted: "0% hadaf mukammal",
     searchingForRides: "Rides dhoondi ja rahi hain...",
-    newRideRequestsWillAppear: "Aap online hain. Nayi ride requests yahan nazar aayengi."
+    newRideRequestsWillAppear: "Aap online hain. Nayi ride requests yahan nazar aayengi.",
+    locationPermissionError: "Location ki ijazat chahiye",
+    locationPermissionDesc: "Live location share karne ke liye, please browser mein location ki ijazat dein.",
   },
   en: {
     youAreOffline: "You are Offline",
@@ -44,7 +48,9 @@ const translations = {
     weeklyGoal: "Weekly Goal",
     goalCompleted: "0% goal completed",
     searchingForRides: "Searching for rides...",
-    newRideRequestsWillAppear: "You are online. New ride requests will appear here."
+    newRideRequestsWillAppear: "You are online. New ride requests will appear here.",
+    locationPermissionError: "Location Permission Required",
+    locationPermissionDesc: "To share your live location, please enable location permissions in your browser.",
   }
 }
 
@@ -53,7 +59,71 @@ export default function Dashboard() {
   const { isOnline, toggleStatus } = useRiderStatus();
   const { activeRide, completedRide } = useRide();
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const t = translations[language];
+  const locationWatchId = useRef<number | null>(null);
+
+  const updateLocationInFirestore = async (position: GeolocationPosition) => {
+    if (!user) return;
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, {
+        location: new GeoPoint(position.coords.latitude, position.coords.longitude)
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error updating location:", error);
+    }
+  };
+
+  const startWatchingLocation = () => {
+    if (navigator.geolocation) {
+      locationWatchId.current = navigator.geolocation.watchPosition(
+        updateLocationInFirestore,
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast({
+            variant: "destructive",
+            title: t.locationPermissionError,
+            description: t.locationPermissionDesc,
+          });
+          toggleStatus(); // Go back offline if permission is denied
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    } else {
+       toast({
+          variant: "destructive",
+          title: t.locationPermissionError,
+          description: "Geolocation is not supported by this browser.",
+       });
+       toggleStatus();
+    }
+  };
+
+  const stopWatchingLocation = () => {
+    if (locationWatchId.current !== null) {
+      navigator.geolocation.clearWatch(locationWatchId.current);
+      locationWatchId.current = null;
+    }
+  };
+  
+  useEffect(() => {
+    if (isOnline) {
+      startWatchingLocation();
+    } else {
+      stopWatchingLocation();
+    }
+
+    return () => {
+      stopWatchingLocation();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
 
 
   useEffect(() => {
