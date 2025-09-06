@@ -1,10 +1,10 @@
-
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
+import MarkersLayer from './markers-layer';
 
 // Fix default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -34,8 +34,7 @@ export const customerIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-
-interface MapMarker {
+export interface MapMarker {
   position: [number, number];
   popupText: string;
   icon?: L.Icon;
@@ -54,28 +53,24 @@ const DynamicMap = ({
   zoom = 12, 
   className 
 }: DynamicMapProps) => {
-  const mapRef = useRef<L.Map | null>(null);
 
-  return (
+  const map = useMemo(() => (
     <MapContainer
       center={center}
       zoom={zoom}
       scrollWheelZoom={true}
       className={className}
       style={{ height: '100%', width: '100%' }}
-      whenCreated={map => mapRef.current = map}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {markers.map((marker, idx) => (
-        <Marker key={idx} position={marker.position} icon={marker.icon || new L.Icon.Default()}>
-          <Popup>{marker.popupText}</Popup>
-        </Marker>
-      ))}
+      <MarkersLayer markers={markers} />
     </MapContainer>
-  );
+  ), [center, zoom, className]);
+
+  return map;
 };
 
 export default DynamicMap;
