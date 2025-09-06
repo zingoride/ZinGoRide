@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Car, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +15,16 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User as AppUser } from '@/app/(admin)/admin/users/page';
+
+// Default icon setup for Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
 
 const translations = {
   ur: {
@@ -85,16 +94,6 @@ const statusStyles = {
   'Inactive': 'bg-gray-500',
 }
 
-const createIcon = (icon: React.ReactElement) => {
-    // This function will only run on the client, avoiding SSR issues with L.divIcon
-    return L.divIcon({
-      html: renderToStaticMarkup(icon),
-      className: 'bg-transparent border-0',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32],
-    });
-};
 
 // Dynamically import the MapContainer and its components with ssr: false
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
@@ -109,10 +108,6 @@ export default function LiveMapPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
-
-  // Icons should only be created on the client side
-  const driverIcon = isClient ? createIcon(<Car className="h-8 w-8 text-primary drop-shadow-lg" />) : null;
-  const customerIcon = isClient ? createIcon(<User className="h-8 w-8 text-accent-foreground drop-shadow-lg" />) : null;
   
    useEffect(() => {
      setIsClient(true);
@@ -197,8 +192,15 @@ export default function LiveMapPage() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {users.map(user => {
-                const icon = user.type === 'Driver' ? driverIcon : customerIcon;
-                if (!icon) return null; // Don't render marker if icon is not ready
+                // This is a simplified way to use different icons without L.divIcon issues in this context
+                const icon = new L.Icon({
+                    iconUrl: user.type === 'Driver' ? 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+                    shadowSize: [41, 41]
+                });
 
                 return (
                    <Marker
@@ -209,7 +211,7 @@ export default function LiveMapPage() {
                     >
                       <Popup>
                           <div>
-                            <h4 className="font-bold">{user.name}</h4>
+                            <h4 className="font-bold">{user.name} ({user.type})</h4>
                             <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
                           </div>
                       </Popup>
