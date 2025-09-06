@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MapPin, ArrowRight, Loader2 } from 'lucide-react';
+import { MapPin, ArrowRight, Loader2, Search } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,14 +16,14 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const translations = {
   ur: {
-    pickupPlaceholder: "Uthanay ki jagah?",
+    pickupPlaceholder: "Aap kahan hain?",
     dropoffPlaceholder: "Kahan jana hai?",
     findRideButton: "Ride Dhundein",
     findingRide: "Ride dhoondi ja rahi hai...",
     rideRequestError: "Ride request karne mein masla hua.",
   },
   en: {
-    pickupPlaceholder: "Pickup location?",
+    pickupPlaceholder: "Where are you?",
     dropoffPlaceholder: "Where to?",
     findRideButton: "Find Ride",
     findingRide: "Finding Ride...",
@@ -68,7 +68,7 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             createdAt: serverTimestamp(),
         });
         
-        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date() });
+        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date(), status: 'booked' });
 
     } catch (error) {
         console.error("Error creating ride request:", error);
@@ -82,41 +82,28 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg backdrop-blur-sm bg-background/80">
       <CardContent className="p-4">
         <form onSubmit={handleSubmit} className="grid gap-3">
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="pickup"
-              placeholder={t.pickupPlaceholder}
-              className="pl-10"
-              value={pickup}
-              onChange={(e) => setPickup(e.target.value)}
-              required
-            />
-          </div>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               id="dropoff"
               placeholder={t.dropoffPlaceholder}
-              className="pl-10"
+              className="pl-10 h-12 text-base"
               value={dropoff}
               onChange={(e) => setDropoff(e.target.value)}
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
             {loading ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {t.findingRide}
                 </>
             ) : (
-                <>
-                    <ArrowRight className="mr-2 h-4 w-4" /> {t.findRideButton}
-                </>
+                <>{t.findRideButton}</>
             )}
           </Button>
         </form>

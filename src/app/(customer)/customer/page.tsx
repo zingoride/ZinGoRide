@@ -10,6 +10,9 @@ import type { RideRequest } from '@/lib/types';
 import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Star, Tag, MapPin } from 'lucide-react';
 
 export default function CustomerPage() {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
@@ -45,12 +48,25 @@ export default function CustomerPage() {
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
-        // 'pending' state is when AvailableRides is shown
-        if (currentRide.status === 'pending') {
+        // 'booked' state is when AvailableRides is shown (after 'pending' is created)
+        if (currentRide.status === 'booked' || currentRide.status === 'pending') {
              return (
-                <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
-                    <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
-                </div>
+                 <div className="relative w-full h-full">
+                    <div className="absolute inset-0 z-0">
+                        <Image
+                            src="https://picsum.photos/seed/customermap/1200/900"
+                            alt="City map background"
+                            fill
+                            style={{objectFit: 'cover'}}
+                            className="opacity-90"
+                            data-ai-hint="street map aerial"
+                        />
+                         <div className="absolute inset-0 bg-background/20 backdrop-blur-sm"></div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                        <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+                    </div>
+                 </div>
              )
         }
         // 'accepted', 'in_progress', etc.
@@ -65,13 +81,36 @@ export default function CustomerPage() {
                     alt="City map background"
                     fill
                     style={{objectFit: 'cover'}}
-                    className="opacity-90"
                     data-ai-hint="street map aerial"
                 />
-                 <div className="absolute inset-0 bg-background/20 backdrop-blur-sm"></div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
-                <RideBookingForm onFindRide={handleFindRide} />
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 space-y-4">
+                 <RideBookingForm onFindRide={handleFindRide} />
+                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <Card className='shadow-lg'>
+                        <CardContent className='p-3 flex items-center gap-3'>
+                            <div className='p-2 bg-primary/10 rounded-lg'>
+                                <Tag className='h-6 w-6 text-primary' />
+                            </div>
+                            <div>
+                                <p className='font-bold'>Promotions</p>
+                                <p className='text-sm text-muted-foreground'>Get discounts on your next ride</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                     <Card className='shadow-lg'>
+                        <CardContent className='p-3 flex items-center gap-3'>
+                           <div className='p-2 bg-primary/10 rounded-lg'>
+                                <Star className='h-6 w-6 text-primary' />
+                            </div>
+                            <div>
+                                <p className='font-bold'>Saved Places</p>
+                                <p className='text-sm text-muted-foreground'>Add your home or work for faster booking</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                 </div>
             </div>
         </div>
     );
