@@ -21,17 +21,45 @@ import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import type { RideRequest } from '@/lib/types';
+import L from 'leaflet';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
     loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> 
 });
 
+
+// Define custom icons directly in the file that uses them
+export const carIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/car.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/car.png',
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
+
+export const customerIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/user-male-circle.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/user-male-circle.png',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
+
+const mockCoordinates = {
+    driver: [24.88, 67.05], // Driver initial position
+    customer: [24.8607, 67.0011] // Customer pickup
+};
+
+
 const translations = {
     ur: {
         toPickup: "Pickup ke raaste par",
         toDropoff: "Dropoff ke raaste par",
-        riderInfo: "Rider ki Maloomat",
+        riderInfo: "Customer ki Maloomat",
         rideDetails: "Safar ki Tafseelat",
         pickupLocation: "Uthanay ki Jagah",
         dropoffLocation: "Manzil",
@@ -43,11 +71,12 @@ const translations = {
         rideStarted: "Safar shuru ho gaya!",
         rideCompleted: "Safar mukammal ho gaya!",
         errorUpdating: "Status update karne mein masla hua.",
+        rideCancelled: "Ride has been cancelled.",
     },
     en: {
         toPickup: "On the way to Pickup",
         toDropoff: "On the way to Dropoff",
-        riderInfo: "Rider Information",
+        riderInfo: "Customer Information",
         rideDetails: "Ride Details",
         pickupLocation: "Pickup Location",
         dropoffLocation: "Destination",
@@ -59,27 +88,32 @@ const translations = {
         rideStarted: "Ride has started!",
         rideCompleted: "Ride completed!",
         errorUpdating: "Error updating status.",
+        rideCancelled: "Ride has been cancelled.",
     }
 }
 
 export function InProgressRide() {
   const { activeRide, completeRide: completeRideInContext, cancelRide: cancelRideInContext } = useRide();
-  const [isNavigating, setIsNavigating] = useState(false);
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
 
   useEffect(() => {
-    setIsNavigating(true);
-  }, []);
+    if (activeRide?.status === 'in_progress') {
+        setRideStage('dropoff');
+    } else {
+        setRideStage('pickup');
+    }
+  }, [activeRide?.status]);
+
 
   if (!activeRide) {
     return null;
   }
   
-  const { pickup, dropoff, rider, customerName } = activeRide;
-  const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: 'https://picsum.photos/seed/sania/100/100' };
+  const { id, pickup, dropoff, customerName, rider } = activeRide;
+  const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: `https://picsum.photos/seed/${customerName}/100/100` };
   
   const handleCall = () => {
     if (riderInfo?.phone) {
@@ -88,32 +122,41 @@ export function InProgressRide() {
   };
   
   const handleNavigate = () => {
-    setIsNavigating(true);
     // In a real app, you would open Google Maps or another navigation app.
     const destination = rideStage === 'pickup' ? pickup : dropoff;
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
   };
   
-  const handleStartRide = () => {
-    setRideStage('dropoff');
-    setIsNavigating(true);
-    toast({ title: t.rideStarted });
-  }
+  const handleUpdateStatus = async (status: RideRequest['status']) => {
+      try {
+        const rideRef = doc(db, "rides", id);
+        await updateDoc(rideRef, { status });
 
-  const handleCompleteRide = () => {
-    completeRideInContext();
-    toast({ title: t.rideCompleted });
-  };
-
-  const handleCancelRide = () => {
-    cancelRideInContext();
+        if(status === 'in_progress'){
+            toast({ title: t.rideStarted });
+        } else if (status === 'completed') {
+            completeRideInContext();
+            toast({ title: t.rideCompleted });
+        } else if (status === 'cancelled_by_driver') {
+            cancelRideInContext();
+            toast({ title: t.rideCancelled, variant: 'destructive' });
+        }
+      } catch (error) {
+          console.error("Error updating ride status: ", error);
+          toast({ variant: "destructive", title: t.errorUpdating });
+      }
   }
+  
+  const mapMarkers = [
+    { position: [mockCoordinates.customer[0], mockCoordinates.customer[1]], popupText: 'Customer Location', icon: customerIcon },
+    { position: [mockCoordinates.driver[0], mockCoordinates.driver[1]], popupText: 'Your Location', icon: carIcon }
+  ];
 
 
   return (
     <div className="flex flex-col gap-4 items-start h-full">
-      <div className="w-full h-48 bg-muted/50 rounded-lg border overflow-hidden">
-         <DynamicMap />
+      <div className="w-full h-48 md:h-64 bg-muted/50 rounded-lg border overflow-hidden">
+         <DynamicMap markers={mapMarkers} />
       </div>
 
       <div className="flex flex-col gap-4 w-full">
@@ -182,7 +225,7 @@ export function InProgressRide() {
                     {rideStage === 'pickup' ? t.navigateToPickup : t.navigateToDropoff}
                 </Button>
                 {rideStage === 'pickup' && (
-                  <Button size="lg" className="w-full" onClick={handleStartRide}>
+                  <Button size="lg" className="w-full" onClick={() => handleUpdateStatus('in_progress')}>
                     {t.startRide}
                   </Button>
                 )}
@@ -191,10 +234,10 @@ export function InProgressRide() {
         </Card>
         
         <div className='space-y-2'>
-            <Button size="lg" className="w-full" onClick={handleCompleteRide} disabled={rideStage === 'pickup'}>
+            <Button size="lg" className="w-full" onClick={() => handleUpdateStatus('completed')} disabled={rideStage === 'pickup'}>
                 {t.completeRide}
             </Button>
-             <Button variant="destructive" size="lg" className="w-full" onClick={handleCancelRide}>
+             <Button variant="destructive" size="lg" className="w-full" onClick={() => handleUpdateStatus('cancelled_by_driver')}>
                 <X className="mr-2 h-5 w-5" />
                 {t.cancelRide}
             </Button>

@@ -27,13 +27,14 @@ export function RideProvider({ children }: { children: ReactNode }) {
 
   // Listen for changes on the active ride document
   useEffect(() => {
-    if (activeRide) {
+    if (!activeRide?.id) return;
+
       const unsub = onSnapshot(doc(db, "rides", activeRide.id), (doc) => {
         if (doc.exists()) {
           const data = { id: doc.id, ...doc.data() } as RideDetails;
           if (data.status === 'completed') {
-            completeRide();
-          } else if (data.status === 'cancelled_by_customer') {
+            completeRide(data);
+          } else if (data.status === 'cancelled_by_customer' || data.status === 'cancelled_by_driver') {
             cancelRide();
           } else {
             setActiveRide(data);
@@ -43,7 +44,7 @@ export function RideProvider({ children }: { children: ReactNode }) {
         }
       });
       return () => unsub();
-    }
+    
   }, [activeRide?.id]);
 
   const acceptRide = async (ride: RideDetails) => {
@@ -54,6 +55,7 @@ export function RideProvider({ children }: { children: ReactNode }) {
         const rideUpdate = {
             driverId: user.uid,
             driverName: user.displayName || 'Driver',
+            driverAvatar: user.photoURL || '',
             status: 'accepted' as const,
         };
         await updateDoc(rideRef, rideUpdate);
@@ -64,15 +66,17 @@ export function RideProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const completeRide = () => {
-    if (activeRide) {
-      setCompletedRide(activeRide);
+  const completeRide = (rideData? : RideDetails) => {
+    const rideToComplete = rideData || activeRide;
+    if (rideToComplete) {
+      setCompletedRide(rideToComplete);
       setActiveRide(null);
     }
   };
   
   const cancelRide = () => {
     setActiveRide(null);
+    setCompletedRide(null);
   }
 
   const closeInvoice = () => {
