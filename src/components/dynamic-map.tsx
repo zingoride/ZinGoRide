@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import MapWrapper from './MapWrapper';
+import MarkersLayer from './MarkersLayer';
 
 // Fix default icons, which is a common issue with Leaflet and bundlers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,52 +32,11 @@ const DynamicMap = ({
   zoom = 12, 
   className 
 }: DynamicMapProps) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
-
-  // Initialize map
-  useEffect(() => {
-    if (mapInstanceRef.current || !mapContainerRef.current) return;
-
-    mapInstanceRef.current = L.map(mapContainerRef.current).setView(center, zoom);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(mapInstanceRef.current);
-    
-    // Cleanup on unmount
-    return () => {
-      mapInstanceRef.current?.remove();
-      mapInstanceRef.current = null;
-    };
-  }, [center, zoom]);
-
-
-  // Update markers
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    // Add new markers
-    markers.forEach(markerInfo => {
-      const marker = L.marker(markerInfo.position, { icon: markerInfo.icon || new L.Icon.Default() })
-        .addTo(mapInstanceRef.current!)
-        .bindPopup(markerInfo.popupText);
-      markersRef.current.push(marker);
-    });
-
-  }, [markers]);
-
+  
   return (
-    <div 
-      ref={mapContainerRef} 
-      className={className}
-      style={{ height: '100%', width: '100%' }} 
-    />
+    <MapWrapper center={center} zoom={zoom} className={className}>
+      <MarkersLayer markers={markers} />
+    </MapWrapper>
   );
 };
 
