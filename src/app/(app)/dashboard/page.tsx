@@ -88,7 +88,7 @@ export default function Dashboard() {
             title: t.locationPermissionError,
             description: t.locationPermissionDesc,
           });
-          toggleStatus(); // Go back offline if permission is denied
+          if(isOnline) toggleStatus(); // Go back offline if permission is denied
         },
         {
           enableHighAccuracy: true,
@@ -102,7 +102,7 @@ export default function Dashboard() {
           title: t.locationPermissionError,
           description: "Geolocation is not supported by this browser.",
        });
-       toggleStatus();
+       if(isOnline) toggleStatus();
     }
   };
 
@@ -128,31 +128,42 @@ export default function Dashboard() {
 
 
   useEffect(() => {
-    if (!isOnline) {
+    if (!isOnline || activeRide) {
       setRideRequests([]);
       return;
     }
     
+    // Listen for newly booked rides that need a driver.
     const ridesRef = collection(db, "rides");
     const q = query(
       ridesRef, 
-      where("status", "in", ["booked", "pending"]), 
+      where("status", "==", "booked"), 
       orderBy("createdAt", "desc"),
-      limit(5) // Limit to the latest 5 booked rides
+      limit(5)
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const requests: RideRequest[] = [];
       querySnapshot.forEach((doc) => {
-        if (!activeRide || activeRide.id !== doc.id) {
-           requests.push({ id: doc.id, ...doc.data() } as RideRequest);
+        // Ensure ride is not already accepted by someone else and it's not the driver's own current ride
+        if (!doc.data().driverId) {
+            const requestData = { id: doc.id, ...doc.data() } as RideRequest;
+            requestData.createdAt = (doc.data().createdAt as any).toDate(); // Convert timestamp to Date
+            requests.push(requestData);
         }
       });
       setRideRequests(requests);
+    }, (error) => {
+        console.error("Error fetching ride requests: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch new ride requests.",
+        });
     });
 
     return () => unsubscribe();
-  }, [isOnline, activeRide]);
+  }, [isOnline, activeRide, toast]);
 
   if (completedRide) {
     return <RideInvoice ride={completedRide} />;

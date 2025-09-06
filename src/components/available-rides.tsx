@@ -92,8 +92,7 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
             fare: selectedRideDetails ? parseFloat(selectedRideDetails.price) : 0,
         };
 
-        // We update the database, but the onConfirm will be triggered
-        // by the onSnapshot listener in the parent page for a seamless transition.
+        // We update the database. The parent's onSnapshot listener will handle the UI transition.
         await updateDoc(rideRef, updateData);
 
         toast({
@@ -101,15 +100,12 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
             description: t.rideConfirmedDesc,
         });
 
-        // The parent's onSnapshot listener will handle the state change
-        // onConfirm({ ...ride, ...updateData });
-
     } catch (error) {
         console.error("Error confirming ride: ", error);
         toast({ variant: "destructive", title: t.rideUpdateError });
         setLoading(false);
     } 
-    // No need to set loading to false here, as the component will unmount
+    // No need to set loading to false here, as the component will unmount or be replaced.
   };
 
   return (
