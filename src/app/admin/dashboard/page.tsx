@@ -47,8 +47,8 @@ export default function AdminDashboardPage() {
   const t = translations[language];
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl md:text-3xl font-bold">{t.dashboard}</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-xl font-bold">{t.dashboard}</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">PKR 1,250,000</div>
+            <div className="text-lg font-bold">PKR 1,250,000</div>
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">PKR 187,500</div>
+            <div className="text-lg font-bold">PKR 187,500</div>
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
+            <div className="text-lg font-bold">+12,234</div>
             <p className="text-xs text-muted-foreground">+180.1% from last month</p>
           </CardContent>
         </Card>
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-lg font-bold">+573</div>
             <p className="text-xs text-muted-foreground">+19% from last month</p>
           </CardContent>
         </Card>
@@ -97,11 +97,11 @@ export default function AdminDashboardPage() {
           <CardDescription>{t.ridesAndRevenue}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
+              <XAxis dataKey="name" fontSize={12} />
+              <YAxis fontSize={12} />
               <Tooltip />
               <Legend />
               <Bar dataKey="rides" fill="hsl(var(--primary))" />
