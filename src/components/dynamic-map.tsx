@@ -1,10 +1,10 @@
+
 'use client';
 
-import { MapContainer, TileLayer } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import MapWrapper from './MapWrapper';
+import MarkersLayer from './MarkersLayer';
 import L from 'leaflet';
-import { useMemo } from 'react';
-import MarkersLayer from './markers-layer';
+import type { MapMarker } from './MarkersLayer';
 
 // Fix default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -13,6 +13,7 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
+
 
 export const carIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png', // Placeholder, can be replaced
@@ -34,11 +35,9 @@ export const customerIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-export interface MapMarker {
-  position: [number, number];
-  popupText: string;
-  icon?: L.Icon;
-}
+
+export type { MapMarker };
+
 
 interface DynamicMapProps {
   markers?: MapMarker[];
@@ -47,30 +46,16 @@ interface DynamicMapProps {
   className?: string;
 }
 
-const DynamicMap = ({ 
+export default function DynamicMap({ 
   markers = [], 
   center = [24.8607, 67.0011], 
   zoom = 12, 
   className 
-}: DynamicMapProps) => {
-
-  const map = useMemo(() => (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      scrollWheelZoom={true}
-      className={className}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+}: DynamicMapProps) {
+  return (
+    <MapWrapper center={center} zoom={zoom} className={className}>
       <MarkersLayer markers={markers} />
-    </MapContainer>
-  ), [center, zoom, className]);
+    </MapWrapper>
+  );
+}
 
-  return map;
-};
-
-export default DynamicMap;
