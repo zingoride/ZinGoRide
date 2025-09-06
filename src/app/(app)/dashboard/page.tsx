@@ -35,6 +35,8 @@ const translations = {
     newRideRequestsWillAppear: "Aap online hain. Nayi ride requests yahan nazar aayengi.",
     locationPermissionError: "Location ki ijazat chahiye",
     locationPermissionDesc: "Live location share karne ke liye, please browser mein location ki ijazat dein.",
+    newRideRequestToast: "Nayi Ride Request!",
+    newRideRequestToastDesc: (pickup: string, dropoff: string) => `${pickup} se ${dropoff} tak.`,
   },
   en: {
     youAreOffline: "You are Offline",
@@ -52,8 +54,13 @@ const translations = {
     newRideRequestsWillAppear: "You are online. New ride requests will appear here.",
     locationPermissionError: "Location Permission Required",
     locationPermissionDesc: "To share your live location, please enable location permissions in your browser.",
+    newRideRequestToast: "New Ride Request!",
+    newRideRequestToastDesc: (pickup: string, dropoff: string) => `From ${pickup} to ${dropoff}.`,
   }
 }
+
+// A simple, short, and royalty-free ping sound encoded in Base64
+const PING_SOUND = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAANAAAR2wAAMPwAAB2sAABTMAAAR2wAAAAAAAAUNCRYBAAAAiuu+//uQZAAAAAANAAAR2wAAMPwAAB2sAABTMAAAR2wAAAAAAAAUNCRYBAAAAiuu+";
 
 export default function Dashboard() {
   const [rideRequests, setRideRequests] = useState<RideRequest[]>([]);
@@ -64,6 +71,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const t = translations[language];
   const locationWatchId = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const knownRideIds = useRef(new Set());
+
 
   const updateLocationInFirestore = async (position: GeolocationPosition) => {
     if (!user) return;
@@ -144,15 +154,28 @@ export default function Dashboard() {
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const requests: RideRequest[] = [];
+      let isNewRequest = false;
+
       querySnapshot.forEach((doc) => {
-        // Ensure ride is not already accepted by someone else and it's not the driver's own current ride
-        if (!doc.data().driverId) {
-            const requestData = { id: doc.id, ...doc.data() } as RideRequest;
-            requestData.createdAt = (doc.data().createdAt as any).toDate(); // Convert timestamp to Date
-            requests.push(requestData);
+        const requestData = { id: doc.id, ...doc.data() } as RideRequest;
+        requests.push(requestData);
+        
+        if (!knownRideIds.current.has(requestData.id)) {
+            isNewRequest = true;
+            knownRideIds.current.add(requestData.id);
+            toast({
+                title: t.newRideRequestToast,
+                description: t.newRideRequestToastDesc(requestData.pickup, requestData.dropoff),
+            });
         }
       });
+      
       setRideRequests(requests);
+      
+      if (isNewRequest && audioRef.current) {
+        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+      }
+
     }, (error) => {
         console.error("Error fetching ride requests: ", error);
         toast({
@@ -163,7 +186,7 @@ export default function Dashboard() {
     });
 
     return () => unsubscribe();
-  }, [isOnline, activeRide, toast]);
+  }, [isOnline, activeRide, toast, t.newRideRequestToast, t.newRideRequestToastDesc]);
 
   if (completedRide) {
     return <RideInvoice ride={completedRide} />;
@@ -176,6 +199,7 @@ export default function Dashboard() {
   if (!isOnline) {
     return (
       <div className="flex flex-1 flex-col items-center justify-start gap-8 text-center p-4">
+        <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
         <div className="flex flex-col items-center gap-2">
             <WifiOff className="h-16 w-16 text-muted-foreground" />
             <div className="space-y-1">
@@ -208,6 +232,7 @@ export default function Dashboard() {
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
+       <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
       {rideRequests.length > 0 ? (
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
           <div className="grid gap-4">
