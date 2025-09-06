@@ -12,9 +12,8 @@ import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
+import { mockBookedRide } from '@/lib/mock-data';
 
 
 const translations = {
@@ -62,18 +61,13 @@ export default function Dashboard() {
       setRideRequests([]);
       return;
     }
-
-    const q = query(collection(db, "rides"), where("status", "==", "booked"));
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const requests: RideRequest[] = [];
-        querySnapshot.forEach((doc) => {
-            requests.push({ id: doc.id, ...doc.data() } as RideRequest);
-        });
-        setRideRequests(requests);
-    });
+    // Using mock data
+    const timeout = setTimeout(() => {
+        setRideRequests([mockBookedRide]);
+    }, 3000); // show a ride request after 3 seconds
 
-    return () => unsubscribe();
+    return () => clearTimeout(timeout);
   }, [isOnline]);
 
   if (completedRide) {

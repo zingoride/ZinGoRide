@@ -10,8 +10,6 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
 const rideOptions = [
   {
@@ -64,7 +62,12 @@ const translations = {
     }
 }
 
-export function AvailableRides({ ride }: { ride: RideRequest }) {
+interface AvailableRidesProps {
+    ride: RideRequest;
+    onConfirm: (confirmedRide: RideRequest) => void;
+}
+
+export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
   const [selectedRide, setSelectedRide] = useState('Car');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -73,30 +76,25 @@ export function AvailableRides({ ride }: { ride: RideRequest }) {
 
   const handleConfirmRide = async () => {
     setLoading(true);
-    try {
-        const rideRef = doc(db, "rides", ride.id);
+    
+    // Simulate API call
+    setTimeout(() => {
         const selectedRideDetails = rideOptions.find(r => r.type === selectedRide);
-        
-        await updateDoc(rideRef, {
+        const confirmedRide: RideRequest = {
+            ...ride,
             status: 'booked',
-            vehicleType: selectedRide,
-            fare: selectedRideDetails?.price ? parseFloat(selectedRideDetails.price) : 0,
-        });
+            vehicleType: selectedRide as any,
+            fare: selectedRideDetails ? parseFloat(selectedRideDetails.price) : 0,
+        };
 
         toast({
             title: t.rideConfirmedTitle,
             description: t.rideConfirmedDesc,
         });
-        // No longer calling onConfirmRide, state is now managed by parent via Firestore listener
-    } catch (error) {
-        console.error("Error updating ride: ", error);
-        toast({
-            variant: 'destructive',
-            title: t.rideUpdateError,
-        });
-    } finally {
+
+        onConfirm(confirmedRide);
         setLoading(false);
-    }
+    }, 1000);
   };
 
   return (

@@ -20,8 +20,7 @@ import { Separator } from './ui/separator';
 import { Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 
 const paymentDetails = {
     easypaisa: '03001234567',
@@ -87,36 +86,15 @@ export function WalletTopUpDialog({ trigger, userType }: { trigger: React.ReactN
         if (!user) return;
 
         setLoading(true);
-        const formData = new FormData(e.currentTarget);
-        const amount = Number(formData.get('amount'));
-        const transactionId = formData.get('transactionId') as string;
-
-        try {
-            await addDoc(collection(db, "walletRequests"), {
-                userId: user.uid,
-                userName: user.displayName,
-                userType: userType || 'Driver', // Default to driver if not specified
-                amount: amount,
-                transactionId: transactionId,
-                status: 'Pending',
-                createdAt: serverTimestamp(),
-            });
-
+        // Simulate sending request
+        setTimeout(() => {
             toast({
                 title: t.requestSent,
                 description: t.requestSentDesc,
             });
             setOpen(false);
-        } catch (error) {
-            console.error(error);
-            toast({
-                variant: 'destructive',
-                title: t.error,
-                description: t.errorDesc,
-            });
-        } finally {
             setLoading(false);
-        }
+        }, 1500)
     };
 
     return (

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   MapPin,
@@ -18,8 +18,6 @@ import { useRide } from '@/context/RideContext';
 import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const translations = {
@@ -60,63 +58,48 @@ const translations = {
 }
 
 export function InProgressRide() {
-  const { activeRide, completeRide, cancelRide } = useRide();
+  const { activeRide, completeRide: completeRideInContext, cancelRide: cancelRideInContext } = useRide();
   const [isNavigating, setIsNavigating] = useState(false);
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
 
+  useEffect(() => {
+    // Simulate navigation auto-start on ride accept
+    setIsNavigating(true);
+  }, []);
+
   if (!activeRide) {
     return null;
   }
   
-  const { pickup, dropoff, rider } = activeRide;
+  const { pickup, dropoff, rider, customerName } = activeRide;
+  const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: 'https://picsum.photos/seed/sania/100/100' };
   
   const handleCall = () => {
-    if (rider?.phone) {
-      window.location.href = `tel:${rider.phone}`;
+    if (riderInfo?.phone) {
+      window.location.href = `tel:${riderInfo.phone}`;
     }
   };
   
   const handleNavigate = () => {
     setIsNavigating(true);
   };
-
-  const updateRideStatus = async (status: 'in_progress' | 'completed' | 'cancelled_by_driver') => {
-     try {
-      const rideRef = doc(db, "rides", activeRide.id);
-      await updateDoc(rideRef, { status: status });
-      return true;
-    } catch (error) {
-      console.error("Error updating ride status: ", error);
-       toast({
-        variant: "destructive",
-        title: t.errorUpdating,
-      });
-      return false;
-    }
-  };
   
-  const handleStartRide = async () => {
-    if (await updateRideStatus('in_progress')) {
-        setRideStage('dropoff');
-        setIsNavigating(true); // Automatically start navigation to dropoff
-        toast({ title: t.rideStarted });
-    }
+  const handleStartRide = () => {
+    setRideStage('dropoff');
+    setIsNavigating(true); // Automatically start navigation to dropoff
+    toast({ title: t.rideStarted });
   }
 
-  const handleCompleteRide = async () => {
-    if (await updateRideStatus('completed')) {
-        completeRide();
-        toast({ title: t.rideCompleted });
-    }
+  const handleCompleteRide = () => {
+    completeRideInContext();
+    toast({ title: t.rideCompleted });
   };
 
-  const handleCancelRide = async () => {
-    if (await updateRideStatus('cancelled_by_driver')) {
-        cancelRide();
-    }
+  const handleCancelRide = () => {
+    cancelRideInContext();
   }
 
   const mapImageUrl = isNavigating 
@@ -157,19 +140,19 @@ export function InProgressRide() {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
-                        <AvatarImage src={rider?.avatarUrl} data-ai-hint="portrait woman" />
+                        <AvatarImage src={riderInfo?.avatarUrl} data-ai-hint="portrait woman" />
                         <AvatarFallback>
-                        {rider?.name
+                        {riderInfo?.name
                             .split(' ')
                             .map((n) => n[0])
                             .join('')}
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-xl font-bold">{rider?.name}</p>
+                        <p className="text-xl font-bold">{riderInfo?.name}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{rider?.rating.toFixed(1)}</span>
+                        <span>{riderInfo?.rating.toFixed(1)}</span>
                         </div>
                     </div>
                 </div>
@@ -177,7 +160,7 @@ export function InProgressRide() {
                     <Button variant="outline" size="icon" onClick={handleCall}>
                         <Phone className="h-5 w-5" />
                     </Button>
-                    <ChatDialog riderName={rider?.name || 'Rider'} />
+                    <ChatDialog riderName={riderInfo?.name || 'Rider'} />
                 </div>
             </div>
           </CardContent>

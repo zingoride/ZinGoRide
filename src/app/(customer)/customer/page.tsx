@@ -7,8 +7,6 @@ import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
 import type { RideRequest } from '@/lib/types';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { CustomerInvoice } from '@/components/customer-invoice';
 import { Card } from '@/components/ui/card';
 
@@ -19,22 +17,35 @@ export default function CustomerPage() {
     useEffect(() => {
         if (!rideId) return;
 
-        const unsub = onSnapshot(doc(db, "rides", rideId), (doc) => {
-            if (doc.exists()) {
-                setCurrentRide({ id: doc.id, ...doc.data() } as RideRequest);
-            } else {
-                setCurrentRide(null);
-                setRideId(null);
-            }
-        });
+        // Mocking the Firestore listener
+        const ride = currentRide;
+        if (ride) {
+            // Simulate ride status changes for mock data
+            const t1 = setTimeout(() => {
+                setCurrentRide(prev => prev ? {...prev, status: 'accepted'} : null);
+            }, 6000);
+            const t2 = setTimeout(() => {
+                setCurrentRide(prev => prev ? {...prev, status: 'in_progress'} : null);
+            }, 12000);
+             const t3 = setTimeout(() => {
+                setCurrentRide(prev => prev ? {...prev, status: 'completed'} : null);
+            }, 18000);
 
-        return () => unsub();
-    }, [rideId]);
+            return () => {
+                clearTimeout(t1);
+                clearTimeout(t2);
+                clearTimeout(t3);
+            }
+        }
+    }, [rideId, currentRide]);
     
 
     const handleFindRide = (ride: RideRequest) => {
         setRideId(ride.id);
-        setCurrentRide(ride);
+        // Simulate Firestore latency
+        setTimeout(() => {
+            setCurrentRide(ride);
+        }, 500);
     };
     
     const handleReset = () => {
@@ -46,9 +57,15 @@ export default function CustomerPage() {
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
+        // 'pending' state is when AvailableRides is shown
         if (currentRide.status === 'pending') {
-             return <AvailableRides ride={currentRide} />
+             return (
+                <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                    <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+                </div>
+             )
         }
+        // 'accepted', 'in_progress', etc.
         return <div className='h-full md:h-[calc(100vh-4rem)]'><CustomerRideStatus ride={currentRide} onCancel={handleReset} /></div>;
     }
 

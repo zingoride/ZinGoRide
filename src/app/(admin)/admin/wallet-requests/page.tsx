@@ -17,9 +17,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, increment, query, orderBy } from "firebase/firestore";
-import { Timestamp } from "firebase/firestore";
+import { mockWalletRequests } from "@/lib/mock-data";
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -91,55 +89,31 @@ export default function WalletRequestsPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const q = query(collection(db, "walletRequests"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const requestsData: TopUpRequest[] = [];
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            requestsData.push({ 
-                id: doc.id,
-                ...data,
-                date: (data.createdAt as Timestamp).toDate(),
-             } as TopUpRequest);
-        });
-        setRequests(requestsData);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // Using mock data instead of Firestore
+    const sortedRequests = mockWalletRequests.sort((a, b) => b.date.getTime() - a.date.getTime());
+    setRequests(sortedRequests);
+    setLoading(false);
   }, []);
 
   const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
     const request = requests.find(req => req.id === requestId);
     if (!request) return;
-
-    const requestRef = doc(db, "walletRequests", requestId);
     
-    try {
-        await updateDoc(requestRef, { status: newStatus });
+    // Update state locally
+    setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: newStatus } : r));
 
-        if (newStatus === 'Approved') {
-            const userRef = doc(db, "users", request.userId);
-            await updateDoc(userRef, {
-                walletBalance: increment(request.amount)
-            });
-            toast({
-                title: "Success",
-                description: t.fundsAdded(request.amount, request.userName),
-            })
-        } else { // Rejected
-            toast({
-                title: "Success",
-                description: t.requestRejected,
-            })
-        }
-    } catch (error) {
-        console.error("Error updating wallet request: ", error);
+    if (newStatus === 'Approved') {
+        // In a real app, you would also update the user's wallet balance.
+        // For mock data, we'll just show a toast.
         toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not process the request.",
-        });
+            title: "Success",
+            description: t.fundsAdded(request.amount, request.userName),
+        })
+    } else { // Rejected
+        toast({
+            title: "Success",
+            description: t.requestRejected,
+        })
     }
   };
 

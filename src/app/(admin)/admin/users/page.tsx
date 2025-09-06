@@ -15,9 +15,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, onSnapshot, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { mockUsers } from "@/lib/mock-data";
 
 
 type UserStatus = 'Active' | 'Inactive';
@@ -61,42 +60,28 @@ export default function UsersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-      const q = query(collection(db, "users"));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const usersData: User[] = [];
-          querySnapshot.forEach((doc) => {
-              usersData.push({ id: doc.id, ...doc.data() } as User);
-          });
-          setUsers(usersData);
-          setLoading(false);
-      });
-
-      return () => unsubscribe();
+      setUsers(mockUsers);
+      setLoading(false);
   }, []);
 
 
-  const handleStatusChange = async (userId: string, newStatus: ApprovalStatus) => {
-    const userRef = doc(db, "users", userId);
-    try {
-        await updateDoc(userRef, { approvalStatus: newStatus });
-        toast({
-            title: "Status Updated",
-            description: `User status changed to ${newStatus}`,
-        });
-        if (selectedUser?.id === userId) {
-            setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
-        }
-    } catch (error) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to update user status.",
-        });
+  const handleStatusChange = (userId: string, newStatus: ApprovalStatus) => {
+    setUsers(prevUsers => 
+        prevUsers.map(user => 
+            user.id === userId ? { ...user, approvalStatus: newStatus } : user
+        )
+    );
+    toast({
+        title: "Status Updated",
+        description: `User status changed to ${newStatus}`,
+    });
+    if (selectedUser?.id === userId) {
+        setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
     }
   };
   
   const handleViewDocuments = (user: User) => {
-    if (user.type === 'Driver') {
+    if (user.type === 'Driver' && user.documents) {
       setSelectedUser(user);
     }
   };

@@ -1,3 +1,4 @@
+
 import { FieldValue } from "firebase/firestore";
 
 export interface RideRequest {
@@ -8,7 +9,7 @@ export interface RideRequest {
     pickup: string;
     dropoff: string;
     status: 'pending' | 'booked' | 'accepted' | 'enroute_to_pickup' | 'at_pickup' | 'in_progress' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_driver';
-    createdAt: FieldValue;
+    createdAt: FieldValue | Date;
     vehicleType?: 'Car' | 'Bike' | 'Rickshaw';
     fare?: number;
     driverId?: string;
@@ -17,4 +18,11 @@ export interface RideRequest {
     tip?: number;
     rating?: number;
     feedback?: string;
+    eta?: string;
+    rider?: {
+        name: string;
+        rating: number;
+        phone: string;
+        avatarUrl: string;
+    }
 }

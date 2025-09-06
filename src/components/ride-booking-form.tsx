@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { MapPin, ArrowRight, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
+import { FieldValue } from 'firebase/firestore';
+
 
 const translations = {
   ur: {
@@ -51,29 +51,20 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
     }
     setLoading(true);
 
-    try {
-      const rideDetails: Omit<RideRequest, 'id'> = {
-        pickup,
-        dropoff,
-        customerId: user.uid,
-        customerName: user.displayName || "Unknown",
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      }
-      
-      const docRef = await addDoc(collection(db, "rides"), rideDetails);
-      
-      onFindRide({ ...rideDetails, id: docRef.id });
-
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      toast({
-        variant: "destructive",
-        title: t.rideRequestError,
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Simulate API call to create a ride
+    setTimeout(() => {
+        const rideDetails: RideRequest = {
+            id: `ride_${new Date().getTime()}`,
+            pickup,
+            dropoff,
+            customerId: user.uid,
+            customerName: user.displayName || "Unknown",
+            status: 'pending',
+            createdAt: new Date(),
+        }
+        onFindRide(rideDetails);
+        setLoading(false);
+    }, 1000);
   };
 
   return (

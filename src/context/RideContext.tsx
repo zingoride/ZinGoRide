@@ -4,8 +4,6 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import type { RideRequest } from '@/lib/types';
 import { useAuth } from './AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
 export type RideDetails = RideRequest;
 
@@ -25,20 +23,12 @@ export function RideProvider({ children }: { children: ReactNode }) {
   const [completedRide, setCompletedRide] = useState<RideDetails | null>(null);
   const { user } = useAuth();
 
-  const acceptRide = async (ride: RideDetails) => {
+  const acceptRide = (ride: RideDetails) => {
     if (!user) return;
-    try {
-        const rideRef = doc(db, "rides", ride.id);
-        await updateDoc(rideRef, { 
-            status: 'accepted',
-            driverId: user.uid,
-            driverName: user.displayName,
-        });
-        setCompletedRide(null);
-        setActiveRide({ ...ride, driverId: user.uid, driverName: user.displayName || 'Driver' });
-    } catch (error) {
-        console.error("Failed to accept ride:", error);
-    }
+    
+    // Mock accepting ride
+    setCompletedRide(null);
+    setActiveRide({ ...ride, driverId: user.uid, driverName: user.displayName || 'Driver' });
   };
 
   const completeRide = () => {

@@ -3,8 +3,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, increment } from 'firebase/firestore';
+
 
 interface WalletContextType {
   balance: number;
@@ -15,30 +14,22 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [balance, setBalance] = useState(0); 
+  const [balance, setBalance] = useState(250); // Start with a default mock balance
 
   useEffect(() => {
+    // In a real app, you would fetch this from your DB.
+    // For now, we just use a static mock balance.
     if (user) {
-      const userDocRef = doc(db, "users", user.uid);
-      const unsubscribe = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-          setBalance(doc.data().walletBalance || 0);
-        }
-      });
-
-      return () => unsubscribe();
+        setBalance(250); 
     } else {
-      setBalance(0);
+        setBalance(0);
     }
   }, [user]);
 
   const addFunds = useCallback(async (amount: number) => {
-    if (!user) return;
-    const userDocRef = doc(db, "users", user.uid);
-    await updateDoc(userDocRef, {
-        walletBalance: increment(amount)
-    });
-  }, [user]);
+    // This function will just update the local state for now.
+    setBalance(prev => prev + amount);
+  }, []);
 
   return (
     <WalletContext.Provider value={{ balance, addFunds }}>
