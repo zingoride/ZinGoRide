@@ -17,13 +17,15 @@ import { useToast } from '@/hooks/use-toast';
 import type { User as AppUser } from '@/app/(admin)/admin/users/page';
 
 // Default icon setup for Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+if (typeof window !== 'undefined') {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  });
+}
 
 
 const translations = {
@@ -96,22 +98,20 @@ const statusStyles = {
 
 
 // Dynamically import the MapContainer and its components with ssr: false
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { 
+    ssr: false,
+    loading: () => <div className="w-full h-full flex flex-col items-center justify-center gap-4"><Skeleton className="h-full w-full" /><p className="absolute text-muted-foreground">Loading map...</p></div>
+});
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 
-export default function LiveMapPage() {
+function LiveMapPage() {
   const [users, setUsers] = useState<TrackedUser[]>([]);
-  const [isClient, setIsClient] = useState(false);
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
-  
-   useEffect(() => {
-     setIsClient(true);
-   }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -179,48 +179,45 @@ export default function LiveMapPage() {
         </CardContent>
       </Card>
       <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
-         {!isClient && (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                <Skeleton className="h-full w-full" />
-                <p className="absolute text-muted-foreground">{t.loadingMap}</p>
-            </div>
-        )}
-          {isClient && (
-            <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-              <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {users.map(user => {
-                // This is a simplified way to use different icons without L.divIcon issues in this context
-                const icon = new L.Icon({
-                    iconUrl: user.type === 'Driver' ? 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-                    shadowSize: [41, 41]
-                });
+        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+          <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {users.map(user => {
+            const icon = new L.Icon({
+                iconUrl: user.type === 'Driver' ? 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+                shadowSize: [41, 41]
+            });
 
-                return (
-                   <Marker
-                      key={user.id}
-                      position={[user.position.lat, user.position.lng]}
-                      icon={icon}
-                      opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
-                    >
-                      <Popup>
-                          <div>
-                            <h4 className="font-bold">{user.name} ({user.type})</h4>
-                            <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
-                          </div>
-                      </Popup>
-                    </Marker>
-                )
-              })}
-            </MapContainer>
-          )}
+            return (
+               <Marker
+                  key={user.id}
+                  position={[user.position.lat, user.position.lng]}
+                  icon={icon}
+                  opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
+                >
+                  <Popup>
+                      <div>
+                        <h4 className="font-bold">{user.name} ({user.type})</h4>
+                        <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
+                      </div>
+                  </Popup>
+                </Marker>
+            )
+          })}
+        </MapContainer>
       </div>
     </div>
   );
 }
+
+
+export default dynamic(() => Promise.resolve(LiveMapPage), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex flex-col items-center justify-center gap-4"><Skeleton className="h-full w-full" /><p className="absolute text-muted-foreground">Loading map...</p></div>
+});
