@@ -221,5 +221,3 @@ export default dynamic(() => Promise.resolve(LiveMapPage), {
   ssr: false,
   loading: () => <div className="w-full h-full flex flex-col items-center justify-center gap-4"><Skeleton className="h-full w-full" /><p className="absolute text-muted-foreground">Loading map...</p></div>
 });
-
-    
