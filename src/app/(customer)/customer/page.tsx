@@ -1,8 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
@@ -12,12 +12,15 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 
-export default function CustomerPage() {
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false, loading: () => <div className="w-full h-full bg-muted animate-pulse"></div> });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+
+const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
 
     useEffect(() => {
-        // Attempt to load rideId from localStorage on initial load
         const savedRideId = localStorage.getItem('activeRideId');
         if (savedRideId) {
             setRideId(savedRideId);
@@ -70,15 +73,12 @@ export default function CustomerPage() {
              return (
                  <div className="relative w-full h-full">
                     <div className="absolute inset-0 z-0">
-                        <Image
-                            src="https://picsum.photos/seed/customermap/1200/900"
-                            alt="City map background"
-                            fill
-                            style={{objectFit: 'cover'}}
-                            className="opacity-90"
-                            data-ai-hint="street map aerial"
-                        />
-                         <div className="absolute inset-0 bg-background/20 backdrop-blur-sm"></div>
+                        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+                          <TileLayer
+                              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                        </MapContainer>
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                         <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
@@ -94,14 +94,12 @@ export default function CustomerPage() {
     return (
         <div className="relative h-full w-full">
             <div className="absolute inset-0 z-0">
-                <Image
-                    src="https://picsum.photos/seed/customermap/1200/900"
-                    alt="City map background"
-                    fill
-                    style={{objectFit: 'cover'}}
-                    data-ai-hint="street map aerial"
-                />
-                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent"></div>
+                <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={false} style={{height: '100%', width: '100%'}}>
+                  <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                </MapContainer>
             </div>
             <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                  <Card className="shadow-lg rounded-t-2xl">
@@ -113,3 +111,5 @@ export default function CustomerPage() {
         </div>
     );
 }
+
+export default CustomerPage;

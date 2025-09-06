@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,11 +7,16 @@ import { Loader2, Phone, Star, Car, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
-import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false, loading: () => <div className="w-full h-full bg-muted animate-pulse"></div> });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 
 
 const driverDetails = {
@@ -56,9 +60,13 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const { language } = useLanguage();
     const t = translations[language];
     const { status, driverName, driverAvatar } = ride;
+    const [L, setL] = useState<any>(null);
 
     useEffect(() => {
-        // Show a progress bar animation while finding a driver
+        import('leaflet').then(leaflet => setL(leaflet));
+    }, []);
+
+    useEffect(() => {
         if (status === 'booked') {
             const progressTimer = setInterval(() => {
                 setProgress(prev => (prev < 90 ? prev + 15 : prev));
@@ -83,7 +91,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             await updateDoc(rideRef, {
                 status: 'cancelled_by_customer',
             });
-            // The onSnapshot in the parent page will trigger onCancel
         } catch (error) {
             console.error("Error cancelling ride: ", error);
         } finally {
@@ -107,25 +114,27 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
-
-    const mapImageUrl = showDriverDetails
-        ? "https://picsum.photos/seed/driver-route/800/600"
-        : "https://picsum.photos/seed/customermap/800/600";
     
-    const mapImageHint = showDriverDetails ? "map with driver route" : "city map";
+    const driverIcon = L ? new L.Icon({
+        iconUrl: '/car-pin.png',
+        iconRetinaUrl: '/car-pin.png',
+        iconSize: [35, 35],
+        iconAnchor: [17, 35],
+        popupAnchor: [0, -35],
+    }) : null;
 
     return (
         <div className="flex flex-col h-full w-full">
              <div className="flex-1 bg-muted flex items-center justify-center relative">
-                 <div className="w-full h-full relative">
-                    <Image
-                        src={mapImageUrl}
-                        alt="Map of city"
-                        fill
-                        style={{objectFit:"cover"}}
-                        data-ai-hint={mapImageHint}
+                 <MapContainer center={[24.9, 67.1]} zoom={14} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
-                </div>
+                    {showDriverDetails && driverIcon && (
+                        <Marker position={[24.91, 67.08]} icon={driverIcon} />
+                    )}
+                </MapContainer>
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
                 <CardHeader>
