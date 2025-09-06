@@ -1,13 +1,13 @@
 
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, Icon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useEffect, useRef } from 'react';
 
-// Fix for default icon issue with webpack
+// Fix default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
-
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
@@ -48,15 +48,22 @@ interface DynamicMapProps {
   className?: string;
 }
 
-const DynamicMap = ({ markers = [], center = [24.8607, 67.0011], zoom = 12, className }: DynamicMapProps) => {
+const DynamicMap = ({ 
+  markers = [], 
+  center = [24.8607, 67.0011], 
+  zoom = 12, 
+  className 
+}: DynamicMapProps) => {
+  const mapRef = useRef<L.Map | null>(null);
+
   return (
-    <MapContainer 
-        key="zingo-ride-map"
-        center={center} 
-        zoom={zoom} 
-        scrollWheelZoom={true} 
-        className={className} 
-        style={{ height: '100%', width: '100%' }}
+    <MapContainer
+      center={center}
+      zoom={zoom}
+      scrollWheelZoom={true}
+      className={className}
+      style={{ height: '100%', width: '100%' }}
+      whenCreated={map => mapRef.current = map}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
