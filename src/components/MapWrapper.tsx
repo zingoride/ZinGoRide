@@ -5,32 +5,27 @@ import 'leaflet/dist/leaflet.css';
 import { ReactNode } from 'react';
 
 interface MapWrapperProps {
-  center?: [number, number];
-  zoom?: number;
+  center: [number, number];
+  zoom: number;
+  children?: React.ReactNode;
   className?: string;
-  children?: ReactNode;
 }
 
-export default function MapWrapper({ 
-  center = [24.8607, 67.0011], 
-  zoom = 12, 
-  className, 
-  children 
-}: MapWrapperProps) {
+export default function MapWrapper({ center, zoom, children, className }: MapWrapperProps) {
   return (
-    <MapContainer
-      key={`${center[0]}-${center[1]}-${zoom}`}
-      center={center}
-      zoom={zoom}
-      scrollWheelZoom={true}
-      className={className}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {children}
-    </MapContainer>
+    <div className={className} style={{ height: '100%', width: '100%' }}>
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom={true}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {children}
+      </MapContainer>
+    </div>
   );
 }

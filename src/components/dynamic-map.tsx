@@ -1,9 +1,8 @@
 'use client';
 
-import MapWrapper from './MapWrapper';
-import MarkersLayer from './MarkersLayer';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import type { MapMarker } from './MarkersLayer';
+import MapWrapper from './MapWrapper';
 
 // Fix default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -35,8 +34,11 @@ export const customerIcon = new L.Icon({
 });
 
 
-export type { MapMarker };
-
+export interface MapMarker {
+  position: [number, number];
+  popupText: string;
+  icon?: L.Icon;
+}
 
 interface DynamicMapProps {
   markers?: MapMarker[];
@@ -45,15 +47,16 @@ interface DynamicMapProps {
   className?: string;
 }
 
-export default function DynamicMap({ 
-  markers = [], 
-  center = [24.8607, 67.0011], 
-  zoom = 12, 
-  className 
-}: DynamicMapProps) {
+const DynamicMap = ({ markers = [], center = [24.8607, 67.0011], zoom = 12, className }: DynamicMapProps) => {
   return (
     <MapWrapper center={center} zoom={zoom} className={className}>
-      <MarkersLayer markers={markers} />
+      {markers.map((marker, idx) => (
+        <Marker key={idx} position={marker.position} icon={marker.icon || new L.Icon.Default()}>
+          <Popup>{marker.popupText}</Popup>
+        </Marker>
+      ))}
     </MapWrapper>
   );
-}
+};
+
+export default DynamicMap;
