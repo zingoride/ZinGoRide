@@ -66,7 +66,7 @@ export default function Dashboard() {
     const ridesRef = collection(db, "rides");
     const q = query(
       ridesRef, 
-      where("status", "==", "booked"), 
+      where("status", "in", ["booked", "pending"]), 
       orderBy("createdAt", "desc"),
       limit(5) // Limit to the latest 5 booked rides
     );
