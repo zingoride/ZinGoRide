@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { PasswordManagementForm } from "@/components/password-management-form";
 
 const translations = {
   ur: {
@@ -624,35 +625,7 @@ export default function AdminSettingsPage() {
                 </CardContent>
             </Card>
 
-             <Card>
-                <CardHeader>
-                    <CardTitle>{t.passwordManagement}</CardTitle>
-                    <CardDescription>{t.passwordManagementDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="current-password">{t.currentPassword}</Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="current-password" type="password" className="pl-8" />
-                        </div>
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="new-password">{t.newPassword}</Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="new-password" type="password" className="pl-8" />
-                        </div>
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="confirm-password">{t.confirmNewPassword}</Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="confirm-password" type="password" className="pl-8" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+             <PasswordManagementForm />
             
             <div className="border-t pt-4">
                 <Button onClick={handleSave} className="w-full md:w-auto">{t.saveButton}</Button>
