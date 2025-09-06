@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -66,13 +65,14 @@ export function RideHistoryTable({ userType = 'rider' }: { userType?: 'rider' | 
         try {
             let q;
             const ridesRef = collection(db, "rides");
+            const statusFilter = where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']);
 
             if (userType === 'admin') {
-                q = query(ridesRef, where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+                q = query(ridesRef, statusFilter);
             } else if (userType === 'rider') {
-                 q = query(ridesRef, where("driverId", "==", user?.uid), where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+                 q = query(ridesRef, where("driverId", "==", user?.uid), statusFilter);
             } else { // customer
-                 q = query(ridesRef, where("customerId", "==", user?.uid), where('status', 'in', ['completed', 'cancelled_by_driver', 'cancelled_by_customer']), orderBy("createdAt", "desc"));
+                 q = query(ridesRef, where("customerId", "==", user?.uid), statusFilter);
             }
 
             const querySnapshot = await getDocs(q);
@@ -81,6 +81,10 @@ export function RideHistoryTable({ userType = 'rider' }: { userType?: 'rider' | 
                 ...doc.data(),
                 createdAt: (doc.data().createdAt as Timestamp)?.toDate() || new Date()
             })) as RideRequest[];
+            
+            // Sort client-side
+            ridesData.sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
+
             setRides(ridesData);
         } catch (error) {
             console.error("Error fetching ride history: ", error);
