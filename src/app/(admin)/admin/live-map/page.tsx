@@ -99,7 +99,7 @@ const createIcon = (icon: React.ReactElement) => {
 // Dynamically import the MapContainer and its components
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr_false: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 
@@ -190,32 +190,34 @@ export default function LiveMapPage() {
                 <p className="absolute text-muted-foreground">{t.loadingMap}</p>
             </div>
         )}
-          <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%', display: isClient ? 'block' : 'none' }}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {users.map(user => {
-              const icon = user.type === 'Driver' ? driverIcon : customerIcon;
-              if (!icon) return null; // Don't render marker if icon is not ready
+          {isClient && (
+            <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+              <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {users.map(user => {
+                const icon = user.type === 'Driver' ? driverIcon : customerIcon;
+                if (!icon) return null; // Don't render marker if icon is not ready
 
-              return (
-                 <Marker
-                    key={user.id}
-                    position={[user.position.lat, user.position.lng]}
-                    icon={icon}
-                    opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
-                  >
-                    <Popup>
-                        <div>
-                          <h4 className="font-bold">{user.name}</h4>
-                          <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
-                        </div>
-                    </Popup>
-                  </Marker>
-              )
-            })}
-          </MapContainer>
+                return (
+                   <Marker
+                      key={user.id}
+                      position={[user.position.lat, user.position.lng]}
+                      icon={icon}
+                      opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
+                    >
+                      <Popup>
+                          <div>
+                            <h4 className="font-bold">{user.name}</h4>
+                            <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
+                          </div>
+                      </Popup>
+                    </Marker>
+                )
+              })}
+            </MapContainer>
+          )}
       </div>
     </div>
   );
