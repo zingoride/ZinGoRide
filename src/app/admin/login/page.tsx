@@ -4,6 +4,8 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -40,38 +42,39 @@ const translations = {
   },
 };
 
-const ADMIN_EMAIL = "info@zingoride.vercel.app";
-const ADMIN_PASS = "RazaHaq@9876";
-
 export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('info@zingoride.vercel.app');
+  const [password, setPassword] = useState('RazaHaq@9876');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('admin_logged_in', 'true');
-        }
-        toast({ title: t.loginSuccess });
-        router.push('/admin/dashboard');
-      } else {
-        toast({
-          variant: "destructive",
-          title: t.loginError,
-        });
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // In a real production app, you might want to check if the user
+      // has admin privileges from your database (e.g., Firestore custom claims).
+      // For this prototype, we will assume if they can log in here, they are an admin.
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin_logged_in', 'true');
       }
+      toast({ title: t.loginSuccess });
+      router.push('/admin/dashboard');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: t.loginError,
+        description: "Please check your credentials or create the admin user in Firebase Authentication.",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
