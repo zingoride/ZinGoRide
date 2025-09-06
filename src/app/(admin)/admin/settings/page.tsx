@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock, Building, Settings2, CreditCard, LifeBuoy, Phone, Mail } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock, Building, Settings2, CreditCard, LifeBuoy, Phone, Mail, Link as LinkIcon, FileText, Gift, Users, Zap, PlusCircle, Trash2, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { PasswordManagementForm } from "@/components/password-management-form";
 import { ProfileForm } from "@/components/profile-form";
+import { Slider } from "@/components/ui/slider";
 
 const translations = {
   ur: {
@@ -68,11 +69,6 @@ const translations = {
     serviceFee: "Service Fee (PKR)",
     passwordManagement: "Password Ka Intezam",
     passwordManagementDesc: "Apna admin password tabdeel karein.",
-    currentPassword: "Mojooda Password",
-    newPassword: "Naya Password",
-    confirmNewPassword: "Naye Password Ki Tasdeeq Karein",
-    updatePasswordButton: "Password Update Karein",
-    passwordUpdateSuccess: "Password kamyabi se update ho gaya hai.",
     appSettings: "Application Settings",
     appSettingsDesc: "Poori application ke liye aam settings.",
     appName: "Application ka Naam",
@@ -93,6 +89,28 @@ const translations = {
     supportSettingsDesc: "Users ke liye support contact information set karein.",
     supportPhone: "Support Phone Number",
     supportEmail: "Support Email Address",
+    securityCompliance: "Security & Compliance",
+    securityComplianceDesc: "Manage privacy, terms, and data policies.",
+    privacyPolicyUrl: "Privacy Policy URL",
+    termsOfServiceUrl: "Terms of Service URL",
+    dataRetentionDays: "Data Retention (Days)",
+    dataRetentionDesc: "How many days to keep user data before anonymization.",
+    referralProgram: "Referral Program",
+    referralProgramDesc: "Manage referral bonuses and settings.",
+    enableReferrals: "Enable Referral Program",
+    referrerBonus: "Referrer Bonus (PKR)",
+    inviteeBonus: "Invitee Bonus (PKR)",
+    surgePricing: "Surge Pricing",
+    surgePricingDesc: "Manage surge multiplier and conditions.",
+    enableSurge: "Enable Surge Pricing",
+    surgeMultiplier: "Surge Multiplier",
+    surgeThreshold: "Surge Threshold (%)",
+    surgeThresholdDesc: "Percentage of busy drivers to trigger surge.",
+    vehicleManagement: "Vehicle Type Management",
+    vehicleManagementDesc: "Add, edit, or disable vehicle types.",
+    vehicleTypeName: "Vehicle Type Name",
+    addNewVehicle: "Add New Vehicle",
+    vehicleIcon: "Vehicle Icon",
   },
   en: {
     settings: "Settings",
@@ -140,11 +158,6 @@ const translations = {
     serviceFee: "Service Fee (PKR)",
     passwordManagement: "Password Management",
     passwordManagementDesc: "Change your admin password.",
-    currentPassword: "Current Password",
-    newPassword: "New Password",
-    confirmNewPassword: "Confirm New Password",
-    updatePasswordButton: "Update Password",
-    passwordUpdateSuccess: "Password updated successfully.",
     appSettings: "Application Settings",
     appSettingsDesc: "General settings for the entire application.",
     appName: "Application Name",
@@ -165,6 +178,28 @@ const translations = {
     supportSettingsDesc: "Set up support contact information for users.",
     supportPhone: "Support Phone Number",
     supportEmail: "Support Email Address",
+    securityCompliance: "Security & Compliance",
+    securityComplianceDesc: "Manage privacy, terms, and data policies.",
+    privacyPolicyUrl: "Privacy Policy URL",
+    termsOfServiceUrl: "Terms of Service URL",
+    dataRetentionDays: "Data Retention (Days)",
+    dataRetentionDesc: "How many days to keep user data before anonymization.",
+    referralProgram: "Referral Program",
+    referralProgramDesc: "Manage referral bonuses and settings.",
+    enableReferrals: "Enable Referral Program",
+    referrerBonus: "Referrer Bonus (PKR)",
+    inviteeBonus: "Invitee Bonus (PKR)",
+    surgePricing: "Surge Pricing",
+    surgePricingDesc: "Manage surge multiplier and conditions.",
+    enableSurge: "Enable Surge Pricing",
+    surgeMultiplier: "Surge Multiplier",
+    surgeThreshold: "Surge Threshold (%)",
+    surgeThresholdDesc: "Percentage of busy drivers to trigger surge.",
+    vehicleManagement: "Vehicle Type Management",
+    vehicleManagementDesc: "Add, edit, or disable vehicle types.",
+    vehicleTypeName: "Vehicle Type Name",
+    addNewVehicle: "Add New Vehicle",
+    vehicleIcon: "Vehicle Icon",
   },
 };
 
@@ -186,6 +221,8 @@ const logoOptions = [
     { name: 'Plane', icon: Plane },
     { name: 'Bot', icon: Bot },
 ];
+
+const allIcons = { Car, Bike, Rocket, Bus, Train, Plane, Ship, Shield };
 
 const colorOptions = [
     { name: 'Blue', value: 'theme-blue', color: 'bg-sky-500' },
@@ -211,7 +248,9 @@ const templateOptions = [
     { name: 'Hot Pink', color: 'theme-pink', logo: 'Plane', icon: Plane, colorClass: 'bg-pink-500' },
     { name: 'Elegant Rose', color: 'theme-rose', logo: 'Default', icon: Package2, colorClass: 'bg-rose-500' },
     { name: 'Modern Slate', color: 'theme-slate', logo: 'Train', icon: Train, colorClass: 'bg-slate-500' },
-]
+];
+
+type VehicleType = { name: string; icon: keyof typeof allIcons; active: boolean; baseFare: number; perKmRate: number; perMinRate: number; };
 
 export default function AdminSettingsPage() {
     const { toast } = useToast();
@@ -221,6 +260,13 @@ export default function AdminSettingsPage() {
     const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+    const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([
+        { name: 'Car', icon: 'Car', active: true, baseFare: 100, perKmRate: 25, perMinRate: 5 },
+        { name: 'Bike', icon: 'Bike', active: true, baseFare: 50, perKmRate: 15, perMinRate: 3 },
+        { name: 'Rickshaw', icon: 'Bus', active: true, baseFare: 70, perKmRate: 20, perMinRate: 4 },
+    ]);
+    const [newVehicleName, setNewVehicleName] = useState('');
+    const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
     const t = translations[language];
 
     useEffect(() => {
@@ -234,20 +280,6 @@ export default function AdminSettingsPage() {
         });
     };
     
-    const handlePasswordUpdate = () => {
-        toast({
-            title: t.saveSuccessTitle,
-            description: t.passwordUpdateSuccess,
-        });
-    };
-
-     const handleSaveFares = () => {
-        toast({
-            title: t.saveSuccessTitle,
-            description: t.fareSavedSuccess,
-        });
-    };
-    
     const handleTemplateChange = (templateName: string) => {
         const selected = templateOptions.find(t => t.name === templateName);
         if (selected) {
@@ -256,6 +288,17 @@ export default function AdminSettingsPage() {
             setActiveTemplate(templateName);
         }
     };
+
+    const handleAddNewVehicle = () => {
+        if (newVehicleName.trim() === '') return;
+        setVehicleTypes(prev => [...prev, { name: newVehicleName, icon: newVehicleIcon, active: true, baseFare: 0, perKmRate: 0, perMinRate: 0 }]);
+        setNewVehicleName('');
+        setNewVehicleIcon('Car');
+    }
+    
+    const handleRemoveVehicle = (index: number) => {
+        setVehicleTypes(prev => prev.filter((_, i) => i !== index));
+    }
 
     useEffect(() => {
         const currentTemplate = templateOptions.find(t => t.color === themeColor && t.logo === logo);
@@ -275,372 +318,460 @@ export default function AdminSettingsPage() {
         <div className="flex flex-col gap-8">
             <h1 className="text-2xl font-bold">{t.settings}</h1>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.templates}</CardTitle>
-                    <CardDescription>{t.templatesDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <RadioGroup 
-                        value={activeTemplate || ''} 
-                        onValueChange={handleTemplateChange}
-                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
-                    >
-                        {templateOptions.map((template) => {
-                            const Icon = template.icon;
-                            return (
-                                <div key={template.name}>
-                                    <RadioGroupItem value={template.name} id={template.name} className="peer sr-only" />
-                                    <Label htmlFor={template.name} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary aspect-square">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className={`h-8 w-8 rounded-full ${template.colorClass} flex items-center justify-center`}>
-                                                 <Icon className="h-5 w-5 text-white" />
-                                            </div>
-                                            <span className="text-center text-sm">{template.name}</span>
+            <Tabs defaultValue="general" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                    <TabsTrigger value="financial">Financial</TabsTrigger>
+                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                </TabsList>
+                <TabsContent value="general" className="mt-4 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.adminProfile}</CardTitle>
+                            <CardDescription>{t.adminProfileDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <ProfileForm />
+                        </CardContent>
+                    </Card>
+                    <PasswordManagementForm />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.appSettings}</CardTitle>
+                            <CardDescription>{t.appSettingsDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="app-name">{t.appName}</Label>
+                                <div className="relative">
+                                   <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                   <Input id="app-name" placeholder={t.appNamePlaceholder} defaultValue="ZinGo Ride" className="pl-8" />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="app-currency">{t.appCurrency}</Label>
+                                <div className="relative">
+                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="app-currency" placeholder={t.appCurrencyPlaceholder} defaultValue="PKR" className="pl-8" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.supportSettings}</CardTitle>
+                            <CardDescription>{t.supportSettingsDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="support-phone">{t.supportPhone}</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="support-phone" type="tel" placeholder="+92 300 1234567" className="pl-8" />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="support-email">{t.supportEmail}</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="support-email" type="email" placeholder="support@zingo.com" className="pl-8" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="appearance" className="mt-4 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.templates}</CardTitle>
+                            <CardDescription>{t.templatesDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <RadioGroup 
+                                value={activeTemplate || ''} 
+                                onValueChange={handleTemplateChange}
+                                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+                            >
+                                {templateOptions.map((template) => {
+                                    const Icon = template.icon;
+                                    return (
+                                        <div key={template.name}>
+                                            <RadioGroupItem value={template.name} id={template.name} className="peer sr-only" />
+                                            <Label htmlFor={template.name} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary aspect-square">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className={`h-8 w-8 rounded-full ${template.colorClass} flex items-center justify-center`}>
+                                                         <Icon className="h-5 w-5 text-white" />
+                                                    </div>
+                                                    <span className="text-center text-sm">{template.name}</span>
+                                                </div>
+                                            </Label>
                                         </div>
-                                    </Label>
+                                    )
+                                })}
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.display}</CardTitle>
+                            <CardDescription>{t.displayDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4">
+                                <Label htmlFor="theme">{t.theme}</Label>
+                                <RadioGroup 
+                                    value={theme} 
+                                    onValueChange={setTheme}
+                                    className="grid grid-cols-3 gap-4"
+                                >
+                                    <div>
+                                        <RadioGroupItem value="light" id="light-admin" className="peer sr-only" />
+                                        <Label htmlFor="light-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                            {t.light}
+                                        </Label>
+                                    </div>
+                                    <div>
+                                        <RadioGroupItem value="dark" id="dark-admin" className="peer sr-only" />
+                                        <Label htmlFor="dark-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                            {t.dark}
+                                        </Label>
+                                    </div>
+                                    <div>
+                                        <RadioGroupItem value="system" id="system-admin" className="peer sr-only" />
+                                        <Label htmlFor="system-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                            {t.system}
+                                        </Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.colorTheme}</CardTitle>
+                            <CardDescription>{t.colorThemeDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup 
+                                value={themeColor} 
+                                onValueChange={(value) => setThemeColor(value as any)}
+                                className="grid grid-cols-2 md:grid-cols-5 gap-4"
+                            >
+                                {colorOptions.map((option) => (
+                                    <div key={option.value}>
+                                        <RadioGroupItem value={option.value} id={option.value} className="peer sr-only" />
+                                        <Label htmlFor={option.value} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`h-6 w-6 rounded-full ${option.color}`} />
+                                                <span>{t[option.name.toLowerCase() as keyof typeof t] || option.name}</span>
+                                            </div>
+                                        </Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.logoTitle}</CardTitle>
+                            <CardDescription>{t.logoDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-20 w-20">
+                                    <AvatarImage src="/logo.png" alt="App Logo" />
+                                    <AvatarFallback>
+                                        <LogoComponent className="h-10 w-10" />
+                                    </AvatarFallback>
+                                </Avatar>
+                                <Button asChild variant="outline">
+                                    <label htmlFor="logo-upload" className="cursor-pointer">
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        {t.uploadLogo}
+                                    </label>
+                                </Button>
+                                <input id="logo-upload" type="file" className="hidden" />
+                            </div>
+
+                            <RadioGroup 
+                                value={logo} 
+                                onValueChange={(value) => setLogo(value as any)}
+                                className="grid grid-cols-2 md:grid-cols-5 gap-4"
+                            >
+                                {logoOptions.map(({ name, icon: Icon }) => (
+                                     <div key={name}>
+                                        <RadioGroupItem value={name} id={name.toLowerCase()} className="peer sr-only" />
+                                        <Label htmlFor={name.toLowerCase()} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                            <Icon className="h-8 w-8 mb-2" />
+                                            {name}
+                                        </Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.languageTitle}</CardTitle>
+                            <CardDescription>{t.languageDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-2">
+                                <Label htmlFor="language">{t.languageLabel}</Label>
+                                <Select value={language} onValueChange={(value) => setLanguage(value as 'ur' | 'en')}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={t.selectLanguage} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ur">Urdu</SelectItem>
+                                        <SelectItem value="en">English</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="financial" className="mt-4 space-y-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.fareManagement}</CardTitle>
+                            <CardDescription>{t.fareManagementDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Tabs defaultValue={vehicleTypes[0]?.name || 'car'} className="w-full">
+                                <TabsList className="grid w-full grid-cols-3">
+                                    {vehicleTypes.map(v => {
+                                        const Icon = allIcons[v.icon];
+                                        return <TabsTrigger key={v.name} value={v.name}><Icon className="mr-2" /> {v.name}</TabsTrigger>
+                                    })}
+                                </TabsList>
+                                {vehicleTypes.map(v => (
+                                <TabsContent key={v.name} value={v.name} className="mt-4">
+                                    <div className="space-y-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor={`${v.name}-base-fare`}>{t.baseFare}</Label>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input id={`${v.name}-base-fare`} type="number" placeholder="e.g., 100" defaultValue={v.baseFare} className="pl-8" />
+                                            </div>
+                                        </div>
+                                         <div className="grid gap-2">
+                                            <Label htmlFor={`${v.name}-km-rate`}>{t.perKmRate}</Label>
+                                             <div className="relative">
+                                                <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input id={`${v.name}-km-rate`} type="number" placeholder="e.g., 25" defaultValue={v.perKmRate} className="pl-8" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor={`${v.name}-min-rate`}>{t.perMinRate}</Label>
+                                            <div className="relative">
+                                                <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input id={`${v.name}-min-rate`} type="number" placeholder="e.g., 5" defaultValue={v.perMinRate} className="pl-8" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TabsContent>
+                                ))}
+                            </Tabs>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.commissionManagement}</CardTitle>
+                            <CardDescription>{t.commissionManagementDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="commission-rate">{t.commissionRate}</Label>
+                                <div className="relative">
+                                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="commission-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
                                 </div>
-                            )
-                        })}
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.adminProfile}</CardTitle>
-                    <CardDescription>{t.adminProfileDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ProfileForm />
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.display}</CardTitle>
-                    <CardDescription>{t.displayDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4">
-                        <Label htmlFor="theme">{t.theme}</Label>
-                        <RadioGroup 
-                            value={theme} 
-                            onValueChange={setTheme}
-                            className="grid grid-cols-3 gap-4"
-                        >
-                            <div>
-                                <RadioGroupItem value="light" id="light-admin" className="peer sr-only" />
-                                <Label htmlFor="light-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {t.light}
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="service-fee">{t.serviceFee}</Label>
+                                 <div className="relative">
+                                    <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="service-fee" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.paymentSettings}</CardTitle>
+                            <CardDescription>{t.paymentSettingsDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center space-x-2">
+                                <Switch id="cash-payment-switch" defaultChecked />
+                                <Label htmlFor="cash-payment-switch">{t.enableCash}</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Switch id="wallet-payment-switch" defaultChecked />
+                                <Label htmlFor="wallet-payment-switch">{t.enableWallet}</Label>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="advanced" className="mt-4 space-y-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.rideSettings}</CardTitle>
+                            <CardDescription>{t.rideSettingsDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="ride-request-timeout">{t.rideRequestTimeout}</Label>
+                                 <div className="relative">
+                                    <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="ride-request-timeout" type="number" placeholder="e.g., 30" defaultValue="10" className="pl-8" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">{t.rideRequestTimeoutDesc}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Switch id="ai-tips-switch" defaultChecked />
+                                <Label htmlFor="ai-tips-switch" className="flex flex-col space-y-1">
+                                    <span>{t.enableAiTips}</span>
+                                    <span className="font-normal leading-snug text-muted-foreground">{t.enableAiTipsDesc}</span>
                                 </Label>
                             </div>
-                            <div>
-                                <RadioGroupItem value="dark" id="dark-admin" className="peer sr-only" />
-                                <Label htmlFor="dark-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {t.dark}
-                                </Label>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.referralProgram}</CardTitle>
+                            <CardDescription>{t.referralProgramDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center space-x-2">
+                                <Switch id="referral-switch" />
+                                <Label htmlFor="referral-switch">{t.enableReferrals}</Label>
                             </div>
-                            <div>
-                                <RadioGroupItem value="system" id="system-admin" className="peer sr-only" />
-                                <Label htmlFor="system-admin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {t.system}
-                                </Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                </CardContent>
-            </Card>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.colorTheme}</CardTitle>
-                    <CardDescription>{t.colorThemeDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <RadioGroup 
-                        value={themeColor} 
-                        onValueChange={(value) => setThemeColor(value as any)}
-                        className="grid grid-cols-2 md:grid-cols-5 gap-4"
-                    >
-                        {colorOptions.map((option) => (
-                            <div key={option.value}>
-                                <RadioGroupItem value={option.value} id={option.value} className="peer sr-only" />
-                                <Label htmlFor={option.value} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`h-6 w-6 rounded-full ${option.color}`} />
-                                        <span>{t[option.name.toLowerCase() as keyof typeof t] || option.name}</span>
-                                    </div>
-                                </Label>
-                            </div>
-                        ))}
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.logoTitle}</CardTitle>
-                    <CardDescription>{t.logoDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center gap-4">
-                        <Avatar className="h-20 w-20">
-                            <AvatarImage src="/logo.png" alt="App Logo" />
-                            <AvatarFallback>
-                                <LogoComponent className="h-10 w-10" />
-                            </AvatarFallback>
-                        </Avatar>
-                        <Button asChild variant="outline">
-                            <label htmlFor="logo-upload" className="cursor-pointer">
-                                <Upload className="mr-2 h-4 w-4" />
-                                {t.uploadLogo}
-                            </label>
-                        </Button>
-                        <input id="logo-upload" type="file" className="hidden" />
-                    </div>
-
-                    <RadioGroup 
-                        value={logo} 
-                        onValueChange={(value) => setLogo(value as any)}
-                        className="grid grid-cols-2 md:grid-cols-5 gap-4"
-                    >
-                        {logoOptions.map(({ name, icon: Icon }) => (
-                             <div key={name}>
-                                <RadioGroupItem value={name} id={name.toLowerCase()} className="peer sr-only" />
-                                <Label htmlFor={name.toLowerCase()} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    <Icon className="h-8 w-8 mb-2" />
-                                    {name}
-                                </Label>
-                            </div>
-                        ))}
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.languageTitle}</CardTitle>
-                    <CardDescription>{t.languageDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-2">
-                        <Label htmlFor="language">{t.languageLabel}</Label>
-                        <Select value={language} onValueChange={(value) => setLanguage(value as 'ur' | 'en')}>
-                            <SelectTrigger>
-                                <SelectValue placeholder={t.selectLanguage} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ur">Urdu</SelectItem>
-                                <SelectItem value="en">English</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.appSettings}</CardTitle>
-                    <CardDescription>{t.appSettingsDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="app-name">{t.appName}</Label>
-                        <div className="relative">
-                           <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                           <Input id="app-name" placeholder={t.appNamePlaceholder} defaultValue="ZinGo Ride" className="pl-8" />
-                        </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="app-currency">{t.appCurrency}</Label>
-                        <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="app-currency" placeholder={t.appCurrencyPlaceholder} defaultValue="PKR" className="pl-8" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>{t.rideSettings}</CardTitle>
-                    <CardDescription>{t.rideSettingsDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="ride-request-timeout">{t.rideRequestTimeout}</Label>
-                         <div className="relative">
-                            <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="ride-request-timeout" type="number" placeholder="e.g., 30" defaultValue="10" className="pl-8" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">{t.rideRequestTimeoutDesc}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Switch id="ai-tips-switch" defaultChecked />
-                        <Label htmlFor="ai-tips-switch" className="flex flex-col space-y-1">
-                            <span>{t.enableAiTips}</span>
-                            <span className="font-normal leading-snug text-muted-foreground">{t.enableAiTipsDesc}</span>
-                        </Label>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>{t.paymentSettings}</CardTitle>
-                    <CardDescription>{t.paymentSettingsDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                        <Switch id="cash-payment-switch" defaultChecked />
-                        <Label htmlFor="cash-payment-switch">{t.enableCash}</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Switch id="wallet-payment-switch" defaultChecked />
-                        <Label htmlFor="wallet-payment-switch">{t.enableWallet}</Label>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.supportSettings}</CardTitle>
-                    <CardDescription>{t.supportSettingsDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="support-phone">{t.supportPhone}</Label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="support-phone" type="tel" placeholder="+92 300 1234567" className="pl-8" />
-                        </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="support-email">{t.supportEmail}</Label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="support-email" type="email" placeholder="support@zingo.com" className="pl-8" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.fareManagement}</CardTitle>
-                    <CardDescription>{t.fareManagementDesc}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue="car" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="car"><Car className="mr-2" /> Car</TabsTrigger>
-                            <TabsTrigger value="bike"><Bike className="mr-2" /> Bike</TabsTrigger>
-                            <TabsTrigger value="rickshaw">Rickshaw</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="car" className="mt-4">
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="car-base-fare">{t.baseFare}</Label>
+                                    <Label htmlFor="referrer-bonus">{t.referrerBonus}</Label>
                                     <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="car-base-fare" type="number" placeholder="e.g., 100" defaultValue="100" className="pl-8" />
-                                    </div>
-                                </div>
-                                 <div className="grid gap-2">
-                                    <Label htmlFor="car-km-rate">{t.perKmRate}</Label>
-                                     <div className="relative">
-                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="car-km-rate" type="number" placeholder="e.g., 25" defaultValue="25" className="pl-8" />
+                                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="referrer-bonus" type="number" placeholder="e.g., 100" className="pl-8" />
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="car-min-rate">{t.perMinRate}</Label>
+                                    <Label htmlFor="invitee-bonus">{t.inviteeBonus}</Label>
                                     <div className="relative">
-                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="car-min-rate" type="number" placeholder="e.g., 5" defaultValue="5" className="pl-8" />
+                                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input id="invitee-bonus" type="number" placeholder="e.g., 100" className="pl-8" />
                                     </div>
                                 </div>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="bike" className="mt-4">
-                             <div className="space-y-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="bike-base-fare">{t.baseFare}</Label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="bike-base-fare" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
-                                    </div>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.surgePricing}</CardTitle>
+                            <CardDescription>{t.surgePricingDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div className="flex items-center space-x-2">
+                                <Switch id="surge-switch" />
+                                <Label htmlFor="surge-switch">{t.enableSurge}</Label>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>{t.surgeMultiplier}: 1.5x</Label>
+                                <Slider defaultValue={[1.5]} min={1} max={3} step={0.1} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>{t.surgeThreshold}</Label>
+                                <div className="relative">
+                                    <Zap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="surge-threshold" type="number" placeholder="e.g. 80" defaultValue="80" className="pl-8" />
                                 </div>
-                                 <div className="grid gap-2">
-                                    <Label htmlFor="bike-km-rate">{t.perKmRate}</Label>
-                                     <div className="relative">
-                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="bike-km-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="bike-min-rate">{t.perMinRate}</Label>
-                                     <div className="relative">
-                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="bike-min-rate" type="number" placeholder="e.g., 3" defaultValue="3" className="pl-8" />
-                                    </div>
+                                <p className="text-sm text-muted-foreground">{t.surgeThresholdDesc}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.securityCompliance}</CardTitle>
+                            <CardDescription>{t.securityComplianceDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="privacy-policy-url">{t.privacyPolicyUrl}</Label>
+                                <div className="relative">
+                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="privacy-policy-url" type="url" placeholder="https://zingo.com/privacy" className="pl-8" />
                                 </div>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="rickshaw" className="mt-4">
-                            <div className="space-y-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="rickshaw-base-fare">{t.baseFare}</Label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="rickshaw-base-fare" type="number" placeholder="e.g., 70" defaultValue="70" className="pl-8" />
-                                    </div>
-                                </div>
-                                 <div className="grid gap-2">
-                                    <Label htmlFor="rickshaw-km-rate">{t.perKmRate}</Label>
-                                    <div className="relative">
-                                        <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="rickshaw-km-rate" type="number" placeholder="e.g., 20" defaultValue="20" className="pl-8" />
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="rickshaw-min-rate">{t.perMinRate}</Label>
-                                    <div className="relative">
-                                        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="rickshaw-min-rate" type="number" placeholder="e.g., 4" defaultValue="4" className="pl-8" />
-                                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="terms-url">{t.termsOfServiceUrl}</Label>
+                                <div className="relative">
+                                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="terms-url" type="url" placeholder="https://zingo.com/terms" className="pl-8" />
                                 </div>
                             </div>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.commissionManagement}</CardTitle>
-                    <CardDescription>{t.commissionManagementDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="commission-rate">{t.commissionRate}</Label>
-                        <div className="relative">
-                            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="commission-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
-                        </div>
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="service-fee">{t.serviceFee}</Label>
-                         <div className="relative">
-                            <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="service-fee" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <PasswordManagementForm />
+                            <div className="grid gap-2">
+                                <Label htmlFor="data-retention">{t.dataRetentionDays}</Label>
+                                <div className="relative">
+                                    <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="data-retention" type="number" placeholder="e.g., 365" className="pl-8" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">{t.dataRetentionDesc}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t.vehicleManagement}</CardTitle>
+                            <CardDescription>{t.vehicleManagementDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {vehicleTypes.map((v, index) => {
+                                const Icon = allIcons[v.icon];
+                                return (
+                                    <div key={index} className="flex items-center justify-between p-2 rounded-lg border bg-muted/50">
+                                        <div className="flex items-center gap-3">
+                                            <Icon className="h-5 w-5" />
+                                            <span className="font-medium">{v.name}</span>
+                                            <Switch checked={v.active} onCheckedChange={(checked) => setVehicleTypes(p => p.map((item, i) => i === index ? {...item, active: checked} : item))} />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveVehicle(index)}><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                            <div className="pt-4 border-t">
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="new-vehicle-name">{t.vehicleTypeName}</Label>
+                                        <Input id="new-vehicle-name" value={newVehicleName} onChange={(e) => setNewVehicleName(e.target.value)} placeholder="e.g., Van" />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="new-vehicle-icon">{t.vehicleIcon}</Label>
+                                        <Select value={newVehicleIcon} onValueChange={(val) => setNewVehicleIcon(val as keyof typeof allIcons)}>
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.keys(allIcons).map(iconName => {
+                                                    const Icon = allIcons[iconName as keyof typeof allIcons];
+                                                    return <SelectItem key={iconName} value={iconName}><div className="flex items-center gap-2"><Icon className="h-4 w-4" /> {iconName}</div></SelectItem>
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <Button onClick={handleAddNewVehicle} className="mt-4 w-full">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> {t.addNewVehicle}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
             
             <div className="border-t pt-4">
                 <Button onClick={handleSave} className="w-full md:w-auto">{t.saveButton}</Button>
@@ -648,3 +779,5 @@ export default function AdminSettingsPage() {
         </div>
     )
 }
+
+    
