@@ -99,23 +99,14 @@ export function InProgressRide() {
     cancelRideInContext();
   }
 
-  const renderMapPlaceholder = () => (
-      <div className="w-full h-full bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
-          <Map className="h-16 w-16" />
-          <p className="text-lg font-medium">Map View</p>
-          <p className="text-sm">Navigation would be shown here.</p>
-      </div>
-  );
 
   return (
     <div className="flex flex-col gap-8 items-start h-full">
-      <div className="w-full h-[300px] rounded-lg overflow-hidden relative bg-muted flex flex-col items-center justify-center">
-        <div className="absolute top-4 left-4 z-10">
-            <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
-                 {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
-            </Badge>
-        </div>
-        {renderMapPlaceholder()}
+      <div className="w-full bg-muted/50 p-4 rounded-lg border flex flex-col items-center justify-center text-center space-y-2 h-40">
+        <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
+              {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
+        </Badge>
+        <p className="text-sm text-muted-foreground">Navigation and map view would appear here.</p>
       </div>
 
       <div className="flex flex-col gap-6 w-full">

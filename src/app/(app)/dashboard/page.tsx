@@ -134,12 +134,6 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-4 h-[calc(100vh-12rem)]">
-            <div className="w-full h-1/2 rounded-lg border bg-muted flex items-center justify-center">
-                 <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                    <Map className="h-16 w-16" />
-                    <p className="text-lg font-medium">Map Placeholder</p>
-                 </div>
-            </div>
              <div className="text-center text-muted-foreground space-y-2">
                 <h2 className="text-2xl font-semibold">{t.searchingForRides}</h2>
                 <p>{t.newRideRequestsWillAppear}</p>

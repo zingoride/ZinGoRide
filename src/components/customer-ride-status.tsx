@@ -103,15 +103,8 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
-        <div className="flex flex-col h-full w-full">
-             <div className="flex-1 bg-muted flex items-center justify-center relative">
-                <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                    <Map className="h-16 w-16" />
-                    <p className="text-lg font-medium">Map View</p>
-                    {showDriverDetails && <p className="text-sm">Driver's live location would be shown here.</p>}
-                 </div>
-            </div>
-            <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
+        <div className="flex flex-col h-full w-full bg-background items-center justify-end">
+            <Card className="w-full flex flex-col rounded-t-2xl z-10 border-t-4 border-primary shadow-2xl">
                 <CardHeader>
                     <CardTitle>{title}</CardTitle>
                     <CardDescription>{description}</CardDescription>

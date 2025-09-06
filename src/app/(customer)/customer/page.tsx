@@ -62,15 +62,6 @@ const CustomerPage = () => {
         setRideId(null);
     };
 
-    const renderMapPlaceholder = () => {
-        return (
-             <div className="h-full w-full bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
-                <Map className="h-16 w-16" />
-                <p className="text-lg font-medium">Map View</p>
-             </div>
-        )
-    }
-
     if (currentRide) {
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
@@ -78,11 +69,8 @@ const CustomerPage = () => {
         
         if (currentRide.status === 'pending' || currentRide.status === 'booked') {
              return (
-                 <div className="relative w-full h-full">
-                    <div className="absolute inset-0 z-0">
-                        {renderMapPlaceholder()}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                 <div className="relative w-full h-full flex items-end">
+                    <div className="w-full p-4">
                         <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
                     </div>
                  </div>
@@ -93,11 +81,8 @@ const CustomerPage = () => {
     }
 
     return (
-        <div className="relative h-full w-full">
-            <div className="absolute inset-0 z-0">
-                {renderMapPlaceholder()}
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+        <div className="relative h-full w-full flex items-end">
+            <div className="w-full p-4">
                  <Card className="shadow-lg rounded-t-2xl">
                     <CardContent className="p-4">
                         <RideBookingForm onFindRide={handleFindRide} />
