@@ -18,7 +18,6 @@ const LiveMapPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     const usersCollection = collection(db, "users");
     const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
         const usersList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as UserType));
