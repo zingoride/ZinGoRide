@@ -2,50 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper Functions
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+
+    function isOwnUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isRider() {
-      return isSignedIn() && getUserData().type == 'Driver';
-    }
-    
-    function isCustomer() {
-      return isSignedIn() && getUserData().type == 'Customer';
-    }
-
-    // User profiles can be read and updated only by the owner.
-    // Anyone can create a user profile (signup).
+    // User collection: Users can manage their own data.
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow create;
+      allow read, update: if isOwnUser(userId);
+      allow create: if isSignedIn();
     }
 
-    // Wallet requests can be created by any signed-in user.
-    // Only admins (not yet implemented in rules) will manage them later.
+    // Rides collection
+    match /rides/{rideId} {
+      // ANY signed-in user can read rides. This allows drivers to see open requests.
+      allow read: if isSignedIn();
+      
+      // Only signed-in users can create rides.
+      allow create: if isSignedIn();
+
+      // Only the customer or an assigned driver can update the ride.
+      allow update: if isSignedIn() && 
+                     (request.resource.data.customerId == request.auth.uid || 
+                      resource.data.driverId == request.auth.uid);
+    }
+
+    // Wallet requests collection: Signed-in users can create requests.
     match /walletRequests/{requestId} {
         allow create: if isSignedIn();
-    }
-    
-    match /rides/{rideId} {
-      // A customer can create their own ride request.
-      allow create: if isCustomer() && request.resource.data.customerId == request.auth.uid;
-      
-      // The customer who owns the ride can read and update it (e.g., cancel).
-      // A driver who has accepted the ride can also read it.
-      allow read, update: if (isCustomer() && resource.data.customerId == request.auth.uid) || (isRider() && resource.data.driverId == request.auth.uid);
-
-      // Any logged-in rider can see ride requests that are not yet taken.
-      allow list: if isRider();
+        // Admins would typically be the only ones to read/update, handled by backend logic for now.
     }
   }
 }
