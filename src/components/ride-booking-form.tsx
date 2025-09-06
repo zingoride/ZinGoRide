@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, MapPin, Circle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -15,14 +15,14 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const translations = {
   ur: {
-    pickupPlaceholder: "Aap kahan hain?",
+    pickupPlaceholder: "Kahan se?",
     dropoffPlaceholder: "Kahan jana hai?",
     findRideButton: "Ride Dhundein",
     findingRide: "Ride dhoondi ja rahi hai...",
     rideRequestError: "Ride request karne mein masla hua.",
   },
   en: {
-    pickupPlaceholder: "Where are you?",
+    pickupPlaceholder: "Where from?",
     dropoffPlaceholder: "Where to?",
     findRideButton: "Find Ride",
     findingRide: "Finding Ride...",
@@ -58,7 +58,6 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             status: 'pending',
-            // other fields are optional for now
         }
         
         const ridesCollection = collection(db, "rides");
@@ -83,15 +82,26 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
   return (
     <form onSubmit={handleSubmit} className="grid gap-3">
         <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input
-            id="dropoff"
-            placeholder={t.dropoffPlaceholder}
-            className="pl-10 h-12 text-base"
-            value={dropoff}
-            onChange={(e) => setDropoff(e.target.value)}
-            required
-        />
+            <Circle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+                id="pickup"
+                placeholder={t.pickupPlaceholder}
+                className="pl-10 h-12 text-base"
+                value={pickup}
+                onChange={(e) => setPickup(e.target.value)}
+                required
+            />
+        </div>
+        <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+                id="dropoff"
+                placeholder={t.dropoffPlaceholder}
+                className="pl-10 h-12 text-base"
+                value={dropoff}
+                onChange={(e) => setDropoff(e.target.value)}
+                required
+            />
         </div>
         <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
         {loading ? (
