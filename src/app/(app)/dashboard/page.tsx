@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc, setDoc, GeoPoint } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { TipCalculator } from '@/components/tip-calculator';
 
 const translations = {
   ur: {
@@ -163,18 +164,19 @@ export default function Dashboard() {
 
   if (!isOnline) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
-        <WifiOff className="h-24 w-24 text-muted-foreground" />
-        <div className="space-y-2">
-            <h1 className="text-3xl font-bold">{t.youAreOffline}</h1>
-            <p className="text-muted-foreground">{t.goOnlineToReceive}</p>
+      <div className="flex flex-1 flex-col items-center justify-start gap-8 text-center p-4">
+        <div className="flex flex-col items-center gap-2">
+            <WifiOff className="h-16 w-16 text-muted-foreground" />
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold">{t.youAreOffline}</h1>
+                <p className="text-muted-foreground text-sm">{t.goOnlineToReceive}</p>
+            </div>
+             <Button onClick={toggleStatus} size="lg" className="w-full max-w-sm mt-4">
+                {t.goOnline}
+            </Button>
         </div>
         
-        <Button onClick={toggleStatus} size="lg" className="w-full max-w-sm">
-          {t.goOnline}
-        </Button>
-        
-        <div className="grid w-full max-w-sm gap-4 md:gap-8 mt-4">
+        <div className="grid w-full max-w-3xl gap-6 md:grid-cols-2">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{t.todaysEarnings}</CardTitle>
@@ -187,6 +189,7 @@ export default function Dashboard() {
                 </p>
               </CardContent>
             </Card>
+            <TipCalculator />
         </div>
       </div>
     );
