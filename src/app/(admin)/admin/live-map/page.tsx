@@ -6,10 +6,21 @@ import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, GeoPoint } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import L from 'leaflet';
-import type { User } from '@/app/(admin)/admin/users/page';
+
+// Define the User type, including the location property
+export interface User {
+  id: string;
+  name: string;
+  type: 'Driver' | 'Customer';
+  status: 'Active' | 'Inactive';
+  // Assuming location is stored as a Firestore GeoPoint or a similar object
+  location?: GeoPoint | { latitude: number; longitude: number }; 
+  [key: string]: any;
+}
+
 
 // Define custom icons directly in the file that uses them
 export const carIcon = new L.Icon({
@@ -34,14 +45,6 @@ const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
   loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
 });
 
-const mockCoordinates: { [key: string]: [number, number] } = {
-    'user-1': [24.8607, 67.0011], // Karachi
-    'user-2': [24.8732, 67.0632], // Near Mazar-e-Quaid
-    'user-3': [24.8882, 67.0531], // Gulshan
-    'user-4': [24.8253, 67.0274], // Clifton
-    'user-5': [24.9263, 67.0281], // North Nazimabad
-};
-
 
 export default function LiveMapPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -49,11 +52,16 @@ export default function LiveMapPage() {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
+    // Query to get all active users
     const usersCollection = collection(db, "users");
     const q = query(usersCollection, where("status", "==", "Active"));
 
+    // Set up a real-time listener
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      const usersList = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as User))
+        .filter(user => user.location); // Only include users that have a location
+
       setUsers(usersList);
       setLoading(false);
     }, (error) => {
@@ -61,20 +69,24 @@ export default function LiveMapPage() {
       setLoading(false);
     });
 
+    // Cleanup listener on component unmount
     return () => unsubscribe();
   }, []);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
-      if (filter === 'all') return true;
-      return user.type.toLowerCase() === filter;
-    });
+    if (filter === 'all') return users;
+    // The filter values are 'driver' and 'customer' (lowercase)
+    return users.filter(user => user.type.toLowerCase() === filter);
   }, [users, filter]);
 
   const mapMarkers = useMemo(() => {
     return filteredUsers.map(user => {
-      // Use mock coordinates, in a real app this would come from the user's document
-      const position = mockCoordinates[user.id] || [24.8607, 67.0011]; 
+      const loc = user.location;
+      // Handle both GeoPoint and object-based location formats
+      const position: [number, number] = loc
+        ? ('latitude' in loc ? [loc.latitude, loc.longitude] : [24.86, 67.01]) // Default to Karachi if format is wrong
+        : [24.86, 67.01]; // Default position if no location
+
       return {
         position: position,
         popupText: `${user.name} - ${user.type}`,
@@ -107,7 +119,11 @@ export default function LiveMapPage() {
       </Card>
       <Card className="flex-1">
         <CardContent className="p-0 h-full">
-            <DynamicMap markers={mapMarkers} />
+            {loading ? (
+                 <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
+            ) : (
+                 <DynamicMap markers={mapMarkers} />
+            )}
         </CardContent>
       </Card>
     </div>
