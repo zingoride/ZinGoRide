@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
 
 const translations = {
   ur: {
@@ -32,10 +34,12 @@ const translations = {
 
 export function AdminHeader() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const router = useRouter();
   const t = translations[language];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await auth.signOut();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin_logged_in');
     }
@@ -52,16 +56,16 @@ export function AdminHeader() {
           >
               <Avatar>
               <AvatarImage
-                  src="https://picsum.photos/100/100?random=admin"
+                  src={user?.photoURL || "https://picsum.photos/100/100?random=admin"}
                   alt="Admin Avatar"
                   data-ai-hint="portrait man glasses"
               />
-              <AvatarFallback>A</AvatarFallback>
+              <AvatarFallback>{user?.displayName?.charAt(0) || 'A'}</AvatarFallback>
               </Avatar>
           </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t.myAccount}</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.displayName || t.myAccount}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/admin/settings">{t.settings}</Link>
@@ -74,5 +78,3 @@ export function AdminHeader() {
       </DropdownMenu>
   );
 }
-
-    

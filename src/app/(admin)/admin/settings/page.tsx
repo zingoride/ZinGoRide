@@ -19,10 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { PasswordManagementForm } from "@/components/password-management-form";
+import { ProfileForm } from "@/components/profile-form";
 
 const translations = {
   ur: {
     settings: "Settings",
+    adminProfile: "Admin Profile",
+    adminProfileDesc: "Apni admin profile ki maloomat yahan update karein.",
     display: "Display",
     displayDesc: "Apni pasand ke mutabiq application ki theme chunein.",
     theme: "Theme",
@@ -93,6 +96,8 @@ const translations = {
   },
   en: {
     settings: "Settings",
+    adminProfile: "Admin Profile",
+    adminProfileDesc: "Update your admin profile information here.",
     display: "Display",
     displayDesc: "Choose the application's theme according to your preference.",
     theme: "Theme",
@@ -298,6 +303,16 @@ export default function AdminSettingsPage() {
                             )
                         })}
                     </RadioGroup>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.adminProfile}</CardTitle>
+                    <CardDescription>{t.adminProfileDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                   <ProfileForm />
                 </CardContent>
             </Card>
 

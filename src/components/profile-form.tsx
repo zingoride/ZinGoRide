@@ -17,11 +17,12 @@ import { useLanguage } from "@/context/LanguageContext"
 import { useAuth } from "@/context/AuthContext"
 import { useEffect, useState, useRef } from "react"
 import { updateProfile } from "firebase/auth"
-import { doc, updateDoc } from "firebase/firestore"
+import { doc, updateDoc, getDoc } from "firebase/firestore"
 import { auth, db, storage } from "@/lib/firebase"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Upload } from "lucide-react"
+import { Skeleton } from "./ui/skeleton"
 
 const translations = {
     ur: {
@@ -65,15 +66,23 @@ export function ProfileForm() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-      if (user) {
-          setFullName(user.displayName || '');
-          // In a real app, phone would be fetched from user's document in Firestore
-          setPhone('+92 300 1234567'); 
+      const loadUserData = async () => {
+        if (user) {
+            setFullName(user.displayName || '');
+            const userDocRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                setPhone(docSnap.data().phone || '');
+            }
+        }
+        setFormLoading(false);
       }
+      loadUserData();
   }, [user]);
   
   const handleAvatarClick = () => {
@@ -100,8 +109,8 @@ export function ProfileForm() {
         await updateDoc(userDocRef, { photoURL });
 
         // Optimistically update user in context
-        if (setUser) {
-            setUser({...user, photoURL });
+        if (setUser && auth.currentUser) {
+            setUser(auth.currentUser);
         }
 
         toast({ title: t.uploadSuccess });
@@ -120,7 +129,7 @@ export function ProfileForm() {
       setLoading(true);
       try {
           // Update Firebase Auth profile
-          if (auth.currentUser) {
+          if (auth.currentUser && auth.currentUser.displayName !== fullName) {
               await updateProfile(auth.currentUser, { displayName: fullName });
           }
 
@@ -131,8 +140,8 @@ export function ProfileForm() {
               phone: phone, // Assuming phone is stored in Firestore
           });
           
-          if (setUser) {
-              setUser({...user, displayName: fullName });
+          if (setUser && auth.currentUser) {
+            setUser(auth.currentUser);
           }
 
           toast({ title: t.updateSuccess });
@@ -145,17 +154,39 @@ export function ProfileForm() {
       }
   }
 
+  if (formLoading) {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-9 w-36" />
+                </div>
+            </div>
+            <div className="space-y-4">
+                 <Skeleton className="h-4 w-24" />
+                 <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-4">
+                 <Skeleton className="h-4 w-24" />
+                 <Skeleton className="h-10 w-full" />
+            </div>
+             <div className="space-y-4">
+                 <Skeleton className="h-4 w-24" />
+                 <Skeleton className="h-10 w-full" />
+            </div>
+        </div>
+    )
+  }
+
   if (!user) {
-      return null; // Or a loading skeleton
+      return null;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.myProfile}</CardTitle>
-        <CardDescription>{t.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6">
+    <div className="space-y-6">
         <div className="flex items-center gap-4">
             <div className="relative">
                 <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
@@ -192,20 +223,19 @@ export function ProfileForm() {
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="phone">{t.phoneNumber}</Label>
-                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 1234567" />
+            </div>
+             <div className="grid gap-2">
+                <Label htmlFor="email">{t.email}</Label>
+                <Input id="email" type="email" value={user.email || ''} disabled />
             </div>
         </div>
-        <div className="grid gap-2">
-            <Label htmlFor="email">{t.email}</Label>
-            <Input id="email" type="email" value={user.email || ''} disabled />
+        <div>
+            <Button onClick={handleSaveChanges} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? t.saving : t.saveChanges}
+            </Button>
         </div>
-      </CardContent>
-      <CardFooter className="border-t px-6 py-4">
-        <Button onClick={handleSaveChanges} disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? t.saving : t.saveChanges}
-        </Button>
-      </CardFooter>
-    </Card>
+    </div>
   )
 }
