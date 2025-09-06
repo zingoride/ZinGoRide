@@ -20,8 +20,12 @@ import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
+const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> 
+});
 
 const translations = {
     ur: {
@@ -108,7 +112,7 @@ export function InProgressRide() {
 
   return (
     <div className="flex flex-col gap-4 items-start h-full">
-      <div className="w-full h-48 bg-muted/50 rounded-lg border flex flex-col items-center justify-center text-center space-y-2">
+      <div className="w-full h-48 bg-muted/50 rounded-lg border overflow-hidden">
          <DynamicMap />
       </div>
 

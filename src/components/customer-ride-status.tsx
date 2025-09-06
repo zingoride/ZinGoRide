@@ -14,7 +14,10 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
 
-const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
+const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
+});
 
 
 const driverDetails = {
@@ -82,6 +85,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             await updateDoc(rideRef, {
                 status: 'cancelled_by_customer',
             });
+            // onCancel will be triggered by the snapshot listener on the parent page
         } catch (error) {
             console.error("Error cancelling ride: ", error);
         } finally {
@@ -108,7 +112,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
     return (
         <div className="flex flex-col h-full w-full">
-            <div className="flex-grow relative">
+            <div className="flex-grow">
                 <DynamicMap />
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl z-10 border-t-4 border-primary shadow-2xl">
