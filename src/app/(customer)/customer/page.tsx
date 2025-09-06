@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
@@ -11,16 +10,14 @@ import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Map } from 'lucide-react';
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
-    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setIsClient(true);
         const savedRideId = localStorage.getItem('activeRideId');
         if (savedRideId) {
             setRideId(savedRideId);
@@ -64,16 +61,14 @@ const CustomerPage = () => {
         setRideId(null);
     };
 
-    const renderMap = () => {
-        if(!isClient) return <Skeleton className="w-full h-full bg-muted animate-pulse" />;
-        
+    const renderMapPlaceholder = () => {
         return (
-            <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={false} style={{height: '100%', width: '100%'}}>
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-            </MapContainer>
+             <div className="w-full h-full bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                    <Map className="h-16 w-16 mx-auto" />
+                    <p>Map View</p>
+                </div>
+            </div>
         )
     }
 
@@ -86,7 +81,7 @@ const CustomerPage = () => {
              return (
                  <div className="relative w-full h-full">
                     <div className="absolute inset-0 z-0">
-                        {renderMap()}
+                        {renderMapPlaceholder()}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                         <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
@@ -101,7 +96,7 @@ const CustomerPage = () => {
     return (
         <div className="relative h-full w-full">
             <div className="absolute inset-0 z-0">
-                {renderMap()}
+                {renderMapPlaceholder()}
             </div>
             <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                  <Card className="shadow-lg rounded-t-2xl">

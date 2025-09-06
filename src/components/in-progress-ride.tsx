@@ -8,6 +8,7 @@ import {
   X,
   Star,
   Navigation,
+  Map as MapIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,16 +19,11 @@ import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import { Skeleton } from './ui/skeleton';
-import type { Icon } from 'leaflet';
-
 
 const translations = {
     ur: {
         toPickup: "Pickup ke raaste par",
         toDropoff: "Dropoff ke raaste par",
-        mapPlaceholder: "Live Map Placeholder",
         riderInfo: "Rider ki Maloomat",
         rideDetails: "Safar ki Tafseelat",
         pickupLocation: "Uthanay ki Jagah",
@@ -44,7 +40,6 @@ const translations = {
     en: {
         toPickup: "On the way to Pickup",
         toDropoff: "On the way to Dropoff",
-        mapPlaceholder: "Live Map Placeholder",
         riderInfo: "Rider Information",
         rideDetails: "Ride Details",
         pickupLocation: "Pickup Location",
@@ -67,12 +62,8 @@ export function InProgressRide() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
-  const [isClient, setIsClient] = useState(false);
-  const [L, setL] = useState<any>(null);
 
   useEffect(() => {
-    setIsClient(true);
-    import('leaflet').then(leaflet => setL(leaflet));
     setIsNavigating(true);
   }, []);
 
@@ -108,32 +99,12 @@ export function InProgressRide() {
     cancelRideInContext();
   }
 
-  const driverIcon: Icon | null = L ? new L.Icon({
-      iconUrl: '/car-pin.png',
-      iconSize: [35, 35],
-      iconAnchor: [17, 35],
-  }) : null;
-
-  const customerIcon: Icon | null = L ? new L.Icon({
-      iconUrl: '/customer-pin.png',
-      iconSize: [35, 35],
-      iconAnchor: [17, 35],
-  }) : null;
-
-  const renderMap = () => {
-    if(!isClient || !L || !driverIcon || !customerIcon) return <Skeleton className="w-full h-full bg-muted" />;
-
-    return (
-      <MapContainer center={[24.88, 67.06]} zoom={13} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-          <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={[24.86, 67.04]} icon={driverIcon} />
-          <Marker position={[24.90, 67.08]} icon={customerIcon} />
-      </MapContainer>
-    );
-  }
+  const renderMapPlaceholder = () => (
+      <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
+        <MapIcon className="h-24 w-24 text-muted-foreground" />
+        <p className="mt-4 font-semibold text-muted-foreground">Live map view</p>
+      </div>
+  );
 
   return (
     <div className="flex flex-col gap-8 items-start h-full">
@@ -143,7 +114,7 @@ export function InProgressRide() {
                  {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
             </Badge>
         </div>
-        {renderMap()}
+        {renderMapPlaceholder()}
       </div>
 
       <div className="flex flex-col gap-6 w-full">

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, Star, Car, X } from 'lucide-react';
+import { Loader2, Phone, Star, Car, X, Map } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
@@ -12,11 +12,6 @@ import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Skeleton } from './ui/skeleton';
-import type { Icon } from 'leaflet';
-
 
 const driverDetails = {
     name: 'Ali Khan',
@@ -37,7 +32,6 @@ const translations = {
         findingDriver: "Driver dhoonda ja raha hai...",
         call: "Call",
         cancelRide: "Ride Cancel Karein",
-        mapPlaceholder: "Live Map Placeholder",
         cancelling: "Cancelling...",
     },
     en: {
@@ -48,7 +42,6 @@ const translations = {
         findingDriver: "Finding a driver...",
         call: "Call",
         cancelRide: "Cancel Ride",
-        mapPlaceholder: "Live Map Placeholder",
         cancelling: "Cancelling...",
     }
 };
@@ -59,13 +52,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const { language } = useLanguage();
     const t = translations[language];
     const { status, driverName, driverAvatar } = ride;
-    const [isClient, setIsClient] = useState(false);
-    const [L, setL] = useState<any>(null);
-
-    useEffect(() => {
-        setIsClient(true);
-        import('leaflet').then(leaflet => setL(leaflet));
-    }, []);
 
     useEffect(() => {
         if (status === 'booked') {
@@ -115,35 +101,14 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
-    
-    const driverIcon: Icon | null = L ? new L.Icon({
-        iconUrl: '/car-pin.png',
-        iconRetinaUrl: '/car-pin.png',
-        iconSize: [35, 35],
-        iconAnchor: [17, 35],
-        popupAnchor: [0, -35],
-    }) : null;
-
-    const renderMap = () => {
-      if(!isClient || !L || !driverIcon) return <Skeleton className="w-full h-full bg-muted" />;
-
-      return (
-        <MapContainer center={[24.9, 67.1]} zoom={14} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {showDriverDetails && driverIcon && (
-                <Marker position={[24.91, 67.08]} icon={driverIcon} />
-            )}
-        </MapContainer>
-      )
-    }
 
     return (
         <div className="flex flex-col h-full w-full">
              <div className="flex-1 bg-muted flex items-center justify-center relative">
-                 {renderMap()}
+                 <div className="text-center text-muted-foreground">
+                    <Map className="h-24 w-24 mx-auto" />
+                    <p className="mt-2 font-semibold">Live Map View</p>
+                </div>
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
                 <CardHeader>

@@ -2,12 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
 import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wifi, WifiOff, DollarSign } from 'lucide-react';
+import { Wifi, WifiOff, DollarSign, Map } from 'lucide-react';
 import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
@@ -15,8 +14,6 @@ import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const translations = {
   ur: {
@@ -57,11 +54,6 @@ export default function Dashboard() {
   const { activeRide, completedRide } = useRide();
   const { language } = useLanguage();
   const t = translations[language];
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (!isOnline) {
@@ -129,21 +121,6 @@ export default function Dashboard() {
     );
   }
 
-  const renderMap = () => {
-      if (!isClient) {
-          return <Skeleton className="w-full h-full bg-muted" />;
-      }
-      return (
-        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-        </MapContainer>
-      )
-  }
-
-
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
       {rideRequests.length > 0 ? (
@@ -156,11 +133,13 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-4 h-[calc(100vh-12rem)]">
-            <div className="w-full h-1/2 rounded-lg overflow-hidden border">
-                {renderMap()}
+            <div className="w-full h-1/2 rounded-lg border bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground space-y-2">
+                    <Map className="h-16 w-16 mx-auto" />
+                    <h2 className="text-2xl font-semibold">{t.searchingForRides}</h2>
+                    <p>{t.newRideRequestsWillAppear}</p>
+                </div>
             </div>
-            <h2 className="text-2xl font-semibold">{t.searchingForRides}</h2>
-            <p className="text-muted-foreground">{t.newRideRequestsWillAppear}</p>
         </div>
       )}
     </div>

@@ -1,113 +1,98 @@
 
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Car, Users } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, Car, Users, Circle } from 'lucide-react';
 import type { User as UserType } from '../users/page';
 import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import type { Icon } from 'leaflet';
-
-const generateRandomPosition = (baseLat: number, baseLng: number): [number, number] => {
-  const lat = baseLat + (Math.random() - 0.5) * 0.1;
-  const lng = baseLng + (Math.random() - 0.5) * 0.1;
-  return [lat, lng];
-};
+import { Badge } from '@/components/ui/badge';
 
 const LiveMapPage = () => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
-  const [L, setL] = useState<any>(null);
 
   useEffect(() => {
-    setIsClient(true);
-    import('leaflet').then(leaflet => setL(leaflet));
+    setLoading(true);
+    const usersCollection = collection(db, "users");
+    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+        const usersList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as UserType));
+        setUsers(usersList);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching users:", error);
+        setLoading(false);
+    });
 
-    const fetchUsers = async () => {
-      setLoading(true);
-      const usersCollection = collection(db, "users");
-      const usersSnapshot = await getDocs(usersCollection);
-      const usersList = usersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as UserType));
-      setUsers(usersList);
-      setLoading(false);
-    };
-    fetchUsers();
+    return () => unsubscribe();
   }, []);
 
-  const driverIcon = useMemo((): Icon | null => {
-    if (!L) return null;
-    return new L.Icon({
-      iconUrl: '/car-pin.png',
-      iconRetinaUrl: '/car-pin.png',
-      iconSize: [35, 35],
-      iconAnchor: [17, 35],
-      popupAnchor: [0, -35],
-    });
-  }, [L]);
+  const filteredUsers = users.filter(user => {
+    if (filter === 'all') return true;
+    return user.type.toLowerCase() === filter;
+  });
 
-  const customerIcon = useMemo((): Icon | null => {
-    if (!L) return null;
-    return new L.Icon({
-      iconUrl: '/customer-pin.png',
-      iconRetinaUrl: '/customer-pin.png',
-      iconSize: [35, 35],
-      iconAnchor: [17, 35],
-      popupAnchor: [0, -35],
-    });
-  }, [L]);
-
-  const filteredUsers = useMemo(() => {
-    if (filter === 'all') return users;
-    return users.filter(user => user.type.toLowerCase() === filter);
-  }, [filter, users]);
-
-  const renderMap = () => {
-    if (!isClient || !L || loading) {
-       return (
-        <div className="p-4 space-y-4">
-            <Skeleton className="h-12 w-1/4" />
-            <Skeleton className="w-full h-[calc(100vh-10rem)]" />
-        </div>
-       )
+  const renderUserCards = () => {
+    if (loading) {
+      return Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index}>
+            <CardHeader className="flex flex-row items-center gap-4">
+                 <Skeleton className="h-12 w-12 rounded-full" />
+                 <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                 </div>
+            </CardHeader>
+        </Card>
+      ));
     }
 
-    return (
-        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {filteredUsers.map(user => {
-            const position = generateRandomPosition(24.9, 67.1); // Karachi base coordinates
-            const icon = user.type === 'Driver' ? driverIcon : customerIcon;
+    if (filteredUsers.length === 0) {
+        return <p className="col-span-full text-center text-muted-foreground">No users found for this filter.</p>
+    }
 
-            if (!icon) return null;
-
-            return (
-                <Marker key={user.id} position={position} icon={icon}>
-                <Popup>
-                    <b>{user.name}</b><br/>
-                    {user.email}<br/>
-                    Status: {user.approvalStatus}
-                </Popup>
-                </Marker>
-            )
-            })}
-        </MapContainer>
-    );
-  }
+    return filteredUsers.map(user => (
+      <Card key={user.id} className="shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={`https://picsum.photos/seed/${user.id}/100`} data-ai-hint="portrait" />
+            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <CardTitle className="text-base">{user.name}</CardTitle>
+            <CardDescription>{user.email}</CardDescription>
+          </div>
+           <Badge variant={user.type === 'Driver' ? 'secondary' : 'outline'}>
+                {user.type === 'Driver' ? <Car className="mr-2 h-4 w-4" /> : <User className="mr-2 h-4 w-4" />}
+                {user.type}
+            </Badge>
+        </CardHeader>
+        <CardFooter className="text-xs text-muted-foreground justify-between">
+            <div>
+                 <p>Status: {user.status}</p>
+            </div>
+            <div className="flex items-center gap-1">
+                <Circle className={`h-2 w-2 ${user.status === 'Active' ? 'fill-green-500 text-green-500' : 'fill-gray-400 text-gray-400'}`} />
+                <span>{user.approvalStatus}</span>
+            </div>
+        </CardFooter>
+      </Card>
+    ));
+  };
 
   return (
     <div className="flex flex-col h-full gap-4">
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Live Fleet Overview</CardTitle>
+          <div className="space-y-1">
+             <CardTitle>Live Fleet Overview</CardTitle>
+             <CardDescription>View all active users in a list instead of a map.</CardDescription>
+          </div>
           <div className="w-[180px]">
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger>
@@ -122,8 +107,8 @@ const LiveMapPage = () => {
           </div>
         </CardHeader>
       </Card>
-      <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
-        {renderMap()}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {renderUserCards()}
       </div>
     </div>
   );
