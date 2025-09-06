@@ -34,8 +34,8 @@ const logoMap: Record<LogoType, ComponentType<{ className?: string }>> = {
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
-  const [logo, setLogo] = useState<LogoType>('ZR');
-  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => ZRLogoComponent);
+  const [logo, setLogo] = useState<LogoType>('Bike');
+  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Bike);
 
   useEffect(() => {
     const storedLogo = localStorage.getItem('appLogo') as LogoType;
@@ -44,8 +44,8 @@ export function LogoProvider({ children }: { children: ReactNode }) {
       setLogoComponent(() => logoMap[storedLogo]);
     } else {
       // If nothing is stored, or stored logo is invalid, default to ZR
-      setLogo('ZR');
-      setLogoComponent(() => ZRLogoComponent);
+      setLogo('Bike');
+      setLogoComponent(() => Bike);
     }
   }, []);
 

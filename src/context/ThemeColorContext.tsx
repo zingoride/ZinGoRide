@@ -13,7 +13,7 @@ interface ThemeColorContextType {
 const ThemeColorContext = createContext<ThemeColorContextType | undefined>(undefined);
 
 export function ThemeColorProvider({ children }: { children: ReactNode }) {
-  const [themeColor, setThemeColor] = useState<ThemeColor>('theme-blue');
+  const [themeColor, setThemeColor] = useState<ThemeColor>('theme-lime');
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('themeColor') as ThemeColor;
