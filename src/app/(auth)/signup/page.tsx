@@ -68,7 +68,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const t = translations[language];
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     try {
