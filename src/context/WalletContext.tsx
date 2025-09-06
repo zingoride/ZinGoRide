@@ -3,33 +3,46 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 
 interface WalletContextType {
   balance: number;
-  addFunds: (amount: number) => Promise<void>;
+  addFunds: (amount: number) => Promise<void>; // This might not be needed on client
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [balance, setBalance] = useState(250); // Start with a default mock balance
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    // In a real app, you would fetch this from your DB.
-    // For now, we just use a static mock balance.
     if (user) {
-        setBalance(250); 
+      const userDocRef = doc(db, "users", user.uid);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          setBalance(doc.data().walletBalance || 0);
+        }
+      });
+      return () => unsubscribe();
     } else {
-        setBalance(0);
+      setBalance(0);
     }
   }, [user]);
 
   const addFunds = useCallback(async (amount: number) => {
-    // This function will just update the local state for now.
-    setBalance(prev => prev + amount);
-  }, []);
+    // This is now mainly handled by the admin panel or cloud functions for security.
+    // This local update is just for immediate UI feedback if needed, but the source of truth is Firestore.
+    if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            const currentBalance = docSnap.data().walletBalance || 0;
+            setBalance(currentBalance + amount); // Optimistic update
+        }
+    }
+  }, [user]);
 
   return (
     <WalletContext.Provider value={{ balance, addFunds }}>

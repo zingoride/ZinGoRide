@@ -10,6 +10,8 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const rideOptions = [
   {
@@ -77,24 +79,31 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
   const handleConfirmRide = async () => {
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+        const rideRef = doc(db, "rides", ride.id);
         const selectedRideDetails = rideOptions.find(r => r.type === selectedRide);
-        const confirmedRide: RideRequest = {
-            ...ride,
+        
+        const updateData = {
             status: 'booked',
             vehicleType: selectedRide as any,
             fare: selectedRideDetails ? parseFloat(selectedRideDetails.price) : 0,
         };
+
+        await updateDoc(rideRef, updateData);
 
         toast({
             title: t.rideConfirmedTitle,
             description: t.rideConfirmedDesc,
         });
 
-        onConfirm(confirmedRide);
+        onConfirm({ ...ride, ...updateData });
+
+    } catch (error) {
+        console.error("Error confirming ride: ", error);
+        toast({ variant: "destructive", title: t.rideUpdateError });
+    } finally {
         setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

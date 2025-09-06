@@ -1,9 +1,11 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { RideRequest } from '@/lib/types';
 import { useAuth } from './AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 export type RideDetails = RideRequest;
 
@@ -23,12 +25,43 @@ export function RideProvider({ children }: { children: ReactNode }) {
   const [completedRide, setCompletedRide] = useState<RideDetails | null>(null);
   const { user } = useAuth();
 
-  const acceptRide = (ride: RideDetails) => {
+  // Listen for changes on the active ride document
+  useEffect(() => {
+    if (activeRide) {
+      const unsub = onSnapshot(doc(db, "rides", activeRide.id), (doc) => {
+        if (doc.exists()) {
+          const data = { id: doc.id, ...doc.data() } as RideDetails;
+          if (data.status === 'completed') {
+            completeRide();
+          } else if (data.status === 'cancelled_by_customer') {
+            cancelRide();
+          } else {
+            setActiveRide(data);
+          }
+        } else {
+           setActiveRide(null); // Ride document was deleted
+        }
+      });
+      return () => unsub();
+    }
+  }, [activeRide?.id]);
+
+  const acceptRide = async (ride: RideDetails) => {
     if (!user) return;
     
-    // Mock accepting ride
-    setCompletedRide(null);
-    setActiveRide({ ...ride, driverId: user.uid, driverName: user.displayName || 'Driver' });
+    try {
+        const rideRef = doc(db, "rides", ride.id);
+        const rideUpdate = {
+            driverId: user.uid,
+            driverName: user.displayName || 'Driver',
+            status: 'accepted' as const,
+        };
+        await updateDoc(rideRef, rideUpdate);
+        setActiveRide({ ...ride, ...rideUpdate });
+        setCompletedRide(null);
+    } catch(error) {
+        console.error("Error accepting ride: ", error);
+    }
   };
 
   const completeRide = () => {

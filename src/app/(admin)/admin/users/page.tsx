@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
 import { useToast } from "@/hooks/use-toast";
-import { mockUsers } from "@/lib/mock-data";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, updateDoc, query, where } from "firebase/firestore";
 
 
 type UserStatus = 'Active' | 'Inactive';
@@ -60,23 +61,50 @@ export default function UsersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-      setUsers(mockUsers);
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const usersCollection = collection(db, "users");
+        const usersSnapshot = await getDocs(usersCollection);
+        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersList);
+      } catch (error) {
+        console.error("Error fetching users: ", error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching users",
+          description: "Could not retrieve user data from Firestore.",
+        });
+      }
       setLoading(false);
-  }, []);
+    };
+
+    fetchUsers();
+  }, [toast]);
 
 
-  const handleStatusChange = (userId: string, newStatus: ApprovalStatus) => {
-    setUsers(prevUsers => 
-        prevUsers.map(user => 
-            user.id === userId ? { ...user, approvalStatus: newStatus } : user
-        )
-    );
-    toast({
-        title: "Status Updated",
-        description: `User status changed to ${newStatus}`,
-    });
-    if (selectedUser?.id === userId) {
-        setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
+  const handleStatusChange = async (userId: string, newStatus: ApprovalStatus) => {
+    try {
+        const userDocRef = doc(db, "users", userId);
+        await updateDoc(userDocRef, { approvalStatus: newStatus });
+        setUsers(prevUsers => 
+            prevUsers.map(user => 
+                user.id === userId ? { ...user, approvalStatus: newStatus } : user
+            )
+        );
+        toast({
+            title: "Status Updated",
+            description: `User status changed to ${newStatus}`,
+        });
+        if (selectedUser?.id === userId) {
+            setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
+        }
+    } catch (error) {
+        console.error("Error updating status: ", error);
+         toast({
+            variant: "destructive",
+            title: "Error updating status",
+        });
     }
   };
   

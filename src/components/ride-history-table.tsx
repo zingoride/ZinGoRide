@@ -15,7 +15,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import type { RideRequest } from "@/lib/types";
 import { format } from "date-fns";
-import { mockRides } from "@/lib/mock-data";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const translations = {
   ur: {
@@ -56,26 +57,37 @@ export function RideHistoryTable({ userType = 'rider' }: { userType?: 'rider' | 
   const t = translations[language];
 
   useEffect(() => {
-    const fetchRides = () => {
+    const fetchRides = async () => {
         setLoading(true);
         if (!user && userType !== 'admin') {
             setLoading(false);
             return;
         }
-        
-        let filteredRides: RideRequest[] = mockRides.map(ride => ({...ride, createdAt: new Date()}));
 
-        if (userType === 'rider' && user) {
-            filteredRides = filteredRides.filter(ride => ride.driverId === user.uid);
-        } else if (userType === 'customer' && user) {
-            filteredRides = filteredRides.filter(ride => ride.customerId === user.uid);
+        try {
+            const ridesCollection = collection(db, "rides");
+            let q;
+
+            if (userType === 'rider' && user) {
+                q = query(ridesCollection, where("driverId", "==", user.uid), where("status", "in", ["completed", "cancelled_by_driver", "cancelled_by_customer"]), orderBy("createdAt", "desc"));
+            } else if (userType === 'customer' && user) {
+                q = query(ridesCollection, where("customerId", "==", user.uid), where("status", "in", ["completed", "cancelled_by_driver", "cancelled_by_customer"]), orderBy("createdAt", "desc"));
+            } else { // admin
+                q = query(ridesCollection, where("status", "in", ["completed", "cancelled_by_driver", "cancelled_by_customer"]), orderBy("createdAt", "desc"));
+            }
+
+            const rideSnapshot = await getDocs(q);
+            const ridesList = rideSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: (doc.data().createdAt as any).toDate()
+            } as RideRequest));
+            setRides(ridesList);
+        } catch (error) {
+            console.error("Error fetching ride history: ", error);
+        } finally {
+            setLoading(false);
         }
-        
-        // Sort the data as it's no longer ordered by Firestore
-        filteredRides.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
-
-        setRides(filteredRides);
-        setLoading(false);
     };
 
     fetchRides();

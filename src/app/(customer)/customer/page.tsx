@@ -8,7 +8,8 @@ import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
 import type { RideRequest } from '@/lib/types';
 import { CustomerInvoice } from '@/components/customer-invoice';
-import { Card } from '@/components/ui/card';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function CustomerPage() {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
@@ -17,35 +18,22 @@ export default function CustomerPage() {
     useEffect(() => {
         if (!rideId) return;
 
-        // Mocking the Firestore listener
-        const ride = currentRide;
-        if (ride) {
-            // Simulate ride status changes for mock data
-            const t1 = setTimeout(() => {
-                setCurrentRide(prev => prev ? {...prev, status: 'accepted'} : null);
-            }, 6000);
-            const t2 = setTimeout(() => {
-                setCurrentRide(prev => prev ? {...prev, status: 'in_progress'} : null);
-            }, 12000);
-             const t3 = setTimeout(() => {
-                setCurrentRide(prev => prev ? {...prev, status: 'completed'} : null);
-            }, 18000);
-
-            return () => {
-                clearTimeout(t1);
-                clearTimeout(t2);
-                clearTimeout(t3);
+        const rideRef = doc(db, "rides", rideId);
+        const unsubscribe = onSnapshot(rideRef, (doc) => {
+            if (doc.exists()) {
+                setCurrentRide({ id: doc.id, ...doc.data() } as RideRequest);
+            } else {
+                handleReset();
             }
-        }
-    }, [rideId, currentRide]);
+        });
+
+        return () => unsubscribe();
+    }, [rideId]);
     
 
     const handleFindRide = (ride: RideRequest) => {
         setRideId(ride.id);
-        // Simulate Firestore latency
-        setTimeout(() => {
-            setCurrentRide(ride);
-        }, 500);
+        setCurrentRide(ride);
     };
     
     const handleReset = () => {

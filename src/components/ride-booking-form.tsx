@@ -10,7 +10,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
-import { FieldValue } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 
 const translations = {
@@ -51,20 +52,33 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
     }
     setLoading(true);
 
-    // Simulate API call to create a ride
-    setTimeout(() => {
-        const rideDetails: RideRequest = {
-            id: `ride_${new Date().getTime()}`,
+    try {
+        const rideDetails: Omit<RideRequest, 'id' | 'createdAt'> = {
             pickup,
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             status: 'pending',
-            createdAt: new Date(),
+            // other fields are optional for now
         }
-        onFindRide(rideDetails);
+        
+        const ridesCollection = collection(db, "rides");
+        const docRef = await addDoc(ridesCollection, {
+            ...rideDetails,
+            createdAt: serverTimestamp(),
+        });
+        
+        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date() });
+
+    } catch (error) {
+        console.error("Error creating ride request:", error);
+        toast({
+            variant: "destructive",
+            title: t.rideRequestError,
+        });
+    } finally {
         setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

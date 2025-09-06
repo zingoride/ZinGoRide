@@ -47,7 +47,7 @@ const translations = {
 }
 
 export function RideRequest(props: RideDetails) {
-  const { id, pickup, dropoff, fare, eta } = props;
+  const { id, pickup, dropoff, fare = 0, eta = '5 min' } = props;
   const [timeLeft, setTimeLeft] = useState(10);
   const [isExpired, setIsExpired] = useState(false);
   const { acceptRide } = useRide();

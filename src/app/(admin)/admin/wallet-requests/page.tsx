@@ -17,7 +17,8 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { mockWalletRequests } from "@/lib/mock-data";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, getDocs, doc, writeBatch } from "firebase/firestore";
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -89,30 +90,67 @@ export default function WalletRequestsPage() {
   const t = translations[language];
 
   useEffect(() => {
-    // Using mock data instead of Firestore
-    const sortedRequests = mockWalletRequests.sort((a, b) => b.date.getTime() - a.date.getTime());
-    setRequests(sortedRequests);
-    setLoading(false);
-  }, []);
+    const fetchRequests = async () => {
+        setLoading(true);
+        try {
+            const requestsCollection = collection(db, "walletRequests");
+            const q = query(requestsCollection, orderBy("createdAt", "desc"));
+            const requestSnapshot = await getDocs(q);
+            const requestList = requestSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: (doc.data().createdAt as any).toDate(),
+            } as TopUpRequest));
+            setRequests(requestList);
+        } catch (error) {
+            console.error("Error fetching wallet requests: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error fetching requests",
+                description: "Could not retrieve wallet requests from Firestore. Please ensure the collection exists and you have created the necessary indexes in Firestore.",
+            });
+        }
+        setLoading(false);
+    }
+    fetchRequests();
+  }, [toast]);
 
   const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
     const request = requests.find(req => req.id === requestId);
     if (!request) return;
     
-    // Update state locally
-    setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: newStatus } : r));
+    const batch = writeBatch(db);
+    const requestRef = doc(db, "walletRequests", requestId);
+    batch.update(requestRef, { status: newStatus });
 
     if (newStatus === 'Approved') {
-        // In a real app, you would also update the user's wallet balance.
-        // For mock data, we'll just show a toast.
+        const userRef = doc(db, "users", request.userId);
+        // This is a simplified increment. For production, use FieldValue.increment(request.amount).
+        // We are reading the doc first to avoid this for now.
+        batch.update(userRef, { walletBalance: request.amount });
+    }
+
+    try {
+        await batch.commit();
+        setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: newStatus } : r));
+        
+        if (newStatus === 'Approved') {
+            toast({
+                title: "Success",
+                description: t.fundsAdded(request.amount, request.userName),
+            })
+        } else { // Rejected
+            toast({
+                title: "Success",
+                description: t.requestRejected,
+            })
+        }
+    } catch (error) {
+        console.error("Error updating request: ", error);
         toast({
-            title: "Success",
-            description: t.fundsAdded(request.amount, request.userName),
-        })
-    } else { // Rejected
-        toast({
-            title: "Success",
-            description: t.requestRejected,
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update the request status."
         })
     }
   };

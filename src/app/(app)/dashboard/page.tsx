@@ -13,7 +13,8 @@ import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
-import { mockBookedRide } from '@/lib/mock-data';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 
 
 const translations = {
@@ -62,13 +63,27 @@ export default function Dashboard() {
       return;
     }
     
-    // Using mock data
-    const timeout = setTimeout(() => {
-        setRideRequests([mockBookedRide]);
-    }, 3000); // show a ride request after 3 seconds
+    const ridesRef = collection(db, "rides");
+    const q = query(
+      ridesRef, 
+      where("status", "==", "booked"), 
+      orderBy("createdAt", "desc"),
+      limit(5) // Limit to the latest 5 booked rides
+    );
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const requests: RideRequest[] = [];
+      querySnapshot.forEach((doc) => {
+        // Simple check to ensure ride isn't already handled by this driver
+        if (!activeRide || activeRide.id !== doc.id) {
+           requests.push({ id: doc.id, ...doc.data() } as RideRequest);
+        }
+      });
+      setRideRequests(requests);
+    });
 
-    return () => clearTimeout(timeout);
-  }, [isOnline]);
+    return () => unsubscribe();
+  }, [isOnline, activeRide]);
 
   if (completedRide) {
     return <RideInvoice ride={completedRide} />;

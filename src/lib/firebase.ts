@@ -1,7 +1,7 @@
 
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
-// import { getFirestore } from "firebase/firestore"; - Removing Firestore dependency
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -21,7 +21,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Services
 export const auth = getAuth(app);
-// export const db = getFirestore(app); - Removing Firestore dependency
+export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 // Analytics (will only work in the browser)
@@ -33,7 +33,3 @@ if (typeof window !== "undefined") {
     }
   });
 }
-
-// Mock db object to avoid breaking imports
-export const db = {};
-

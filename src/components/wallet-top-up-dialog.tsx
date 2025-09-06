@@ -20,6 +20,8 @@ import { Separator } from './ui/separator';
 import { Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
 const paymentDetails = {
@@ -84,17 +86,39 @@ export function WalletTopUpDialog({ trigger, userType }: { trigger: React.ReactN
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user) return;
-
         setLoading(true);
-        // Simulate sending request
-        setTimeout(() => {
+        
+        const form = e.currentTarget;
+        const amount = (form.elements.namedItem('amount') as HTMLInputElement).value;
+        const transactionId = (form.elements.namedItem('transactionId') as HTMLInputElement).value;
+
+        try {
+            await addDoc(collection(db, 'walletRequests'), {
+                userId: user.uid,
+                userName: user.displayName,
+                userType,
+                amount: parseFloat(amount),
+                transactionId,
+                status: 'Pending',
+                createdAt: serverTimestamp(),
+            });
+            
             toast({
                 title: t.requestSent,
                 description: t.requestSentDesc,
             });
             setOpen(false);
+
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: 'destructive',
+                title: t.error,
+                description: t.errorDesc,
+            });
+        } finally {
             setLoading(false);
-        }, 1500)
+        }
     };
 
     return (
