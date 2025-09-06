@@ -32,6 +32,8 @@ export default function MapWrapper({ center, zoom, children, className }: MapWra
         zoom={zoom}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
+        // A unique key can force a re-render, but we want to avoid that.
+        // The structural sharing of the component is the key here.
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
