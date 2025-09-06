@@ -8,8 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { carIcon, customerIcon } from '@/components/dynamic-map';
+import L from 'leaflet';
 import type { User } from '@/app/(admin)/admin/users/page';
+
+// Define custom icons directly in the file that uses them
+export const carIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/car.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/car.png',
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
+
+export const customerIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/user-male-circle.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/user-male-circle.png',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
 
 // Dynamically import the map component to ensure it's client-side only
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
