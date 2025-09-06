@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -10,6 +9,7 @@ import {
   LayoutDashboard,
   CreditCard,
   Banknote,
+  Map,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const translations = {
     settings: "Settings",
     walletRequests: "Wallet Requests",
     payouts: "Payouts",
+    liveMap: "Live Map",
   },
   en: {
     dashboard: "Dashboard",
@@ -31,6 +32,7 @@ const translations = {
     settings: "Settings",
     walletRequests: "Wallet Requests",
     payouts: "Payouts",
+    liveMap: "Live Map",
   },
 };
 
@@ -46,6 +48,7 @@ export function AdminSidebar() {
     { href: "/admin/users", label: t.users, icon: Users },
     { href: "/admin/wallet-requests", label: t.walletRequests, icon: CreditCard },
     { href: "/admin/payouts", label: t.payouts, icon: Banknote },
+    { href: "/admin/live-map", label: t.liveMap, icon: Map },
     { href: "/admin/settings", label: t.settings, icon: Settings },
   ];
 
