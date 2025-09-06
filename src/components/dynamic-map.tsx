@@ -1,4 +1,3 @@
-
 'use client';
 
 import MapWrapper from './MapWrapper';
@@ -58,4 +57,3 @@ export default function DynamicMap({
     </MapWrapper>
   );
 }
-
