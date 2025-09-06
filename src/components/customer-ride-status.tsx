@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Phone, Star, Car, X, Map } from 'lucide-react';
@@ -12,6 +13,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
+
+const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
+
 
 const driverDetails = {
     name: 'Ali Khan',
@@ -89,7 +93,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         const eta = language === 'ur' ? driverDetails.etaUr : driverDetails.etaEn;
         switch(status) {
             case 'booked':
-                return { title: t.rideStatus, description: t.findingDesc };
+                 return { title: t.rideStatus, description: t.findingDesc };
             case 'accepted':
                  return { title: t.rideStatus, description: t.acceptedDesc(eta) };
             case 'in_progress':
@@ -103,7 +107,10 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
-        <div className="flex flex-col h-full w-full bg-background items-center justify-end">
+        <div className="flex flex-col h-full w-full">
+            <div className="flex-grow relative">
+                <DynamicMap />
+            </div>
             <Card className="w-full flex flex-col rounded-t-2xl z-10 border-t-4 border-primary shadow-2xl">
                 <CardHeader>
                     <CardTitle>{title}</CardTitle>

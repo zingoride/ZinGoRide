@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import {
   MapPin,
   Phone,
@@ -19,6 +20,8 @@ import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+
+const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
 
 const translations = {
     ur: {
@@ -82,6 +85,9 @@ export function InProgressRide() {
   
   const handleNavigate = () => {
     setIsNavigating(true);
+    // In a real app, you would open Google Maps or another navigation app.
+    const destination = rideStage === 'pickup' ? pickup : dropoff;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
   };
   
   const handleStartRide = () => {
@@ -101,18 +107,20 @@ export function InProgressRide() {
 
 
   return (
-    <div className="flex flex-col gap-8 items-start h-full">
-      <div className="w-full bg-muted/50 p-4 rounded-lg border flex flex-col items-center justify-center text-center space-y-2 h-40">
-        <Badge variant="secondary" className="text-lg py-2 px-4 shadow-lg">
-              {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
-        </Badge>
-        <p className="text-sm text-muted-foreground">Navigation and map view would appear here.</p>
+    <div className="flex flex-col gap-4 items-start h-full">
+      <div className="w-full h-48 bg-muted/50 rounded-lg border flex flex-col items-center justify-center text-center space-y-2">
+         <DynamicMap />
       </div>
 
-      <div className="flex flex-col gap-6 w-full">
+      <div className="flex flex-col gap-4 w-full">
         <Card>
-          <CardHeader>
-            <CardTitle>{t.riderInfo}</CardTitle>
+          <CardHeader className='pb-3'>
+             <div className="flex items-center justify-between">
+                <CardTitle>{t.riderInfo}</CardTitle>
+                <Badge variant="secondary" className="text-md py-1 px-3 shadow-sm">
+                    {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
+                </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between gap-4">
