@@ -26,6 +26,7 @@ export default function CustomerPage() {
 
     useEffect(() => {
         if (!rideId) {
+            setCurrentRide(null);
             localStorage.removeItem('activeRideId');
             return;
         }
@@ -34,7 +35,12 @@ export default function CustomerPage() {
         const rideRef = doc(db, "rides", rideId);
         const unsubscribe = onSnapshot(rideRef, (doc) => {
             if (doc.exists()) {
-                setCurrentRide({ id: doc.id, ...doc.data() } as RideRequest);
+                const rideData = { id: doc.id, ...doc.data() } as RideRequest;
+                if (rideData.status === 'cancelled_by_customer') {
+                    handleReset();
+                } else {
+                    setCurrentRide(rideData);
+                }
             } else {
                 handleReset();
             }
@@ -59,7 +65,7 @@ export default function CustomerPage() {
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
-        // 'pending' is before vehicle selection.
+        
         if (currentRide.status === 'pending') {
              return (
                  <div className="relative w-full h-full">
@@ -80,6 +86,7 @@ export default function CustomerPage() {
                  </div>
              )
         }
+        
         // 'booked', 'accepted', 'in_progress', etc. will now show the status screen
         return <div className='h-full md:h-[calc(100vh-4rem)]'><CustomerRideStatus ride={currentRide} onCancel={handleReset} /></div>;
     }
@@ -94,6 +101,7 @@ export default function CustomerPage() {
                     style={{objectFit: 'cover'}}
                     data-ai-hint="street map aerial"
                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent"></div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                  <Card className="shadow-lg rounded-t-2xl">
