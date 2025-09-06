@@ -1,10 +1,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, Star, Car, X, Map } from 'lucide-react';
+import { Loader2, Phone, Star, Car, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
@@ -12,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
+import 'leaflet/dist/leaflet.css';
 
 const driverDetails = {
     name: 'Ali Khan',
@@ -53,6 +55,10 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const t = translations[language];
     const { status, driverName, driverAvatar } = ride;
 
+    const MapContainer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false }), []);
+    const TileLayer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false }), []);
+    const Marker = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false }), []);
+    
     useEffect(() => {
         if (status === 'booked') {
             const progressTimer = setInterval(() => {
@@ -105,10 +111,10 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     return (
         <div className="flex flex-col h-full w-full">
              <div className="flex-1 bg-muted flex items-center justify-center relative">
-                 <div className="text-center text-muted-foreground">
-                    <Map className="h-24 w-24 mx-auto" />
-                    <p className="mt-2 font-semibold">Live Map View</p>
-                </div>
+                <MapContainer center={[24.8607, 67.0011]} zoom={14} style={{ height: "100%", width: "100%" }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {showDriverDetails && <Marker position={[24.8607, 67.0011]} />}
+                </MapContainer>
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
                 <CardHeader>

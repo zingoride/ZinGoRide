@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import {
   MapPin,
   Phone,
   X,
   Star,
   Navigation,
-  Map as MapIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import 'leaflet/dist/leaflet.css';
 
 const translations = {
     ur: {
@@ -63,6 +64,12 @@ export function InProgressRide() {
   const { toast } = useToast();
   const t = translations[language];
 
+  const MapContainer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false }), []);
+  const TileLayer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false }), []);
+  const Marker = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false }), []);
+  const Polyline = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.Polyline), { ssr: false }), []);
+
+
   useEffect(() => {
     setIsNavigating(true);
   }, []);
@@ -74,6 +81,10 @@ export function InProgressRide() {
   const { pickup, dropoff, rider, customerName } = activeRide;
   const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: 'https://picsum.photos/seed/sania/100/100' };
   
+  // Dummy positions for pickup and dropoff
+  const pickupPosition: [number, number] = [24.88, 67.03]; // Saddar
+  const dropoffPosition: [number, number] = [24.82, 67.03]; // Clifton
+
   const handleCall = () => {
     if (riderInfo?.phone) {
       window.location.href = `tel:${riderInfo.phone}`;
@@ -99,11 +110,13 @@ export function InProgressRide() {
     cancelRideInContext();
   }
 
-  const renderMapPlaceholder = () => (
-      <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
-        <MapIcon className="h-24 w-24 text-muted-foreground" />
-        <p className="mt-4 font-semibold text-muted-foreground">Live map view</p>
-      </div>
+  const renderMap = () => (
+      <MapContainer center={pickupPosition} zoom={13} style={{ height: "100%", width: "100%" }}>
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <Marker position={pickupPosition} title="Pickup" />
+          <Marker position={dropoffPosition} title="Dropoff" />
+          <Polyline positions={[pickupPosition, dropoffPosition]} color="blue" />
+      </MapContainer>
   );
 
   return (
@@ -114,7 +127,7 @@ export function InProgressRide() {
                  {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
             </Badge>
         </div>
-        {renderMapPlaceholder()}
+        {renderMap()}
       </div>
 
       <div className="flex flex-col gap-6 w-full">
