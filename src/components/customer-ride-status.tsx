@@ -13,11 +13,35 @@ import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
+import L from 'leaflet';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
     loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
 });
+
+// Mock driver/customer icons for the map
+export const carIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/car.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/car.png',
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
+
+export const customerIcon = new L.Icon({
+  iconUrl: 'https://img.icons8.com/ios-filled/50/000000/user-male-circle.png',
+  iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/user-male-circle.png',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
+
+// Mock driver/customer coordinates
+const mockCoordinates = {
+    driver: [24.88, 67.05], // Driver initial position
+    customer: [24.8607, 67.0011] // Customer pickup
+};
 
 
 const driverDetails = {
@@ -106,6 +130,11 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                  return { title: t.rideStatus, description: t.findingDesc };
         }
     }
+    
+    const mapMarkers = [
+        { position: [mockCoordinates.customer[0], mockCoordinates.customer[1]], popupText: 'Your Location', icon: customerIcon },
+        { position: [mockCoordinates.driver[0], mockCoordinates.driver[1]], popupText: 'Driver Location', icon: carIcon }
+    ];
 
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
@@ -113,7 +142,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     return (
         <div className="flex flex-col h-full w-full">
             <div className="flex-grow">
-                <DynamicMap />
+                <DynamicMap markers={mapMarkers} />
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl z-10 border-t-4 border-primary shadow-2xl">
                 <CardHeader>
