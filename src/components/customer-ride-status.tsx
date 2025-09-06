@@ -104,7 +104,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full w-full">
              <div className="flex-1 bg-muted flex items-center justify-center relative">
                  <div className="w-full h-full relative">
                     <Image
