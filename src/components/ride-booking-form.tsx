@@ -2,10 +2,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MapPin, ArrowRight, Loader2, Search } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -82,32 +81,28 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
   };
 
   return (
-    <Card className="shadow-lg backdrop-blur-sm bg-background/80">
-      <CardContent className="p-4">
-        <form onSubmit={handleSubmit} className="grid gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="dropoff"
-              placeholder={t.dropoffPlaceholder}
-              className="pl-10 h-12 text-base"
-              value={dropoff}
-              onChange={(e) => setDropoff(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-            {loading ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t.findingRide}
-                </>
-            ) : (
-                <>{t.findRideButton}</>
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <form onSubmit={handleSubmit} className="grid gap-3">
+        <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input
+            id="dropoff"
+            placeholder={t.dropoffPlaceholder}
+            className="pl-10 h-12 text-base"
+            value={dropoff}
+            onChange={(e) => setDropoff(e.target.value)}
+            required
+        />
+        </div>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+        {loading ? (
+            <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t.findingRide}
+            </>
+        ) : (
+            <>{t.findRideButton}</>
+        )}
+        </Button>
+    </form>
   );
 }

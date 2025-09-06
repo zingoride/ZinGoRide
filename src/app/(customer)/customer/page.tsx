@@ -85,10 +85,14 @@ export default function CustomerPage() {
                 />
             </div>
             <div className="absolute top-0 left-0 right-0 z-10 p-4 space-y-4">
-                 <RideBookingForm onFindRide={handleFindRide} />
+                 <Card className="shadow-lg backdrop-blur-sm bg-background/80">
+                    <CardContent className="p-4">
+                        <RideBookingForm onFindRide={handleFindRide} />
+                    </CardContent>
+                 </Card>
                  
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <Card className='shadow-lg'>
+                     <Card className='shadow-lg backdrop-blur-sm bg-background/80'>
                         <CardContent className='p-3 flex items-center gap-3'>
                             <div className='p-2 bg-primary/10 rounded-lg'>
                                 <Tag className='h-6 w-6 text-primary' />
@@ -99,7 +103,7 @@ export default function CustomerPage() {
                             </div>
                         </CardContent>
                     </Card>
-                     <Card className='shadow-lg'>
+                     <Card className='shadow-lg backdrop-blur-sm bg-background/80'>
                         <CardContent className='p-3 flex items-center gap-3'>
                            <div className='p-2 bg-primary/10 rounded-lg'>
                                 <Star className='h-6 w-6 text-primary' />
