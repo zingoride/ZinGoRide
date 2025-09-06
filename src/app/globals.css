@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -195,7 +196,7 @@ body {
     --card: 20.5 90.2% 12.6%;
     --card-foreground: 24.6 95% 97.3%;
     --popover: 20.5 90.2% 12.6%;
-    --popover-foreground: 24.6 95% 973%;
+    --popover-foreground: 24.6 95% 97.3%;
     --primary: 20.5 90.2% 48.2%;
     --primary-foreground: 24.6 95% 97.3%;
     --secondary: 20.5 90.2% 16.6%;
@@ -483,10 +484,4 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Fix for react-leaflet icons */
-.leaflet-marker-icon {
-  background: none;
-  border: none;
 }
