@@ -184,8 +184,13 @@ export default function LiveMapPage() {
         </CardContent>
       </Card>
       <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
-         {isClient ? (
-          <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+         {!isClient && (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                <Skeleton className="h-full w-full" />
+                <p className="absolute text-muted-foreground">{t.loadingMap}</p>
+            </div>
+        )}
+          <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%', display: isClient ? 'block' : 'none' }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -211,14 +216,7 @@ export default function LiveMapPage() {
               )
             })}
           </MapContainer>
-        ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                <Skeleton className="h-full w-full" />
-                <p className="absolute text-muted-foreground">{t.loadingMap}</p>
-            </div>
-        )}
       </div>
     </div>
   );
 }
-
