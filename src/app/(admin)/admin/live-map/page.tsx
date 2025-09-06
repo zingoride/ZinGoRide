@@ -8,6 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useLanguage } from '@/context/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import type { User as AppUser } from '@/app/(admin)/admin/users/page';
 
 const translations = {
   ur: {
@@ -24,6 +28,7 @@ const translations = {
     searching: "Searching",
     loadingMap: "Naqsha load ho raha hai...",
     apiKeyError: "Google Maps API Key nahi mili. Baraye meharbani .env file check karein.",
+    errorFetchingUsers: "Users fetch karne mein masla hua."
   },
   en: {
     title: "Live Fleet & Customer Map",
@@ -39,12 +44,13 @@ const translations = {
     searching: "Searching",
     loadingMap: "Loading map...",
     apiKeyError: "Google Maps API Key is missing. Please check your .env file.",
+    errorFetchingUsers: "Error fetching users."
   }
 };
 
 type UserType = 'Driver' | 'Customer';
-type DriverStatus = 'Online' | 'Offline' | 'On Trip';
-type CustomerStatus = 'Idle' | 'Searching' | 'On Trip';
+type DriverStatus = 'Online' | 'Offline' | 'On Trip' | 'Pending' | 'Approved' | 'Rejected' | 'Blocked';
+type CustomerStatus = 'Idle' | 'Searching' | 'On Trip' | 'Active' | 'Inactive';
 
 interface TrackedUser {
   id: string;
@@ -54,13 +60,14 @@ interface TrackedUser {
   position: { lat: number; lng: number };
 }
 
-const initialUsers: TrackedUser[] = [
-  { id: 'driver-1', name: 'Babar Khan', type: 'Driver', status: 'Online', position: { lat: 24.8607, lng: 67.0011 } },
-  { id: 'driver-2', name: 'Dawood Saleem', type: 'Driver', status: 'On Trip', position: { lat: 24.885, lng: 67.04 } },
-  { id: 'driver-3', name: 'Zainab Ansari', type: 'Driver', status: 'Offline', position: { lat: 24.92, lng: 67.08 } },
-  { id: 'cust-1', name: 'Ahmad Ali', type: 'Customer', status: 'Idle', position: { lat: 24.89, lng: 67.02 } },
-  { id: 'cust-2', name: 'Fatima Jilani', type: 'Customer', status: 'On Trip', position: { lat: 24.8855, lng: 67.0405 } },
-];
+// Karachi coordinates for random generation
+const KARACHI_BOUNDS = {
+  north: 25.1,
+  south: 24.8,
+  west: 66.9,
+  east: 67.4,
+};
+
 
 const statusStyles = {
   'Online': 'bg-green-500',
@@ -68,6 +75,12 @@ const statusStyles = {
   'On Trip': 'bg-blue-500',
   'Idle': 'bg-gray-500',
   'Searching': 'bg-yellow-500',
+  'Pending': 'bg-yellow-400',
+  'Approved': 'bg-green-600',
+  'Rejected': 'bg-red-500',
+  'Blocked': 'bg-red-700',
+  'Active': 'bg-green-500',
+  'Inactive': 'bg-gray-500',
 }
 
 const mapContainerStyle = {
@@ -76,15 +89,14 @@ const mapContainerStyle = {
 };
 
 const center = {
-  lat: 24.8607, // Karachi
-  lng: 67.0011,
+  lat: 24.9,
+  lng: 67.1,
 };
 
 const mapOptions = {
     disableDefaultUI: true,
     zoomControl: true,
     styles: [
-        // Using a modern, clean map style
         {
             "featureType": "poi.business",
             "stylers": [ { "visibility": "off" } ]
@@ -102,49 +114,81 @@ const mapOptions = {
 };
 
 export default function LiveMapPage() {
-  const [users, setUsers] = useState<TrackedUser[]>(initialUsers);
+  const [users, setUsers] = useState<TrackedUser[]>([]);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const { language } = useLanguage();
+  const { toast } = useToast();
   const t = translations[language];
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
   });
 
-  const driverIcon = useMemo(() => ({
-    path: 'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-1.5 1.5-1.5zM5 11l1.5-4.5h11L19 11H5z',
-    fillColor: 'hsl(var(--primary))',
-    fillOpacity: 1,
-    strokeWeight: 0,
-    rotation: 0,
-    scale: 1.5,
-    anchor: new window.google.maps.Point(12, 12),
-  }), []);
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try {
+            const usersCollection = collection(db, "users");
+            const usersSnapshot = await getDocs(usersCollection);
+            const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
+            
+            const trackedUsers = usersList.map(user => ({
+                id: user.id,
+                name: user.name,
+                type: user.type,
+                status: user.type === 'Driver' ? user.approvalStatus : user.status,
+                position: {
+                    lat: KARACHI_BOUNDS.south + Math.random() * (KARACHI_BOUNDS.north - KARACHI_BOUNDS.south),
+                    lng: KARACHI_BOUNDS.west + Math.random() * (KARACHI_BOUNDS.east - KARACHI_BOUNDS.west),
+                }
+            }));
+            setUsers(trackedUsers);
+        } catch (error) {
+            console.error("Error fetching users: ", error);
+            toast({ variant: "destructive", title: t.errorFetchingUsers });
+        }
+    };
+    fetchUsers();
+  }, [t.errorFetchingUsers, toast]);
 
-  const customerIcon = useMemo(() => ({
+  const driverIcon = useMemo(() => {
+    if (typeof window === 'undefined' || !window.google) return null;
+    return {
+        path: 'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-1.5 1.5-1.5zM5 11l1.5-4.5h11L19 11H5z',
+        fillColor: 'hsl(var(--primary))',
+        fillOpacity: 1,
+        strokeWeight: 0,
+        rotation: 0,
+        scale: 1.5,
+        anchor: new window.google.maps.Point(12, 12),
+    }
+  }, []);
+
+  const customerIcon = useMemo(() => {
+    if (typeof window === 'undefined' || !window.google) return null;
+    return {
      path: window.google.maps.SymbolPath.CIRCLE,
      fillColor: 'hsl(var(--accent))',
      fillOpacity: 1,
      strokeColor: 'white',
      strokeWeight: 2,
      scale: 8
-  }), []);
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setUsers(prevUsers =>
         prevUsers.map(user => {
-          if (user.status === 'Offline' || user.status === 'Idle') return user;
-          // Simulate more realistic movement along roads
-          const newLat = user.position.lat + (Math.random() - 0.5) * 0.001;
-          const newLng = user.position.lng + (Math.random() - 0.5) * 0.001;
+          if (user.status === 'Offline' || user.status === 'Idle' || user.status === 'Rejected' || user.status === 'Blocked' || user.status === 'Inactive') return user;
+          const newLat = user.position.lat + (Math.random() - 0.5) * 0.002;
+          const newLng = user.position.lng + (Math.random() - 0.5) * 0.002;
           return {
             ...user,
             position: { lat: newLat, lng: newLng },
           };
         })
       );
-    }, 3000); // Update every 3 seconds
+    }, 3000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -192,7 +236,7 @@ export default function LiveMapPage() {
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}
-            zoom={13}
+            zoom={12}
             options={mapOptions}
           >
             {users.map(user => (
@@ -207,7 +251,7 @@ export default function LiveMapPage() {
                   <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
                     <div>
                       <h4 className="font-bold">{user.name}</h4>
-                      <p>Status: <Badge variant="secondary" className={statusStyles[user.status]}>{user.status}</Badge></p>
+                      <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
                     </div>
                   </InfoWindowF>
                 )}
