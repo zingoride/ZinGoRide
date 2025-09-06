@@ -19,6 +19,7 @@ export default function MapWrapper({
 }: MapWrapperProps) {
   return (
     <MapContainer
+      key={`${center[0]}-${center[1]}-${zoom}`}
       center={center}
       zoom={zoom}
       scrollWheelZoom={true}
