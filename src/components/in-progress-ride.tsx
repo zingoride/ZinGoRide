@@ -1,7 +1,7 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import {
   MapPin,
   Phone,
@@ -18,10 +18,10 @@ import { ChatDialog } from './chat-dialog';
 import { Badge } from './ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { Skeleton } from './ui/skeleton';
+import type { Icon } from 'leaflet';
 
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false, loading: () => <div className="w-full h-full bg-muted animate-pulse"></div> });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 
 const translations = {
     ur: {
@@ -67,9 +67,11 @@ export function InProgressRide() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
+  const [isClient, setIsClient] = useState(false);
   const [L, setL] = useState<any>(null);
 
   useEffect(() => {
+    setIsClient(true);
     import('leaflet').then(leaflet => setL(leaflet));
     setIsNavigating(true);
   }, []);
@@ -106,17 +108,32 @@ export function InProgressRide() {
     cancelRideInContext();
   }
 
-  const driverIcon = L ? new L.Icon({
+  const driverIcon: Icon | null = L ? new L.Icon({
       iconUrl: '/car-pin.png',
       iconSize: [35, 35],
       iconAnchor: [17, 35],
   }) : null;
 
-  const customerIcon = L ? new L.Icon({
+  const customerIcon: Icon | null = L ? new L.Icon({
       iconUrl: '/customer-pin.png',
       iconSize: [35, 35],
       iconAnchor: [17, 35],
   }) : null;
+
+  const renderMap = () => {
+    if(!isClient || !L || !driverIcon || !customerIcon) return <Skeleton className="w-full h-full bg-muted" />;
+
+    return (
+      <MapContainer center={[24.88, 67.06]} zoom={13} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+          <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={[24.86, 67.04]} icon={driverIcon} />
+          <Marker position={[24.90, 67.08]} icon={customerIcon} />
+      </MapContainer>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 items-start h-full">
@@ -126,14 +143,7 @@ export function InProgressRide() {
                  {rideStage === 'pickup' ? t.toPickup : t.toDropoff}
             </Badge>
         </div>
-        <MapContainer center={[24.88, 67.06]} zoom={13} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {driverIcon && <Marker position={[24.86, 67.04]} icon={driverIcon} />}
-            {customerIcon && <Marker position={[24.90, 67.08]} icon={customerIcon} />}
-        </MapContainer>
+        {renderMap()}
       </div>
 
       <div className="flex flex-col gap-6 w-full">

@@ -1,20 +1,16 @@
+
 'use client';
-import "leaflet/dist/leaflet.css";
+
 import { useMemo, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Car, Bike, Users } from 'lucide-react';
+import { User, Car, Users } from 'lucide-react';
 import type { User as UserType } from '../users/page';
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Dynamically import map components to ensure they only run on the client side
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import type { Icon } from 'leaflet';
 
 const generateRandomPosition = (baseLat: number, baseLng: number): [number, number] => {
   const lat = baseLat + (Math.random() - 0.5) * 0.1;
@@ -26,15 +22,12 @@ const LiveMapPage = () => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  
-  // State to hold Leaflet and its Icon object, only populated on the client
+  const [isClient, setIsClient] = useState(false);
   const [L, setL] = useState<any>(null);
 
   useEffect(() => {
-    // Dynamically import Leaflet library on the client side
-    import('leaflet').then(leaflet => {
-      setL(leaflet);
-    });
+    setIsClient(true);
+    import('leaflet').then(leaflet => setL(leaflet));
 
     const fetchUsers = async () => {
       setLoading(true);
@@ -47,7 +40,7 @@ const LiveMapPage = () => {
     fetchUsers();
   }, []);
 
-  const driverIcon = useMemo(() => {
+  const driverIcon = useMemo((): Icon | null => {
     if (!L) return null;
     return new L.Icon({
       iconUrl: '/car-pin.png',
@@ -58,7 +51,7 @@ const LiveMapPage = () => {
     });
   }, [L]);
 
-  const customerIcon = useMemo(() => {
+  const customerIcon = useMemo((): Icon | null => {
     if (!L) return null;
     return new L.Icon({
       iconUrl: '/customer-pin.png',
@@ -74,13 +67,40 @@ const LiveMapPage = () => {
     return users.filter(user => user.type.toLowerCase() === filter);
   }, [filter, users]);
 
-  if (loading || !L) {
-    return (
+  const renderMap = () => {
+    if (!isClient || !L || loading) {
+       return (
         <div className="p-4 space-y-4">
             <Skeleton className="h-12 w-1/4" />
             <Skeleton className="w-full h-[calc(100vh-10rem)]" />
         </div>
-    )
+       )
+    }
+
+    return (
+        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {filteredUsers.map(user => {
+            const position = generateRandomPosition(24.9, 67.1); // Karachi base coordinates
+            const icon = user.type === 'Driver' ? driverIcon : customerIcon;
+
+            if (!icon) return null;
+
+            return (
+                <Marker key={user.id} position={position} icon={icon}>
+                <Popup>
+                    <b>{user.name}</b><br/>
+                    {user.email}<br/>
+                    Status: {user.approvalStatus}
+                </Popup>
+                </Marker>
+            )
+            })}
+        </MapContainer>
+    );
   }
 
   return (
@@ -103,28 +123,7 @@ const LiveMapPage = () => {
         </CardHeader>
       </Card>
       <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
-        <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
-          <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {filteredUsers.map(user => {
-            const position = generateRandomPosition(24.9, 67.1); // Karachi base coordinates
-            const icon = user.type === 'Driver' ? driverIcon : customerIcon;
-
-            if (!icon) return null;
-
-            return (
-              <Marker key={user.id} position={position} icon={icon}>
-                <Popup>
-                  <b>{user.name}</b><br/>
-                  {user.email}<br/>
-                  Status: {user.approvalStatus}
-                </Popup>
-              </Marker>
-            )
-          })}
-        </MapContainer>
+        {renderMap()}
       </div>
     </div>
   );
