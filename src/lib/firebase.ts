@@ -1,12 +1,12 @@
 
-import { initializeApp, getApp, getApps } from "firebase/app";
+import { initializeApp, getApp, getApps, FirebaseOptions } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Your web app's Firebase configuration is loaded from environment variables
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -16,8 +16,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase only if all keys are present
+const app = firebaseConfig.apiKey && !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Services
 export const auth = getAuth(app);
@@ -28,7 +28,7 @@ export const storage = getStorage(app);
 let analytics: any = null;
 if (typeof window !== "undefined") {
   isSupported().then((yes) => {
-    if (yes) {
+    if (yes && firebaseConfig.apiKey) {
       analytics = getAnalytics(app);
     }
   });
