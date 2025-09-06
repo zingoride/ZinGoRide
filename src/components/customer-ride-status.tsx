@@ -29,7 +29,8 @@ const translations = {
     ur: {
         rideStatus: "Ride Status",
         findingDesc: "Aapke liye behtareen ride dhoondi ja rahi hai...",
-        enrouteDesc: (eta: string) => `Aapka driver ${eta} mein pohnch raha hai.`,
+        acceptedDesc: (eta: string) => `Aapka driver ${eta} mein pohnch raha hai.`,
+        enrouteDesc: "Aap apne manzil ke raaste par hain.",
         findingDriver: "Driver dhoonda ja raha hai...",
         call: "Call",
         cancelRide: "Ride Cancel Karein",
@@ -39,7 +40,8 @@ const translations = {
     en: {
         rideStatus: "Ride Status",
         findingDesc: "Finding the best ride for you...",
-        enrouteDesc: (eta: string) => `Your driver is arriving in ${eta}.`,
+        acceptedDesc: (eta: string) => `Your driver is arriving in ${eta}.`,
+        enrouteDesc: "You are on the way to your destination.",
         findingDriver: "Finding a driver...",
         call: "Call",
         cancelRide: "Cancel Ride",
@@ -49,24 +51,20 @@ const translations = {
 };
 
 export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCancel: () => void }) {
-    const [status, setStatus] = useState<'finding' | 'enroute'>('finding');
     const [progress, setProgress] = useState(10);
     const [loading, setLoading] = useState(false);
     const { language } = useLanguage();
     const t = translations[language];
+    const { status, driverName, driverAvatar } = ride;
 
     useEffect(() => {
-        if (status === 'finding') {
-            const timer = setTimeout(() => {
-                setStatus('enroute');
-            }, 4000); // Simulate finding a driver for 4 seconds
-            
+        // Show a progress bar animation while finding a driver
+        if (status === 'booked') {
             const progressTimer = setInterval(() => {
                 setProgress(prev => (prev < 90 ? prev + 15 : prev));
-            }, 500);
+            }, 700);
 
             return () => {
-                clearTimeout(timer);
                 clearInterval(progressTimer);
             }
         }
@@ -85,7 +83,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             await updateDoc(rideRef, {
                 status: 'cancelled_by_customer',
             });
-            onCancel();
+            // The onSnapshot in the parent page will trigger onCancel
         } catch (error) {
             console.error("Error cancelling ride: ", error);
         } finally {
@@ -93,15 +91,28 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         }
     };
 
+    const getStatusInfo = () => {
+        const eta = language === 'ur' ? driverDetails.etaUr : driverDetails.etaEn;
+        switch(status) {
+            case 'booked':
+                return { title: t.rideStatus, description: t.findingDesc };
+            case 'accepted':
+                 return { title: t.rideStatus, description: t.acceptedDesc(eta) };
+            case 'in_progress':
+                 return { title: t.rideStatus, description: t.enrouteDesc };
+            default:
+                 return { title: t.rideStatus, description: t.findingDesc };
+        }
+    }
 
-    const mapImageUrl = status === 'enroute' 
+    const { title, description } = getStatusInfo();
+    const showDriverDetails = status === 'accepted' || status === 'in_progress';
+
+    const mapImageUrl = showDriverDetails
         ? "https://picsum.photos/seed/driver-route/800/600"
         : "https://picsum.photos/seed/customermap/800/600";
     
-    const mapImageHint = status === 'enroute' ? "map with driver route" : "city map";
-
-    const eta = language === 'ur' ? driverDetails.etaUr : driverDetails.etaEn;
-
+    const mapImageHint = showDriverDetails ? "map with driver route" : "city map";
 
     return (
         <div className="flex flex-col h-full w-full">
@@ -118,27 +129,24 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             </div>
             <Card className="w-full flex flex-col rounded-t-2xl -mt-4 z-10 border-t-4 border-primary">
                 <CardHeader>
-                    <CardTitle>{t.rideStatus}</CardTitle>
-                    <CardDescription>
-                        {status === 'finding' ? t.findingDesc : t.enrouteDesc(eta)}
-                    </CardDescription>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
-                    {status === 'finding' ? (
+                    {!showDriverDetails ? (
                         <>
                             <Loader2 className="h-16 w-16 text-primary animate-spin" />
                             <p className='font-semibold text-lg'>{t.findingDriver}</p>
                             <Progress value={progress} className='w-full' />
-
                         </>
                     ) : (
                         <div className="w-full flex flex-col items-center gap-4">
                             <Avatar className="h-24 w-24 border-4 border-primary">
-                                <AvatarImage src={driverDetails.avatar} alt={driverDetails.name} data-ai-hint="portrait man" />
-                                <AvatarFallback>{driverDetails.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
+                                <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className='text-center'>
-                                <p className="text-2xl font-bold">{driverDetails.name}</p>
+                                <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
                                 <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                     <span>{driverDetails.rating.toFixed(1)}</span>
@@ -158,7 +166,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                                 <Button variant="outline" className="w-full" onClick={handleCall}>
                                     <Phone className="mr-2 h-4 w-4" /> {t.call}
                                 </Button>
-                                <ChatDialog riderName={driverDetails.name} />
+                                <ChatDialog riderName={driverName || driverDetails.name} />
                             </div>
                         </div>
                     )}

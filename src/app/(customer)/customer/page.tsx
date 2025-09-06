@@ -17,8 +17,20 @@ export default function CustomerPage() {
     const [rideId, setRideId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!rideId) return;
+        // Attempt to load rideId from localStorage on initial load
+        const savedRideId = localStorage.getItem('activeRideId');
+        if (savedRideId) {
+            setRideId(savedRideId);
+        }
+    }, []);
 
+    useEffect(() => {
+        if (!rideId) {
+            localStorage.removeItem('activeRideId');
+            return;
+        }
+
+        localStorage.setItem('activeRideId', rideId);
         const rideRef = doc(db, "rides", rideId);
         const unsubscribe = onSnapshot(rideRef, (doc) => {
             if (doc.exists()) {
@@ -38,6 +50,7 @@ export default function CustomerPage() {
     };
     
     const handleReset = () => {
+        localStorage.removeItem('activeRideId');
         setCurrentRide(null);
         setRideId(null);
     };
@@ -46,8 +59,8 @@ export default function CustomerPage() {
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
-        // 'booked' state is when AvailableRides is shown (after 'pending' is created)
-        if (currentRide.status === 'booked' || currentRide.status === 'pending') {
+        // 'pending' is before vehicle selection.
+        if (currentRide.status === 'pending') {
              return (
                  <div className="relative w-full h-full">
                     <div className="absolute inset-0 z-0">
@@ -67,7 +80,7 @@ export default function CustomerPage() {
                  </div>
              )
         }
-        // 'accepted', 'in_progress', etc.
+        // 'booked', 'accepted', 'in_progress', etc. will now show the status screen
         return <div className='h-full md:h-[calc(100vh-4rem)]'><CustomerRideStatus ride={currentRide} onCancel={handleReset} /></div>;
     }
 

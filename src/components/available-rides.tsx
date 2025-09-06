@@ -12,6 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 const rideOptions = [
   {
@@ -49,8 +50,9 @@ const translations = {
         eta: "Andazan waqt",
         seats: "seats",
         confirmRide: "Ride Confirm Karein",
+        confirming: "Confirming...",
         rideConfirmedTitle: "Ride Confirmed!",
-        rideConfirmedDesc: "Aapki ride book ho gayi hai. Driver jald hi aap se rabta karega.",
+        rideConfirmedDesc: "Aapke liye driver dhoonda ja raha hai.",
         rideUpdateError: "Ride confirm karne mein masla hua."
     },
     en: {
@@ -58,8 +60,9 @@ const translations = {
         eta: "ETA",
         seats: "seats",
         confirmRide: "Confirm Ride",
+        confirming: "Confirming...",
         rideConfirmedTitle: "Ride Confirmed!",
-        rideConfirmedDesc: "Your ride has been booked. The driver will contact you shortly.",
+        rideConfirmedDesc: "Finding a driver for you.",
         rideUpdateError: "Error confirming ride."
     }
 }
@@ -84,11 +87,13 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         const selectedRideDetails = rideOptions.find(r => r.type === selectedRide);
         
         const updateData = {
-            status: 'booked',
+            status: 'booked' as const,
             vehicleType: selectedRide as any,
             fare: selectedRideDetails ? parseFloat(selectedRideDetails.price) : 0,
         };
 
+        // We update the database, but the onConfirm will be triggered
+        // by the onSnapshot listener in the parent page for a seamless transition.
         await updateDoc(rideRef, updateData);
 
         toast({
@@ -96,14 +101,15 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
             description: t.rideConfirmedDesc,
         });
 
-        onConfirm({ ...ride, ...updateData });
+        // The parent's onSnapshot listener will handle the state change
+        // onConfirm({ ...ride, ...updateData });
 
     } catch (error) {
         console.error("Error confirming ride: ", error);
         toast({ variant: "destructive", title: t.rideUpdateError });
-    } finally {
         setLoading(false);
-    }
+    } 
+    // No need to set loading to false here, as the component will unmount
   };
 
   return (
@@ -112,43 +118,44 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         <CardContent className="p-4 space-y-4">
           <h3 className="text-lg font-semibold text-center">{t.chooseRide}</h3>
           <div className="space-y-3">
-            {rideOptions.map((ride) => (
+            {rideOptions.map((option) => (
               <div
-                key={ride.type}
+                key={option.type}
                 className={cn(
                   'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all',
-                  selectedRide === ride.type
+                  selectedRide === option.type
                     ? 'bg-primary/10 border-primary'
                     : 'hover:bg-muted/50'
                 )}
-                onClick={() => setSelectedRide(ride.type)}
+                onClick={() => setSelectedRide(option.type)}
               >
                 <Image
-                  src={ride.image}
-                  alt={ride.type}
+                  src={option.image}
+                  alt={option.type}
                   width={80}
                   height={60}
                   className="rounded-md object-cover"
-                  data-ai-hint={ride.imageHint}
+                  data-ai-hint={option.imageHint}
                 />
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
                     <div className='flex items-center gap-2'>
-                        <ride.icon className="h-5 w-5" />
-                        <p className="font-bold text-md">{ride.type}</p>
+                        <option.icon className="h-5 w-5" />
+                        <p className="font-bold text-md">{option.type}</p>
                     </div>
-                    <p className="font-bold text-md">PKR {ride.price}</p>
+                    <p className="font-bold text-md">PKR {option.price}</p>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
-                     <p>{t.eta}: {ride.eta}</p>
-                     <p>{ride.seats} {t.seats}</p>
+                     <p>{t.eta}: {option.eta}</p>
+                     <p>{option.seats} {t.seats}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
           <Button className="w-full" size="lg" onClick={handleConfirmRide} disabled={loading}>
-            {loading ? "Confirming..." : t.confirmRide}
+             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? t.confirming : t.confirmRide}
           </Button>
         </CardContent>
       </Card>
