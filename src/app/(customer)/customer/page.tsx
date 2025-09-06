@@ -84,17 +84,20 @@ const CustomerPage = () => {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
         
-        if (currentRide.status === 'pending' || currentRide.status === 'booked') {
+        if (currentRide.status === 'booked') {
              return (
-                 <div className="relative w-full h-full">
-                    <DynamicMap />
-                    <div className="absolute bottom-0 left-0 right-0 w-full p-4 z-10">
+                <div className="relative w-full h-[calc(100vh-60px)]">
+                    <div className='absolute inset-0'>
+                        <DynamicMap />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 w-full p-4 z-10 max-w-md mx-auto">
                         <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
                     </div>
                  </div>
              )
         }
         
+        // This will now render the 3-panel layout for accepted/in_progress rides
         return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
     }
 
@@ -103,15 +106,18 @@ const CustomerPage = () => {
             <div className="flex-grow">
                  <DynamicMap />
             </div>
-            <div className="w-full p-4 z-10 bg-background/80 backdrop-blur-sm border-t">
-                 <Card className="shadow-lg rounded-2xl">
-                    <CardContent className="p-4">
-                        <RideBookingForm onFindRide={handleFindRide} />
-                    </CardContent>
-                 </Card>
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-t from-background via-background/80 to-transparent">
+                <div className="max-w-md mx-auto">
+                     <Card className="shadow-lg rounded-2xl border-t-4 border-primary">
+                        <CardContent className="p-4">
+                            <RideBookingForm onFindRide={handleFindRide} />
+                        </CardContent>
+                     </Card>
+                </div>
             </div>
         </div>
     );
 }
 
 export default CustomerPage;
+

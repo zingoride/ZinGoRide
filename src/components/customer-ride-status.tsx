@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, Star, Car, X, Map } from 'lucide-react';
+import { Loader2, Phone, Star, Car, X, MapPin, Navigation } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
+import { Separator } from './ui/separator';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
@@ -61,6 +62,11 @@ const translations = {
         acceptedDesc: (eta: string) => `Aapka driver ${eta} mein pohnch raha hai.`,
         enrouteDesc: "Aap apne manzil ke raaste par hain.",
         findingDriver: "Driver dhoonda ja raha hai...",
+        driverInfo: "Driver Ki Maloomat",
+        rideDetails: "Safar Ki Tafseelat",
+        pickup: "Uthanay ki Jagah",
+        dropoff: "Manzil",
+        actions: "Actions",
         call: "Call",
         cancelRide: "Ride Cancel Karein",
         cancelling: "Cancelling...",
@@ -71,6 +77,11 @@ const translations = {
         acceptedDesc: (eta: string) => `Your driver is arriving in ${eta}.`,
         enrouteDesc: "You are on the way to your destination.",
         findingDriver: "Finding a driver...",
+        driverInfo: "Driver Information",
+        rideDetails: "Ride Details",
+        pickup: "Pickup",
+        dropoff: "Destination",
+        actions: "Actions",
         call: "Call",
         cancelRide: "Cancel Ride",
         cancelling: "Cancelling...",
@@ -82,7 +93,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const [loading, setLoading] = useState(false);
     const { language } = useLanguage();
     const t = translations[language];
-    const { status, driverName, driverAvatar } = ride;
+    const { status, driverName, driverAvatar, pickup, dropoff } = ride;
 
     useEffect(() => {
         if (status === 'booked') {
@@ -140,69 +151,97 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
-        <div className="flex flex-col h-full w-full">
-            <div className="flex-grow">
-                <DynamicMap markers={mapMarkers} />
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full w-full p-4">
+            {/* Panel 1: Map */}
+            <div className="lg:col-span-2 h-full min-h-[300px] lg:min-h-full rounded-lg overflow-hidden border">
+                 <DynamicMap markers={mapMarkers} />
             </div>
-            <Card className="w-full flex flex-col rounded-t-2xl z-10 border-t-4 border-primary shadow-2xl">
-                <CardHeader>
-                    <CardTitle>{title}</CardTitle>
-                    <CardDescription>{description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
-                    {!showDriverDetails ? (
-                        <>
-                            <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                            <p className='font-semibold text-lg'>{t.findingDriver}</p>
-                            <Progress value={progress} className='w-full' />
-                        </>
-                    ) : (
-                        <div className="w-full flex flex-col items-center gap-4">
-                            <Avatar className="h-24 w-24 border-4 border-primary">
-                                <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
-                                <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className='text-center'>
-                                <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
-                                <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span>{driverDetails.rating.toFixed(1)}</span>
-                                </div>
-                            </div>
-                        
-                            <Card className='w-full bg-muted/50 border-dashed'>
-                                <CardContent className='p-3'>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Car className='h-6 w-6' />
-                                        <p className="text-lg font-semibold">{driverDetails.vehicle}</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
 
-                            <div className="flex w-full gap-2 mt-4">
-                                <Button variant="outline" className="w-full" onClick={handleCall}>
-                                    <Phone className="mr-2 h-4 w-4" /> {t.call}
-                                </Button>
-                                <ChatDialog riderName={driverName || driverDetails.name} />
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-                <div className='p-4 border-t'>
-                    <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
-                        {loading ? (
+            {/* Panels 2 & 3: Details & Actions */}
+            <div className="flex flex-col gap-6">
+                
+                {/* Panel 2: Ride Status & Driver Info */}
+                <Card className="flex-grow flex flex-col">
+                    <CardHeader>
+                        <CardTitle>{title}</CardTitle>
+                        <CardDescription>{description}</CardDescription>
+                    </CardHeader>
+                     <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
+                        {!showDriverDetails ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t.cancelling}
+                                <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                                <p className='font-semibold text-lg'>{t.findingDriver}</p>
+                                <Progress value={progress} className='w-full' />
                             </>
                         ) : (
-                             <>
-                                <X className="mr-2 h-4 w-4" /> {t.cancelRide}
-                            </>
+                             <div className="w-full flex flex-col items-center gap-4">
+                                <Avatar className="h-24 w-24 border-4 border-primary">
+                                    <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
+                                    <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className='text-center'>
+                                    <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
+                                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                        <span>{driverDetails.rating.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            
+                                <Card className='w-full bg-muted/50 border-dashed'>
+                                    <CardContent className='p-3'>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Car className='h-6 w-6' />
+                                            <p className="text-lg font-semibold">{driverDetails.vehicle}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         )}
-                    </Button>
-                </div>
-            </Card>
-        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Panel 3: Ride Details & Actions */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t.rideDetails}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-start gap-3">
+                            <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-muted-foreground">{t.pickup}</p>
+                                <p className="font-semibold">{pickup}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <Navigation className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-muted-foreground">{t.dropoff}</p>
+                                <p className="font-semibold">{dropoff}</p>
+                            </div>
+                        </div>
+                        <Separator />
+                        <div className="flex w-full gap-2">
+                            <Button variant="outline" className="w-full" onClick={handleCall} disabled={!showDriverDetails}>
+                                <Phone className="mr-2 h-4 w-4" /> {t.call}
+                            </Button>
+                            <ChatDialog riderName={driverName || driverDetails.name} />
+                        </div>
+                         <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t.cancelling}
+                                </>
+                            ) : (
+                                <>
+                                    <X className="mr-2 h-4 w-4" /> {t.cancelRide}
+                                </>
+                            )}
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+       </div>
     )
 }
