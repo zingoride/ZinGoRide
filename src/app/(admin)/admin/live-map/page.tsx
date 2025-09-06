@@ -2,9 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Car, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,6 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User as AppUser } from '@/app/(admin)/admin/users/page';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 const translations = {
   ur: {
@@ -86,6 +86,7 @@ const statusStyles = {
 }
 
 const createIcon = (icon: React.ReactElement) => {
+    // This function will only run on the client, avoiding SSR issues with L.divIcon
     return L.divIcon({
       html: renderToStaticMarkup(icon),
       className: 'bg-transparent border-0',
@@ -95,20 +96,26 @@ const createIcon = (icon: React.ReactElement) => {
     });
 };
 
-const driverIcon = createIcon(<Car className="h-8 w-8 text-primary drop-shadow-lg" />);
-const customerIcon = createIcon(<User className="h-8 w-8 text-accent-foreground drop-shadow-lg" />);
+// Dynamically import the MapContainer and its components
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 
 export default function LiveMapPage() {
   const [users, setUsers] = useState<TrackedUser[]>([]);
-  const [mapReady, setMapReady] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
 
+  // Icons should only be created on the client side
+  const driverIcon = isClient ? createIcon(<Car className="h-8 w-8 text-primary drop-shadow-lg" />) : null;
+  const customerIcon = isClient ? createIcon(<User className="h-8 w-8 text-accent-foreground drop-shadow-lg" />) : null;
+  
    useEffect(() => {
-     // This ensures that the map component is only rendered on the client side.
-     setMapReady(true);
+     setIsClient(true);
    }, []);
 
   useEffect(() => {
@@ -177,27 +184,32 @@ export default function LiveMapPage() {
         </CardContent>
       </Card>
       <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
-         {mapReady ? (
+         {isClient ? (
           <MapContainer center={[24.9, 67.1]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {users.map(user => (
-              <Marker
-                key={user.id}
-                position={[user.position.lat, user.position.lng]}
-                icon={user.type === 'Driver' ? driverIcon : customerIcon}
-                opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
-              >
-                <Popup>
-                    <div>
-                      <h4 className="font-bold">{user.name}</h4>
-                      <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
-                    </div>
-                </Popup>
-              </Marker>
-            ))}
+            {users.map(user => {
+              const icon = user.type === 'Driver' ? driverIcon : customerIcon;
+              if (!icon) return null; // Don't render marker if icon is not ready
+
+              return (
+                 <Marker
+                    key={user.id}
+                    position={[user.position.lat, user.position.lng]}
+                    icon={icon}
+                    opacity={user.status === 'Offline' || user.status === 'Idle' ? 0.5 : 1}
+                  >
+                    <Popup>
+                        <div>
+                          <h4 className="font-bold">{user.name}</h4>
+                          <p>Status: <Badge variant="secondary" className={(statusStyles as any)[user.status]}>{user.status}</Badge></p>
+                        </div>
+                    </Popup>
+                  </Marker>
+              )
+            })}
           </MapContainer>
         ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
@@ -209,3 +221,4 @@ export default function LiveMapPage() {
     </div>
   );
 }
+
