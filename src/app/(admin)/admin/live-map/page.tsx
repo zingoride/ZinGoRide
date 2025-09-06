@@ -89,9 +89,9 @@ const LiveMapPage = () => {
                     <Skeleton className="h-4 w-3/4" />
                 </CardHeader>
             </Card>
-            <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
+            <Card className="flex-1 w-full">
                  <Skeleton className="h-full w-full" />
-            </div>
+            </Card>
         </div>
      )
   }
@@ -118,7 +118,7 @@ const LiveMapPage = () => {
           </div>
         </CardHeader>
       </Card>
-      <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
+      <Card className="flex-1 w-full h-full rounded-lg overflow-hidden border">
         <MapContainer center={[24.8607, 67.0011]} zoom={12} scrollWheelZoom={true} style={{height: '100%', width: '100%'}}>
           <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -136,7 +136,7 @@ const LiveMapPage = () => {
             )
           })}
         </MapContainer>
-      </div>
+      </Card>
     </div>
   );
 };
