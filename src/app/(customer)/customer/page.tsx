@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
@@ -10,21 +10,13 @@ import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+import { Loader2, Map } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
-
-    const MapContainer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), {
-        ssr: false,
-        loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>,
-    }), []);
-    const TileLayer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false }), []);
-    const Marker = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false }), []);
-    const Popup = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false }), []);
-
 
     useEffect(() => {
         const savedRideId = localStorage.getItem('activeRideId');
@@ -70,14 +62,12 @@ const CustomerPage = () => {
         setRideId(null);
     };
 
-    const renderMap = () => {
+    const renderMapPlaceholder = () => {
         return (
-             <MapContainer center={[24.8607, 67.0011]} zoom={13} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-             </MapContainer>
+             <div className="h-full w-full bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                <Map className="h-16 w-16" />
+                <p className="text-lg font-medium">Map View</p>
+             </div>
         )
     }
 
@@ -90,7 +80,7 @@ const CustomerPage = () => {
              return (
                  <div className="relative w-full h-full">
                     <div className="absolute inset-0 z-0">
-                        {renderMap()}
+                        {renderMapPlaceholder()}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                         <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
@@ -105,7 +95,7 @@ const CustomerPage = () => {
     return (
         <div className="relative h-full w-full">
             <div className="absolute inset-0 z-0">
-                {renderMap()}
+                {renderMapPlaceholder()}
             </div>
             <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
                  <Card className="shadow-lg rounded-t-2xl">

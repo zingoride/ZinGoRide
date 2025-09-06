@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wifi, WifiOff, DollarSign } from 'lucide-react';
+import { Wifi, WifiOff, DollarSign, Map } from 'lucide-react';
 import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
@@ -15,7 +14,6 @@ import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import 'leaflet/dist/leaflet.css';
 
 const translations = {
   ur: {
@@ -57,8 +55,6 @@ export default function Dashboard() {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const MapContainer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false }), []);
-  const TileLayer = useMemo(() => dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false }), []);
 
   useEffect(() => {
     if (!isOnline) {
@@ -139,12 +135,10 @@ export default function Dashboard() {
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-4 h-[calc(100vh-12rem)]">
             <div className="w-full h-1/2 rounded-lg border bg-muted flex items-center justify-center">
-                 <MapContainer center={[24.8607, 67.0011]} zoom={13} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                </MapContainer>
+                 <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                    <Map className="h-16 w-16" />
+                    <p className="text-lg font-medium">Map Placeholder</p>
+                 </div>
             </div>
              <div className="text-center text-muted-foreground space-y-2">
                 <h2 className="text-2xl font-semibold">{t.searchingForRides}</h2>
