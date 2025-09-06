@@ -1,8 +1,18 @@
 'use client';
 
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { useEffect, useRef, useState, ReactNode } from 'react';
+import L, { Map } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ReactNode } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
+
+// Fix default icons, which is a common issue with Leaflet and bundlers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
 
 interface MapWrapperProps {
   center: [number, number];
@@ -12,6 +22,9 @@ interface MapWrapperProps {
 }
 
 export default function MapWrapper({ center, zoom, children, className }: MapWrapperProps) {
+  // By wrapping MapContainer in this component that takes children,
+  // we ensure the map itself is not re-rendered when only the children (e.g., markers) change.
+  // This is a standard pattern to avoid the "Map container already initialized" error in React.
   return (
     <div className={className} style={{ height: '100%', width: '100%' }}>
       <MapContainer

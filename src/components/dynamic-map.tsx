@@ -1,20 +1,17 @@
 'use client';
 
-import { Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import MapWrapper from './MapWrapper';
+import L from 'leaflet';
+import MarkersLayer from './markers-layer';
 
-// Fix default icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
-
+export interface MapMarker {
+  position: [number, number];
+  popupText: string;
+  icon?: L.Icon;
+}
 
 export const carIcon = new L.Icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png', // Placeholder, can be replaced
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
     iconSize: [25, 41],
@@ -34,12 +31,6 @@ export const customerIcon = new L.Icon({
 });
 
 
-export interface MapMarker {
-  position: [number, number];
-  popupText: string;
-  icon?: L.Icon;
-}
-
 interface DynamicMapProps {
   markers?: MapMarker[];
   center?: [number, number];
@@ -50,11 +41,7 @@ interface DynamicMapProps {
 const DynamicMap = ({ markers = [], center = [24.8607, 67.0011], zoom = 12, className }: DynamicMapProps) => {
   return (
     <MapWrapper center={center} zoom={zoom} className={className}>
-      {markers.map((marker, idx) => (
-        <Marker key={idx} position={marker.position} icon={marker.icon || new L.Icon.Default()}>
-          <Popup>{marker.popupText}</Popup>
-        </Marker>
-      ))}
+      <MarkersLayer markers={markers} />
     </MapWrapper>
   );
 };
