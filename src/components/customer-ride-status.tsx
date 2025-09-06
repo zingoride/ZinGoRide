@@ -15,6 +15,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { Separator } from './ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
@@ -70,6 +71,10 @@ const translations = {
         call: "Call",
         cancelRide: "Ride Cancel Karein",
         cancelling: "Cancelling...",
+        toastDriverAcceptedTitle: "Driver Rastay Mein Hai!",
+        toastDriverAcceptedDesc: (name: string) => `${name} aapko lene aa raha hai.`,
+        toastRideStartedTitle: "Safar Shuru!",
+        toastRideStartedDesc: "Aapka safar shuru ho gaya hai.",
     },
     en: {
         rideStatus: "Ride Status",
@@ -85,6 +90,10 @@ const translations = {
         call: "Call",
         cancelRide: "Cancel Ride",
         cancelling: "Cancelling...",
+        toastDriverAcceptedTitle: "Driver on the way!",
+        toastDriverAcceptedDesc: (name: string) => `${name} is coming to pick you up.`,
+        toastRideStartedTitle: "Ride Started!",
+        toastRideStartedDesc: "Your trip is now in progress.",
     }
 };
 
@@ -92,8 +101,12 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const [progress, setProgress] = useState(10);
     const [loading, setLoading] = useState(false);
     const { language } = useLanguage();
+    const { toast } = useToast();
     const t = translations[language];
     const { status, driverName, driverAvatar, pickup, dropoff } = ride;
+    
+    // For tracking status changes to show notifications
+    const prevStatusRef = useState<RideRequest['status']>();
 
     useEffect(() => {
         if (status === 'booked') {
@@ -106,6 +119,27 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             }
         }
     }, [status]);
+    
+    useEffect(() => {
+        const previousStatus = prevStatusRef.current;
+        if (previousStatus !== status) {
+            if (status === 'accepted') {
+                toast({
+                    title: t.toastDriverAcceptedTitle,
+                    description: t.toastDriverAcceptedDesc(driverName || driverDetails.name),
+                });
+            } else if (status === 'in_progress') {
+                 toast({
+                    title: t.toastRideStartedTitle,
+                    description: t.toastRideStartedDesc,
+                });
+            }
+        }
+        // Update previous status ref
+        prevStatusRef.current = status;
+
+    }, [status, driverName, t, toast]);
+
 
     const handleCall = () => {
         if (driverDetails.phone) {
