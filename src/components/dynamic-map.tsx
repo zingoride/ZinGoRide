@@ -50,7 +50,14 @@ interface DynamicMapProps {
 
 const DynamicMap = ({ markers = [], center = [24.8607, 67.0011], zoom = 12, className }: DynamicMapProps) => {
   return (
-    <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className={className} style={{ height: '100%', width: '100%' }}>
+    <MapContainer 
+        key="zingo-ride-map"
+        center={center} 
+        zoom={zoom} 
+        scrollWheelZoom={true} 
+        className={className} 
+        style={{ height: '100%', width: '100%' }}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
