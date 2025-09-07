@@ -105,10 +105,11 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         },
         () => {
           console.warn("Could not get customer's geolocation.");
-          setCustomerPosition(defaultPositions.customer); // Fallback
+          const pickupGeo = ride.pickupCoords;
+          setCustomerPosition(pickupGeo ? [pickupGeo.latitude, pickupGeo.longitude] : defaultPositions.customer); // Fallback
         }
       );
-    }, []);
+    }, [ride.pickupCoords]);
 
     // Listen to driver's location updates from Firestore
     useEffect(() => {
@@ -211,99 +212,85 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const currentDriverName = driverName || "Finding Driver...";
     const currentDriverAvatar = driverAvatar || `https://picsum.photos/seed/${driverId || 'driver'}/100/100`;
 
-
-    return (
-       <div className="flex flex-col gap-4 h-full w-full p-2">
-            {showDriverDetails && (
-                <div className="h-56 w-full rounded-lg overflow-hidden border">
-                    <DynamicMap markers={mapMarkers} />
+    const renderCardContent = () => {
+        if (!showDriverDetails) {
+            return (
+                <div className="flex flex-col justify-center items-center gap-6 text-center h-full p-8">
+                    <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                    <p className='font-semibold text-lg'>{t.findingDriver}</p>
+                    <Progress value={progress} className='w-full' />
                 </div>
-            )}
-            <Card className="flex-grow flex flex-col">
-                <CardHeader>
-                    <CardTitle>{title}</CardTitle>
-                    <CardDescription>{description}</CardDescription>
-                </CardHeader>
-                    <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
-                    {!showDriverDetails ? (
-                        <>
-                            <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                            <p className='font-semibold text-lg'>{t.findingDriver}</p>
-                            <Progress value={progress} className='w-full' />
-                        </>
-                    ) : (
-                            <div className="w-full flex flex-col items-center gap-4">
-                            <Avatar className="h-24 w-24 border-4 border-primary">
-                                <AvatarImage src={currentDriverAvatar} alt={currentDriverName} data-ai-hint="portrait man" />
-                                <AvatarFallback>{currentDriverName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className='text-center'>
-                                <p className="text-2xl font-bold">{currentDriverName}</p>
-                                <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span>4.9</span>
-                                </div>
-                            </div>
-                        
-                            <Card className='w-full bg-muted/50 border-dashed'>
-                                <CardContent className='p-3'>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Car className='h-6 w-6' />
-                                        <p className="text-lg font-semibold">Toyota Corolla - ABC-123</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            )
+        }
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t.rideDetails}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-muted-foreground">{t.pickup}</p>
-                            <p className="font-semibold">{pickup}</p>
+        return (
+             <div className="p-4">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16 border-2 border-primary">
+                        <AvatarImage src={currentDriverAvatar} alt={currentDriverName} data-ai-hint="portrait man" />
+                        <AvatarFallback>{currentDriverName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className='flex-1'>
+                        <p className="text-xl font-bold">{currentDriverName}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span>4.9</span>
                         </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                        <Navigation className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-muted-foreground">{t.dropoff}</p>
-                            <p className="font-semibold">{dropoff}</p>
-                        </div>
-                    </div>
-                    <Separator />
-                    <div className="flex w-full gap-2">
-                        <Button variant="outline" className="w-full" onClick={handleCall} disabled={!showDriverDetails}>
-                            <Phone className="mr-2 h-4 w-4" /> {t.call}
+                     <div className="flex items-center gap-1">
+                        <Button variant="outline" size="icon" onClick={handleCall}>
+                            <Phone className="h-4 w-4" />
                         </Button>
                         {driverId && (
                             <ChatDialog 
                                 rideId={id}
                                 chatPartnerName={driverName || "Driver"}
                                 chatPartnerId={driverId}
+                                trigger={<Button variant="outline" size="icon"><ChatDialog.Icon className="h-4 w-4" /></Button>}
                             />
                         )}
                     </div>
-                        <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
-                        {loading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t.cancelling}
-                            </>
-                        ) : (
-                            <>
-                                <X className="mr-2 h-4 w-4" /> {t.cancelRide}
-                            </>
-                        )}
-                    </Button>
-                </CardContent>
-            </Card>
+                </div>
+
+                <Separator className="my-4" />
+                
+                <Card className='w-full bg-muted/50 border-dashed mb-4'>
+                    <CardContent className='p-3'>
+                        <div className="flex items-center justify-center gap-2">
+                            <Car className='h-6 w-6' />
+                            <p className="text-md font-semibold">Toyota Corolla - ABC-123</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                 <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
+                    {loading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.cancelling}</>
+                    ) : (
+                        <><X className="mr-2 h-4 w-4" /> {t.cancelRide}</>
+                    )}
+                </Button>
+            </div>
+        )
+
+    }
+
+    return (
+       <div className="relative h-full w-full">
+            <div className="absolute inset-0 z-0">
+                 <DynamicMap markers={mapMarkers} />
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                 <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md mx-auto">
+                    <CardHeader>
+                        <CardTitle>{title}</CardTitle>
+                        <CardDescription>{description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                       {renderCardContent()}
+                    </CardContent>
+                </Card>
+            </div>
        </div>
     );
 }

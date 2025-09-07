@@ -79,10 +79,10 @@ const CustomerPage = () => {
     const renderContent = () => {
         if (!currentRide) {
             return (
-                <div className="flex flex-col gap-4">
+                <>
                     <RideBookingForm onFindRide={handleFindRide} />
                     <AdBanner targetAudience="Customer" />
-                </div>
+                </>
             );
         }
         
@@ -101,18 +101,23 @@ const CustomerPage = () => {
         return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
     }
     
-     if (currentRide && (currentRide.status === 'accepted' || currentRide.status === 'in_progress')) {
+     if (currentRide && (currentRide.status === 'accepted' || currentRide.status === 'in_progress' || currentRide.status === 'booked')) {
         return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
      }
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-muted/30">
-            <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md">
-                <CardContent className="p-4">
-                    {renderContent()}
-                </CardContent>
-            </Card>
-        </div>
+       <div className="relative h-full w-full">
+            <div className="absolute inset-0 z-0">
+                <DynamicMap />
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                 <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md mx-auto">
+                    <CardContent className="p-4">
+                        {renderContent()}
+                    </CardContent>
+                </Card>
+            </div>
+       </div>
     );
 }
 
