@@ -126,7 +126,7 @@ export default function LiveMapPage() {
           <CardTitle>{t.liveMap}</CardTitle>
           <CardDescription>{t.description}</CardDescription>
         </div>
-        <div className="w-[180px]">
+        <div className="w-[180px] relative z-10">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger>
               <SelectValue placeholder={t.filterUsers} />
