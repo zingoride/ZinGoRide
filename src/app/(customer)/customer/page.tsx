@@ -90,7 +90,9 @@ const CustomerPage = () => {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
         
-        if (currentRide.status === 'booked' || currentRide.status === 'pending') {
+        // This is the key change: Show AvailableRides only after a ride has been created ('pending' status)
+        // and before it's confirmed ('booked')
+        if (currentRide.status === 'pending') {
              return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
         }
         
