@@ -45,7 +45,7 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
   const { user } = useAuth();
   const { toast } = useToast();
   const [pickup, setPickup] = useState('');
-  const [dropoff, setDropoff] = useState('Clifton, Karachi');
+  const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
