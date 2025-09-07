@@ -82,7 +82,9 @@ export default function SignupPage() {
         email: email,
         type: 'Customer',
         status: 'Active',
+        approvalStatus: 'Approved',
         createdAt: new Date(),
+        walletBalance: 0,
       });
       
       toast({
