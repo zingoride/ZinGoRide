@@ -1,54 +1,97 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read/update their own data. Admins can read any user's data.
+    // Helper function to check if a user is an admin
+    // In a real app, you'd check a custom claim set via a backend.
+    function isAdmin() {
+      // For this prototype, we'll assume a specific UID is the admin.
+      // Replace 'ADMIN_UID' with the actual admin user's UID from Firebase Auth.
+      return request.auth.uid == 'REPLACE_WITH_YOUR_ADMIN_UID';
+    }
+
+    // Helper function to check if a user is a driver
+    function isDriver() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver';
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
-      // Further rules can be added for admin access if an admin role is defined.
+      // Allow a user to read their own document.
+      // Allow an admin to read any user document.
+      // Allow a driver to read other users' location for map functionality.
+      allow read: if request.auth.uid == userId 
+                    || isAdmin() 
+                    || (isDriver() && 'location' in resource.data);
+      
+      // Allow a user to create their own document and update their own document.
+      // Allow an admin to update any user document.
+      allow create, update: if request.auth.uid == userId || isAdmin();
+
+      // Prevent users from deleting their accounts directly from the client.
+      allow delete: if false;
     }
 
-    // Rides can be created by any authenticated user.
-    // They can be read/updated by the customer who created it or the driver who accepted it.
+    // Rules for the 'rides' collection
     match /rides/{rideId} {
+      // Any authenticated user can create a ride request.
       allow create: if request.auth != null;
-      allow read, update: if request.auth != null && (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
-    }
 
-    // Wallet requests can be created by any authenticated user.
-    // They should only be read/updated by admins (not implemented yet, but good practice).
-    match /walletRequests/{requestId} {
-      allow create: if request.auth != null;
-      // For now, deny read/update to prevent users from seeing each other's requests.
-      // Admin panel would use admin credentials to bypass this.
-      allow read, update: if false;
-    }
+      // The customer who created it, the assigned driver, or an admin can read it.
+      allow read: if request.auth != null && (request.auth.uid == resource.data.customerId 
+                    || request.auth.uid == resource.data.driverId 
+                    || isAdmin());
 
-    // Payout requests (assuming only admins/drivers with specific roles create this)
-    // This example assumes only the user themselves can create and read their own requests.
-    match /payoutRequests/{payoutId} {
-       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-       // Updates would be handled by an admin role
-       allow update: if false;
-    }
+      // The assigned driver or an admin can update the ride.
+      // The customer can only update it to cancel it.
+      allow update: if request.auth != null && (request.auth.uid == resource.data.driverId 
+                      || isAdmin() 
+                      || (request.auth.uid == resource.data.customerId && request.resource.data.status == 'cancelled_by_customer'));
 
-    // Chat messages can be read/written by the customer or driver of that ride.
-    // Or by the two participants of a direct chat.
-    match /rides/{rideId}/messages/{messageId} {
-      allow read, create: if request.auth != null && (get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid || get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid);
+      // No one can delete a ride from the client.
+      allow delete: if false;
+      
+       // Chat messages within a ride
+      match /messages/{messageId} {
+        allow read, create: if request.auth.uid == resource.data.senderId
+                            || request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId
+                            || request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId;
+      }
     }
     
+    // Rules for chat between admin and users
     match /chats/{chatId}/messages/{messageId} {
-      // Chat participants are stored in the chatId, e.g., "userId1_userId2"
-      allow read, create: if request.auth != null && request.auth.uid in chatId.split('_');
+        allow read, write: if request.auth != null && (request.auth.uid in chatId.split('_') || isAdmin());
     }
 
-    // Notifications are write-only for server-side actions, no client access.
+    // Rules for wallet top-up requests
+    match /walletRequests/{requestId} {
+      // Any authenticated user can create a request.
+      allow create: if request.auth != null;
+
+      // Only the user who created it or an admin can read it.
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+
+      // Only an admin can update (approve/reject) a request.
+      allow update: if isAdmin();
+      
+      allow delete: if false;
+    }
+    
+     // Rules for payout requests
+    match /payoutRequests/{payoutId} {
+      // Only an admin can create/read payout requests.
+      allow read, create: if isAdmin();
+      // Allow update for status changes
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Rules for broadcast notifications
     match /notifications/{notificationId} {
-      allow read, write: if false;
+        // Only admin can read/write notifications history
+        allow read, write: if isAdmin();
     }
   }
 }
