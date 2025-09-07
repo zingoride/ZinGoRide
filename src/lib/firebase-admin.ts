@@ -13,17 +13,33 @@ export function getFirebaseAdmin() {
     };
   }
 
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  // Use individual environment variables instead of the whole JSON file
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
 
-  if (!serviceAccountKey) {
-    throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_KEY. Please set it in your environment variables.');
+  if (!privateKey || !clientEmail || !projectId) {
+    throw new Error('Missing Firebase Admin SDK credentials. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY in your environment variables.');
   }
 
-  const serviceAccount = JSON.parse(serviceAccountKey);
+  const serviceAccount: admin.ServiceAccount = {
+    projectId,
+    clientEmail,
+    privateKey,
+  };
 
-  app = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  try {
+    app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (error: any) {
+    if (error.code === 'app/duplicate-app') {
+       app = admin.app();
+    } else {
+      throw error;
+    }
+  }
+
 
   return {
     db: admin.firestore(app),
