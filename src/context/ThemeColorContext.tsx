@@ -23,7 +23,9 @@ export function ThemeColorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.body.classList.remove('theme-blue', 'theme-green', 'theme-orange', 'theme-rose', 'theme-violet', 'theme-yellow', 'theme-lime', 'theme-cyan', 'theme-pink', 'theme-slate');
+    // Remove all theme classes before adding the new one
+    const classesToRemove = ['theme-blue', 'theme-green', 'theme-orange', 'theme-rose', 'theme-violet', 'theme-yellow', 'theme-lime', 'theme-cyan', 'theme-pink', 'theme-slate'];
+    document.body.classList.remove(...classesToRemove);
     document.body.classList.add(themeColor);
   }, [themeColor]);
 
