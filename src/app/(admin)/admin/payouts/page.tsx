@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, runTransaction, doc } from "firebase/firestore";
 
 type PayoutStatus = 'Pending' | 'Completed' | 'Failed';
 type PayoutMethod = 'Easypaisa' | 'Jazzcash' | 'Bank Transfer';
@@ -101,34 +101,39 @@ export default function PayoutsPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const fetchCommission = async () => {
+    const fetchCommissionAndPayouts = async () => {
       setLoadingCommission(true);
+      
+      // Fetch completed rides to calculate total commission
       const ridesRef = collection(db, "rides");
-      const q = query(ridesRef, where("status", "==", "completed"));
-      const querySnapshot = await getDocs(q);
+      const ridesQuery = query(ridesRef, where("status", "==", "completed"));
+      const ridesSnapshot = await getDocs(ridesQuery);
       let totalFare = 0;
-      querySnapshot.forEach(doc => {
+      ridesSnapshot.forEach(doc => {
         totalFare += doc.data().fare || 0;
       });
       const calculatedCommission = totalFare * 0.15; // 15% commission
-      setTotalCommission(calculatedCommission);
+
+      // Fetch existing payouts to calculate remaining commission
+      const payoutRef = collection(db, "payoutRequests");
+      const payoutQuery = query(payoutRef, orderBy("date", "desc"));
+      const payoutSnapshot = await getDocs(payoutQuery);
+      const payoutList = payoutSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date.toDate()
+      } as PayoutRequest));
+      
+      const totalPaidOut = payoutList
+        .filter(p => p.status === 'Completed' || p.status === 'Pending')
+        .reduce((sum, p) => sum + p.amount, 0);
+      
+      setTotalCommission(calculatedCommission - totalPaidOut);
+      setPayouts(payoutList);
       setLoadingCommission(false);
     };
 
-    const fetchPayouts = async () => {
-        const payoutRef = collection(db, "payoutRequests");
-        const q = query(payoutRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-        const payoutList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date.toDate()
-        } as PayoutRequest));
-        setPayouts(payoutList);
-    }
-
-    fetchCommission();
-    fetchPayouts();
+    fetchCommissionAndPayouts();
   }, []);
 
   const handleRequestPayout = async (e: React.FormEvent) => {
@@ -138,6 +143,11 @@ export default function PayoutsPage() {
     if (!payoutMethod || !accountNumber || !amount) {
         toast({ variant: "destructive", title: "Missing fields" });
         return;
+    }
+
+    if (payoutAmount <= 0) {
+      toast({ variant: "destructive", title: "Invalid Amount" });
+      return;
     }
 
     if (payoutAmount > totalCommission) {
@@ -153,7 +163,7 @@ export default function PayoutsPage() {
     try {
         const newPayoutRequest = {
             amount: payoutAmount,
-            method: payoutMethod,
+            method: payoutMethod as PayoutMethod,
             accountNumber,
             status: 'Pending' as PayoutStatus,
             date: serverTimestamp(),
