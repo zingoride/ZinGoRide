@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc, setDoc, GeoPoint } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { AdBanner } from '@/components/ad-banner';
 
 const translations = {
   ur: {
@@ -213,6 +214,9 @@ export default function Dashboard() {
              <Button onClick={toggleStatus} size="lg" className="w-full max-w-sm mt-4">
                 {t.goOnline}
             </Button>
+        </div>
+        <div className='w-full max-w-md'>
+          <AdBanner targetAudience="Rider" />
         </div>
       </div>
     );

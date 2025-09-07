@@ -81,7 +81,7 @@ const CustomerPage = () => {
             return (
                 <div className="flex flex-col gap-4">
                     <RideBookingForm onFindRide={handleFindRide} />
-                    <AdBanner />
+                    <AdBanner targetAudience="Customer" />
                 </div>
             );
         }

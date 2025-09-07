@@ -8,15 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Upload, Megaphone, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Upload, Megaphone, Link as LinkIcon, Image as ImageIcon, User, Users } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, where, writeBatch } from 'firebase/firestore';
 import { uploadToCloudinary } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+
+type TargetAudience = 'Customer' | 'Rider';
 
 interface Advertisement {
     id: string;
@@ -25,13 +29,14 @@ interface Advertisement {
     imageUrl: string;
     targetUrl: string;
     isActive: boolean;
+    targetAudience: TargetAudience;
     createdAt: any;
 }
 
 const translations = {
   ur: {
     title: 'Live Ishtiharat (Advertisements)',
-    description: 'Yahan se live ishtiharat manage karein jo customer app mein nazar aayengi.',
+    description: 'Yahan se live ishtiharat manage karein jo customer aur rider apps mein nazar aayengi.',
     newAd: 'Naya Ishtihar Banayein',
     adTitle: 'Ishtihar ka Unwan',
     adTitlePlaceholder: 'e.g., 50% Off on First Ride!',
@@ -41,6 +46,9 @@ const translations = {
     uploadImage: 'Tasveer Upload Karein',
     targetUrl: 'Target URL',
     targetUrlPlaceholder: 'https://example.com/offer',
+    targetAudience: 'Target Audience',
+    customer: 'Customer',
+    rider: 'Rider',
     saveAd: 'Ishtihar Mehfooz Karein',
     saving: 'Mehfooz ho raha hai...',
     successTitle: 'Kamyabi!',
@@ -48,7 +56,9 @@ const translations = {
     errorTitle: 'Ghalti!',
     errorDesc: 'Ishtihar mehfooz karne mein masla hua.',
     currentAds: 'Mojooda Ishtiharat',
-    noAds: 'Abhi tak koi ishtihar nahi banaya gaya.',
+    customerAds: 'Customer Ads',
+    riderAds: 'Rider Ads',
+    noAds: 'Is audience ke liye abhi tak koi ishtihar nahi banaya gaya.',
     activate: 'Active Karein',
     deleteAd: 'Ishtihar Delete Karein',
     confirmDelete: 'Kya aap waqai is ishtihar ko delete karna chahte hain?',
@@ -58,7 +68,7 @@ const translations = {
   },
   en: {
     title: 'Live Advertisements',
-    description: 'Manage live ads that will be displayed in the customer app.',
+    description: 'Manage live ads that will be displayed in the customer and rider apps.',
     newAd: 'Create New Advertisement',
     adTitle: 'Advertisement Title',
     adTitlePlaceholder: 'e.g., 50% Off on First Ride!',
@@ -68,6 +78,9 @@ const translations = {
     uploadImage: 'Upload Image',
     targetUrl: 'Target URL',
     targetUrlPlaceholder: 'https://example.com/offer',
+    targetAudience: 'Target Audience',
+    customer: 'Customer',
+    rider: 'Rider',
     saveAd: 'Save Advertisement',
     saving: 'Saving...',
     successTitle: 'Success!',
@@ -75,7 +88,9 @@ const translations = {
     errorTitle: 'Error!',
     errorDesc: 'There was a problem saving the advertisement.',
     currentAds: 'Current Advertisements',
-    noAds: 'No advertisements have been created yet.',
+    customerAds: 'Customer Ads',
+    riderAds: 'Rider Ads',
+    noAds: 'No advertisements have been created for this audience yet.',
     activate: 'Activate',
     deleteAd: 'Delete Ad',
     confirmDelete: 'Are you sure you want to delete this advertisement?',
@@ -90,7 +105,8 @@ export default function AdvertisementsPage() {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const [ads, setAds] = useState<Advertisement[]>([]);
+  const [customerAds, setCustomerAds] = useState<Advertisement[]>([]);
+  const [riderAds, setRiderAds] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -100,13 +116,15 @@ export default function AdvertisementsPage() {
   const [targetUrl, setTargetUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [targetAudience, setTargetAudience] = useState<TargetAudience>('Customer');
   
   useEffect(() => {
     const adsCollection = collection(db, "advertisements");
     const q = query(adsCollection, orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const adsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advertisement));
-        setAds(adsList);
+        setCustomerAds(adsList.filter(ad => ad.targetAudience === 'Customer'));
+        setRiderAds(adsList.filter(ad => ad.targetAudience === 'Rider'));
         setLoading(false);
     }, (error) => {
         console.error("Error fetching ads: ", error);
@@ -130,6 +148,7 @@ export default function AdvertisementsPage() {
     setTargetUrl('');
     setImageFile(null);
     setImagePreview(null);
+    setTargetAudience('Customer');
   }
 
   const handleSaveAd = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -157,6 +176,7 @@ export default function AdvertisementsPage() {
             targetUrl,
             imageUrl: uploadResult.url,
             isActive: false,
+            targetAudience,
             createdAt: new Date(),
         });
         
@@ -172,20 +192,27 @@ export default function AdvertisementsPage() {
     }
   };
   
-  const toggleAdStatus = async (ad: Advertisement) => {
-    const adDocRef = doc(db, 'advertisements', ad.id);
-    if (ad.isActive) {
+  const toggleAdStatus = async (adToToggle: Advertisement) => {
+    const adDocRef = doc(db, 'advertisements', adToToggle.id);
+    const adsCollection = collection(db, 'advertisements');
+    
+    if (adToToggle.isActive) {
         // If this ad is active, just deactivate it.
          await updateDoc(adDocRef, { isActive: false });
     } else {
-        // If activating this ad, deactivate all others first.
-        const activeAds = ads.filter(a => a.isActive);
-        const batch = ads.map(a => {
-            if(a.isActive) return updateDoc(doc(db, 'advertisements', a.id), {isActive: false})
-            return Promise.resolve()
+        // Deactivate all other ads for the same target audience
+        const batch = writeBatch(db);
+        const q = query(adsCollection, where('targetAudience', '==', adToToggle.targetAudience), where('isActive', '==', true));
+        const activeAdsSnapshot = await getDocs(q);
+
+        activeAdsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { isActive: false });
         });
-        await Promise.all(batch);
-        await updateDoc(adDocRef, { isActive: true });
+        
+        // Activate the new ad
+        batch.update(adDocRef, { isActive: true });
+        
+        await batch.commit();
     }
   };
 
@@ -198,6 +225,55 @@ export default function AdvertisementsPage() {
         toast({ variant: 'destructive', title: t.errorTitle, description: t.deleteError });
     }
   };
+
+  const renderAdList = (ads: Advertisement[], audience: TargetAudience) => (
+    loading ? (
+        <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    ) : ads.length > 0 ? (
+      <div className="space-y-4">
+        {ads.map((ad) => (
+          <Card key={ad.id} className="flex flex-col md:flex-row items-center gap-4 p-4 bg-muted/30">
+            <Image src={ad.imageUrl} alt={ad.title} width={150} height={100} className="rounded-md object-cover md:w-1/3" />
+            <div className="flex-1">
+              <h3 className="font-bold">{ad.title}</h3>
+              <p className="text-sm text-muted-foreground">{ad.description}</p>
+              <a href={ad.targetUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate">{ad.targetUrl}</a>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id={`switch-${ad.id}`} checked={ad.isActive} onCheckedChange={() => toggleAdStatus(ad)} />
+                    <Label htmlFor={`switch-${ad.id}`}>{t.activate}</Label>
+                </div>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" /> {t.deleteAd}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>{t.deleteAd}</AlertDialogTitle>
+                        <AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteAd(ad.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center text-muted-foreground py-16">
+        <Megaphone className="h-12 w-12 mx-auto mb-4" />
+        <p>{t.noAds}</p>
+      </div>
+    )
+  );
 
   return (
     <div className="grid gap-8 md:grid-cols-3 items-start">
@@ -222,6 +298,25 @@ export default function AdvertisementsPage() {
                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input id="ad-url" value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder={t.targetUrlPlaceholder} required className="pl-8" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                 <Label>{t.targetAudience}</Label>
+                 <RadioGroup value={targetAudience} onValueChange={(v) => setTargetAudience(v as TargetAudience)} className="grid grid-cols-2 gap-4">
+                    <div>
+                        <RadioGroupItem value="Customer" id="customer-radio" className="peer sr-only" />
+                        <Label htmlFor="customer-radio" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                            <User className="h-6 w-6 mb-2" />
+                            {t.customer}
+                        </Label>
+                    </div>
+                     <div>
+                        <RadioGroupItem value="Rider" id="rider-radio" className="peer sr-only" />
+                        <Label htmlFor="rider-radio" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                           <Users className="h-6 w-6 mb-2" />
+                           {t.rider}
+                        </Label>
+                    </div>
+                 </RadioGroup>
               </div>
               <div className="space-y-2">
                  <Label htmlFor="ad-image">{t.adImage}</Label>
@@ -255,62 +350,35 @@ export default function AdvertisementsPage() {
       </div>
 
       <div className="md:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.currentAds}</CardTitle>
-            <CardDescription>{t.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-                <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-            ) : ads.length > 0 ? (
-              <div className="space-y-4">
-                {ads.map((ad) => (
-                  <Card key={ad.id} className="flex flex-col md:flex-row items-center gap-4 p-4 bg-muted/30">
-                    <Image src={ad.imageUrl} alt={ad.title} width={150} height={100} className="rounded-md object-cover md:w-1/3" />
-                    <div className="flex-1">
-                      <h3 className="font-bold">{ad.title}</h3>
-                      <p className="text-sm text-muted-foreground">{ad.description}</p>
-                      <a href={ad.targetUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate">{ad.targetUrl}</a>
-                    </div>
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="flex items-center space-x-2">
-                            <Switch id={`switch-${ad.id}`} checked={ad.isActive} onCheckedChange={() => toggleAdStatus(ad)} />
-                            <Label htmlFor={`switch-${ad.id}`}>{t.activate}</Label>
-                        </div>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
-                                    <Trash2 className="mr-2 h-4 w-4" /> {t.deleteAd}
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>{t.deleteAd}</AlertDialogTitle>
-                                <AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteAd(ad.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-16">
-                <Megaphone className="h-12 w-12 mx-auto mb-4" />
-                <p>{t.noAds}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+         <Tabs defaultValue="customer" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="customer">{t.customerAds}</TabsTrigger>
+                <TabsTrigger value="rider">{t.riderAds}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="customer">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>{t.customerAds}</CardTitle>
+                        <CardDescription>{t.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       {renderAdList(customerAds, 'Customer')}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="rider">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>{t.riderAds}</CardTitle>
+                        <CardDescription>{t.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       {renderAdList(riderAds, 'Rider')}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+         </Tabs>
       </div>
     </div>
   );
 }
-

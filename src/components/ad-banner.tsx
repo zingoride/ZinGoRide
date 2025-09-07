@@ -8,6 +8,8 @@ import { Megaphone, X } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, limit } from 'firebase/firestore';
 
+type TargetAudience = 'Customer' | 'Rider';
+
 interface Advertisement {
     id: string;
     title: string;
@@ -15,16 +17,17 @@ interface Advertisement {
     imageUrl: string;
     targetUrl: string;
     isActive: boolean;
+    targetAudience: TargetAudience;
 }
 
-export function AdBanner() {
+export function AdBanner({ targetAudience }: { targetAudience: TargetAudience }) {
     const [ad, setAd] = useState<Advertisement | null>(null);
     const [isVisible, setIsVisible] = useState(true);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const adsCollection = collection(db, "advertisements");
-        const q = query(adsCollection, where("isActive", "==", true), limit(1));
+        const q = query(adsCollection, where("isActive", "==", true), where("targetAudience", "==", targetAudience), limit(1));
         
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (!snapshot.empty) {
@@ -38,7 +41,7 @@ export function AdBanner() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [targetAudience]);
 
     if (loading || !ad || !isVisible) {
         return null; // Don't render anything if loading, no ad, or dismissed
@@ -74,4 +77,3 @@ export function AdBanner() {
         </div>
     );
 }
-
