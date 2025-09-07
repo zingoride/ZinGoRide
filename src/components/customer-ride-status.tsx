@@ -221,99 +221,92 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full w-full p-4">
-            <div className="lg:col-span-2 h-full min-h-[300px] lg:min-h-full rounded-lg overflow-hidden border">
-                 <DynamicMap markers={mapMarkers} />
-            </div>
+       <div className="flex flex-col gap-6 h-full w-full">
+            <Card className="flex-grow flex flex-col">
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
+                    {!showDriverDetails ? (
+                        <>
+                            <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                            <p className='font-semibold text-lg'>{t.findingDriver}</p>
+                            <Progress value={progress} className='w-full' />
+                        </>
+                    ) : (
+                            <div className="w-full flex flex-col items-center gap-4">
+                            <Avatar className="h-24 w-24 border-4 border-primary">
+                                <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
+                                <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className='text-center'>
+                                <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
+                                <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    <span>{driverDetails.rating.toFixed(1)}</span>
+                                </div>
+                            </div>
+                        
+                            <Card className='w-full bg-muted/50 border-dashed'>
+                                <CardContent className='p-3'>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Car className='h-6 w-6' />
+                                        <p className="text-lg font-semibold">{driverDetails.vehicle}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
-            <div className="flex flex-col gap-6">
-                
-                <Card className="flex-grow flex flex-col">
-                    <CardHeader>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                    </CardHeader>
-                     <CardContent className="flex-1 flex flex-col justify-center items-center gap-6 text-center">
-                        {!showDriverDetails ? (
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t.rideDetails}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                        <div>
+                            <p className="text-xs text-muted-foreground">{t.pickup}</p>
+                            <p className="font-semibold">{pickup}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                        <Navigation className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                        <div>
+                            <p className="text-xs text-muted-foreground">{t.dropoff}</p>
+                            <p className="font-semibold">{dropoff}</p>
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className="flex w-full gap-2">
+                        <Button variant="outline" className="w-full" onClick={handleCall} disabled={!showDriverDetails}>
+                            <Phone className="mr-2 h-4 w-4" /> {t.call}
+                        </Button>
+                        {driverId && (
+                            <ChatDialog 
+                                rideId={id}
+                                chatPartnerName={driverName || driverDetails.name}
+                                chatPartnerId={driverId}
+                            />
+                        )}
+                    </div>
+                        <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
+                        {loading ? (
                             <>
-                                <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                                <p className='font-semibold text-lg'>{t.findingDriver}</p>
-                                <Progress value={progress} className='w-full' />
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t.cancelling}
                             </>
                         ) : (
-                             <div className="w-full flex flex-col items-center gap-4">
-                                <Avatar className="h-24 w-24 border-4 border-primary">
-                                    <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
-                                    <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className='text-center'>
-                                    <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
-                                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-                                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                        <span>{driverDetails.rating.toFixed(1)}</span>
-                                    </div>
-                                </div>
-                            
-                                <Card className='w-full bg-muted/50 border-dashed'>
-                                    <CardContent className='p-3'>
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Car className='h-6 w-6' />
-                                            <p className="text-lg font-semibold">{driverDetails.vehicle}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                            <>
+                                <X className="mr-2 h-4 w-4" /> {t.cancelRide}
+                            </>
                         )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{t.rideDetails}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                            <div>
-                                <p className="text-xs text-muted-foreground">{t.pickup}</p>
-                                <p className="font-semibold">{pickup}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <Navigation className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                            <div>
-                                <p className="text-xs text-muted-foreground">{t.dropoff}</p>
-                                <p className="font-semibold">{dropoff}</p>
-                            </div>
-                        </div>
-                        <Separator />
-                        <div className="flex w-full gap-2">
-                            <Button variant="outline" className="w-full" onClick={handleCall} disabled={!showDriverDetails}>
-                                <Phone className="mr-2 h-4 w-4" /> {t.call}
-                            </Button>
-                            {driverId && (
-                               <ChatDialog 
-                                    rideId={id}
-                                    chatPartnerName={driverName || driverDetails.name}
-                                    chatPartnerId={driverId}
-                                />
-                            )}
-                        </div>
-                         <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {t.cancelling}
-                                </>
-                            ) : (
-                                <>
-                                    <X className="mr-2 h-4 w-4" /> {t.cancelRide}
-                                </>
-                            )}
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
+                    </Button>
+                </CardContent>
+            </Card>
        </div>
     )
 }

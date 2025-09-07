@@ -75,50 +75,48 @@ const CustomerPage = () => {
         setRideId(null);
     };
 
-    if (!isClient) {
-        return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-    }
-
-    if (currentRide) {
+    const renderBookingStage = () => {
+        if (!currentRide) {
+            return (
+                <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full h-full flex flex-col">
+                    <CardContent className="p-4 flex-1 flex flex-col justify-center">
+                        <RideBookingForm onFindRide={handleFindRide} />
+                    </CardContent>
+                </Card>
+            );
+        }
+        
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
         
         if (currentRide.status === 'booked') {
-             return (
-                <div className="relative w-full h-full">
-                    <div className='absolute inset-0'>
-                        <DynamicMap />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 w-full p-4 z-10 max-w-md mx-auto">
-                        <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
-                    </div>
-                 </div>
-             )
+             return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
         }
         
-        // This will now render the 3-panel layout for accepted/in_progress rides
         return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
     }
 
+    if (!isClient) {
+        return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+    }
+    
+     if (currentRide && (status === 'accepted' || status === 'in_progress')) {
+        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
+     }
+
     return (
-        <div className="relative h-full w-full flex flex-col">
-            <div className="flex-grow">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 h-full w-full">
+            <div className="md:col-span-2 lg:col-span-1 xl:col-span-2 h-64 md:h-full w-full">
                  <DynamicMap />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-t from-background via-background/80 to-transparent">
-                <div className="max-w-md mx-auto">
-                     <Card className="shadow-lg rounded-2xl border-t-4 border-primary">
-                        <CardContent className="p-4">
-                            <RideBookingForm onFindRide={handleFindRide} />
-                        </CardContent>
-                     </Card>
-                </div>
+            <div className="md:col-span-1 lg:col-span-1 xl:col-span-1 p-4 flex flex-col items-center justify-center bg-background md:border-l">
+                 <div className="w-full max-w-md">
+                     {renderBookingStage()}
+                 </div>
             </div>
         </div>
     );
 }
 
 export default CustomerPage;
-
-
