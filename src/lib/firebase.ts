@@ -16,8 +16,8 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if the config is valid
-const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase only if it hasn't been initialized yet
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 // Services
 const auth = getAuth(app);
