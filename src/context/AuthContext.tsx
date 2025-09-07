@@ -27,12 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  // Removed the routing logic from here to prevent hydration errors.
+  // Routing should be handled by individual pages or a dedicated component.
+
   if (loading) {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
-            <Skeleton className="h-10 w-48 mb-6" />
-            <div className="w-full max-w-md">
-                <Skeleton className="h-96 w-full" />
+            <div className="w-full h-full flex items-center justify-center">
+                 <Skeleton className="h-[80vh] w-full" />
             </div>
         </div>
     )
