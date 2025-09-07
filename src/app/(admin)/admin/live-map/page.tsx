@@ -120,14 +120,14 @@ export default function LiveMapPage() {
   }, [filteredUsers]);
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 h-full">
-      <Card className="h-[75vh] flex flex-col gap-4">
+    <div className="flex flex-col h-full gap-4">
+       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <div>
             <CardTitle>{t.liveMap}</CardTitle>
             <CardDescription>{t.description}</CardDescription>
           </div>
-          <div className="w-[180px] relative z-10">
+          <div className="w-[180px]">
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger>
                 <SelectValue placeholder={t.filterUsers} />
@@ -140,7 +140,9 @@ export default function LiveMapPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 p-0 relative">
+      </Card>
+      <Card className="flex-1">
+        <CardContent className="h-full p-0">
           {loading ? (
             <div className="h-full w-full bg-muted flex items-center justify-center">
               <Loader2 className="h-16 w-16 animate-spin text-primary" />
