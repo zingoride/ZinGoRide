@@ -56,3 +56,29 @@ export async function uploadToCloudinary(formData: FormData): Promise<{ success:
     return { success: false, error: error.message };
   }
 }
+
+export async function sendBroadcastNotification(formData: FormData): Promise<{ success: boolean; error?: string }> {
+    const title = formData.get('title') as string;
+    const message = formData.get('message') as string;
+
+    if (!title || !message) {
+        return { success: false, error: "Title and message are required." };
+    }
+
+    console.log("--- Sending Broadcast Notification ---");
+    console.log("Title:", title);
+    console.log("Message:", message);
+    console.log("------------------------------------");
+
+    // In a real application, you would integrate with Firebase Cloud Messaging (FCM) here.
+    // 1. You would need to set up the Firebase Admin SDK.
+    // 2. Collect FCM tokens from all user devices and store them.
+    // 3. Use the Admin SDK to send a message to a topic (e.g., 'all_users') or to all tokens.
+    // For this prototype, we'll just simulate a successful sending.
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Simulate success
+    return { success: true };
+}

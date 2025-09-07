@@ -11,6 +11,7 @@ import {
   CreditCard,
   Banknote,
   Map,
+  Bell,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const translations = {
     walletRequests: "Wallet Requests",
     payouts: "Payouts",
     liveMap: "Live Map",
+    notifications: "Notifications",
   },
   en: {
     dashboard: "Dashboard",
@@ -34,6 +36,7 @@ const translations = {
     walletRequests: "Wallet Requests",
     payouts: "Payouts",
     liveMap: "Live Map",
+    notifications: "Notifications",
   },
 };
 
@@ -48,6 +51,7 @@ export function AdminSidebar() {
     { href: "/admin/live-map", label: t.liveMap, icon: Map },
     { href: "/admin/rides", label: t.rides, icon: Car },
     { href: "/admin/users", label: t.users, icon: Users },
+    { href: "/admin/notifications", label: t.notifications, icon: Bell },
     { href: "/admin/wallet-requests", label: t.walletRequests, icon: CreditCard },
     { href: "/admin/payouts", label: t.payouts, icon: Banknote },
     { href: "/admin/settings", label: t.settings, icon: Settings },
