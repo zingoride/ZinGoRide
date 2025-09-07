@@ -125,14 +125,36 @@ export async function sendBroadcastNotification(formData: FormData): Promise<{ s
     }
 }
 
+async function getUserByEmail(email: string): Promise<{ uid: string; name: string } | null> {
+    const { auth, db } = getFirebaseAdmin();
+    try {
+        // Use Firebase Auth to get the user by email
+        const userRecord = await auth.getUserByEmail(email);
+        
+        // Optionally, you can also fetch their name from Firestore if it's stored there
+        const userDocRef = db.collection('users').doc(userRecord.uid);
+        const userDoc = await userDocRef.get();
+        const name = userDoc.exists ? userDoc.data()?.name : userRecord.displayName;
+
+        return { uid: userRecord.uid, name: name || 'User' };
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            return null;
+        }
+        console.error("Error fetching user by email: ", error);
+        return null;
+    }
+}
+
+
 export async function manualTopUp(formData: FormData): Promise<{ success: boolean; error?: string }> {
-    const userId = formData.get('userId') as string;
+    const userIdentifier = formData.get('userId') as string; // This can be email or UID
     const amount = Number(formData.get('amount'));
     const adminId = formData.get('adminId') as string;
     const adminName = formData.get('adminName') as string;
 
-    if (!userId || !amount || !adminId) {
-        return { success: false, error: "User ID, amount, and admin ID are required." };
+    if (!userIdentifier || !amount || !adminId) {
+        return { success: false, error: "User Identifier, amount, and admin ID are required." };
     }
 
     if (amount <= 0) {
@@ -140,13 +162,35 @@ export async function manualTopUp(formData: FormData): Promise<{ success: boolea
     }
 
     const { db } = getFirebaseAdmin();
-    const userRef = db.collection('users').doc(userId);
-
+    
     try {
+        let userId: string;
+        let userName: string;
+
+        // Check if the identifier is an email
+        if (userIdentifier.includes('@')) {
+            const userAccount = await getUserByEmail(userIdentifier);
+            if (!userAccount) {
+                return { success: false, error: "User with this email not found." };
+            }
+            userId = userAccount.uid;
+            userName = userAccount.name;
+        } else {
+            // Assume it's a UID
+            userId = userIdentifier;
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (!userDoc.exists) {
+                return { success: false, error: "User with this ID not found." };
+            }
+            userName = userDoc.data()?.name || 'User';
+        }
+
+        const userRef = db.collection('users').doc(userId);
+
         await db.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                throw new Error("User not found");
+                throw new Error("User not found in transaction");
             }
             
             // Increment user's wallet balance
@@ -157,7 +201,7 @@ export async function manualTopUp(formData: FormData): Promise<{ success: boolea
             transaction.set(transactionRef, {
                 type: 'admin_topup',
                 userId: userId,
-                userName: userDoc.data()?.name || '',
+                userName: userName,
                 amount: amount,
                 status: 'Completed',
                 adminId: adminId,
