@@ -130,7 +130,7 @@ export function InProgressRide() {
     return null;
   }
   
-  const { id, pickup, dropoff, customerName, rider } = activeRide;
+  const { id, pickup, dropoff, customerId, customerName, rider } = activeRide;
   const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: `https://picsum.photos/seed/${customerName}/100/100` };
   
   const handleCall = () => {
@@ -210,7 +210,11 @@ export function InProgressRide() {
                     <Button variant="outline" size="icon" onClick={handleCall}>
                         <Phone className="h-5 w-5" />
                     </Button>
-                    <ChatDialog riderName={riderInfo?.name || 'Rider'} />
+                    <ChatDialog 
+                        chatPartnerName={riderInfo?.name || 'Customer'}
+                        chatPartnerId={customerId}
+                        rideId={id}
+                    />
                 </div>
             </div>
           </CardContent>

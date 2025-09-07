@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,52 +12,94 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
 
 interface ChatMessage {
-  sender: 'driver' | 'rider';
+  id?: string;
+  senderId: string;
   text: string;
-  timestamp: string;
+  timestamp: Timestamp;
 }
 
 const translations = {
     ur: {
-        message: "Message",
-        chatWith: "Chat with",
-        typeMessage: "Type a message...",
+        message: "Pegham",
+        chatWith: "ke sath Guftugu",
+        typeMessage: "Apna pegham likhein...",
+        noMessages: "Abhi tak koi pegham nahi.",
+        loadingChat: "Chat load ho rahi hai...",
     },
     en: {
         message: "Message",
         chatWith: "Chat with",
         typeMessage: "Type a message...",
+        noMessages: "No messages yet.",
+        loadingChat: "Loading chat...",
     }
 }
 
 
-export function ChatDialog({ riderName }: { riderName: string }) {
+export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPartnerName: string, chatPartnerId: string, rideId: string }) {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = translations[language];
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!rideId) return;
+
+    setLoading(true);
+    const messagesCollection = collection(db, 'rides', rideId, 'messages');
+    const q = query(messagesCollection, orderBy('timestamp', 'asc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as ChatMessage));
+      setMessages(fetchedMessages);
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching messages:", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [rideId]);
+  
+  useEffect(() => {
+    // Auto-scroll to bottom
+    if (scrollAreaRef.current) {
+        setTimeout(() => {
+            const viewport = scrollAreaRef.current?.querySelector('div');
+            if (viewport) viewport.scrollTop = viewport.scrollHeight;
+        }, 100);
+    }
+  }, [messages]);
+
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === '' || !user) return;
 
-    const message: ChatMessage = {
-      sender: 'driver',
-      text: newMessage,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+    const messagesCollection = collection(db, 'rides', rideId, 'messages');
+    
+    await addDoc(messagesCollection, {
+        senderId: user.uid,
+        text: newMessage,
+        timestamp: serverTimestamp()
+    });
 
-    setMessages([...messages, message]);
     setNewMessage('');
   };
 
@@ -70,40 +112,46 @@ export function ChatDialog({ riderName }: { riderName: string }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[70vh]">
         <DialogHeader>
-          <DialogTitle>{t.chatWith} {riderName}</DialogTitle>
+          <DialogTitle>{t.chatWith} {chatPartnerName}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1 p-4 bg-muted/50 rounded-lg">
+        <ScrollArea className="flex-1 p-4 bg-muted/50 rounded-lg" ref={scrollAreaRef}>
            <div className="space-y-4">
-            {messages.length > 0 ? messages.map((msg, index) => (
+            {loading ? (
+                <div className="flex justify-center items-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            ) : messages.length > 0 ? messages.map((msg) => (
               <div
-                key={index}
+                key={msg.id}
                 className={`flex items-end gap-2 ${
-                  msg.sender === 'driver' ? 'justify-end' : 'justify-start'
+                  msg.senderId === user?.uid ? 'justify-end' : 'justify-start'
                 }`}
               >
-                {msg.sender === 'rider' && (
+                {msg.senderId !== user?.uid && (
                   <Avatar className="h-8 w-8">
-                     <AvatarImage src="https://picsum.photos/100/100?random=1" />
-                    <AvatarFallback>{riderName.charAt(0)}</AvatarFallback>
+                     <AvatarImage src={`https://picsum.photos/seed/${chatPartnerId}/100/100`} />
+                    <AvatarFallback>{chatPartnerName.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
                 <div
-                  className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                    msg.sender === 'driver'
+                  className={`max-w-[75%] rounded-lg px-3 py-2 text-sm break-words ${
+                    msg.senderId === user?.uid
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-background border'
                   }`}
                 >
                   <p>{msg.text}</p>
-                   <p className={`text-xs mt-1 ${
-                    msg.sender === 'driver'
+                   <p className={`text-xs mt-1 text-right ${
+                    msg.senderId === user?.uid
                       ? 'text-primary-foreground/70'
                       : 'text-muted-foreground'
-                  }`}>{msg.timestamp}</p>
+                  }`}>
+                      {msg.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'}) || ''}
+                  </p>
                 </div>
               </div>
             )) : (
-                <div className="text-center text-muted-foreground py-8">No messages yet.</div>
+                <div className="text-center text-muted-foreground py-8">{t.noMessages}</div>
             )}
           </div>
         </ScrollArea>
