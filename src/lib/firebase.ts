@@ -1,9 +1,9 @@
 
 import { initializeApp, getApp, getApps, FirebaseOptions, FirebaseApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
+import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration is loaded from environment variables
 const firebaseConfig: FirebaseOptions = {
@@ -18,25 +18,35 @@ const firebaseConfig: FirebaseOptions = {
 
 // Initialize Firebase only if it hasn't been initialized yet and all keys are present
 let app: FirebaseApp;
-if (firebaseConfig.apiKey) {
-    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+let analytics: Analytics | null = null;
+
+if (firebaseConfig.apiKey && getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps().length > 0 ? getApp() : ({} as FirebaseApp);
 }
 
-// Ensure services are initialized only if the app was initialized.
-// Provide dummy objects or handle errors if not initialized, although for this app,
-// it should always be initialized in the client-side context where these are used.
-const auth = app ? getAuth(app) : ({} as any);
-const db = app ? getFirestore(app) : ({} as any);
-const storage = app ? getStorage(app) : ({} as any);
-
-// Analytics (will only work in the browser)
-let analytics: any = null;
-if (typeof window !== "undefined" && app) {
-  isSupported().then((yes) => {
-    if (yes) {
-      analytics = getAnalytics(app);
+// Ensure services are initialized only if the app was successfully initialized.
+if (app.name) {
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    
+    if (typeof window !== "undefined") {
+        isSupported().then((yes) => {
+            if (yes) {
+                analytics = getAnalytics(app);
+            }
+        });
     }
-  });
+} else {
+    // Provide dummy objects if app is not initialized to avoid crashes
+    auth = {} as Auth;
+    db = {} as Firestore;
+    storage = {} as FirebaseStorage;
 }
 
 export { app, auth, db, storage, analytics };
