@@ -19,11 +19,15 @@ export function FcmTokenManager() {
         return;
       }
       
+      const userDocRef = doc(db, 'users', user.uid);
+
       try {
         const messaging = getMessaging(firebaseApp);
 
         // Check for notification permission
         const permission = await Notification.requestPermission();
+        
+        await setDoc(userDocRef, { notificationStatus: permission }, { merge: true });
         
         if (permission === 'granted') {
           console.log('Notification permission granted.');
@@ -36,13 +40,14 @@ export function FcmTokenManager() {
           if (currentToken) {
             console.log('FCM Token:', currentToken);
             // Save the token to Firestore
-            const userDocRef = doc(db, 'users', user.uid);
             await setDoc(userDocRef, { fcmToken: currentToken }, { merge: true });
           } else {
             console.log('No registration token available. Request permission to generate one.');
+             await setDoc(userDocRef, { fcmToken: null }, { merge: true });
           }
         } else {
           console.log('Unable to get permission to notify.');
+          await setDoc(userDocRef, { fcmToken: null }, { merge: true });
         }
 
         // Handle foreground messages

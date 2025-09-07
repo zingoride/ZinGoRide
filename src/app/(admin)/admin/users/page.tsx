@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban, MessageSquare } from "lucide-react";
+import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban, MessageSquare, Bell, BellOff } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
@@ -24,6 +24,8 @@ import { ChatDialog } from "@/components/chat-dialog";
 type UserStatus = 'Active' | 'Inactive';
 type UserType = 'Customer' | 'Driver';
 type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Blocked';
+type NotificationStatus = 'granted' | 'denied' | 'default';
+
 
 interface Document {
   name: string;
@@ -44,6 +46,7 @@ export interface User {
   type: UserType;
   status: UserStatus;
   approvalStatus: ApprovalStatus;
+  notificationStatus?: NotificationStatus;
   documents?: Document[];
   vehicle?: Vehicle;
 }
@@ -54,6 +57,12 @@ const approvalStatusConfig = {
   Rejected: { variant: 'destructive', className: 'bg-red-100 text-red-800', label: 'Rejected' },
   Blocked: { variant: 'destructive', className: 'bg-red-200 text-red-900', label: 'Blocked' },
 };
+
+const notificationStatusConfig = {
+    granted: { label: 'Allowed', icon: Bell, className: 'text-green-600' },
+    denied: { label: 'Denied', icon: BellOff, className: 'text-red-600' },
+    default: { label: 'Unknown', icon: BellOff, className: 'text-muted-foreground' }
+}
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -148,13 +157,16 @@ export default function UsersPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>User Type</TableHead>
-                    <TableHead>Approval Status</TableHead>
+                    <TableHead>Approval</TableHead>
+                    <TableHead>Notifications</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {users.map((user) => {
                     const approvalConfig = approvalStatusConfig[user.approvalStatus] || approvalStatusConfig.Pending;
+                    const notifConfig = notificationStatusConfig[user.notificationStatus || 'default'];
+                    const NotifIcon = notifConfig.icon;
                     const chatId = adminUser ? getChatId(adminUser.uid, user.id) : null;
                     return (
                     <TableRow key={user.id}>
@@ -172,6 +184,12 @@ export default function UsersPage() {
                             {approvalConfig.label}
                         </Badge>
                         )}
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-2">
+                           <NotifIcon className={`h-4 w-4 ${notifConfig.className}`} />
+                           <span className={notifConfig.className}>{notifConfig.label}</span>
+                        </div>
                     </TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-2">
                         {chatId && (

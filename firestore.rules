@@ -1,80 +1,85 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is an admin
-    function isAdmin() {
-      return request.auth != null && request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+  
+    // Helper Functions
+    function isUserAuthenticated() {
+      return request.auth != null;
     }
     
-    // Helper function to check if the user is the owner of the document
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Helper function to check if the user is part of a chat
-    function isUserInChat(chatId) {
-      // Matches if the user's UID is at the start or end of the chat ID string
-      return request.auth != null && (chatId.matches(request.auth.uid + '_.*') || chatId.matches('.*_' + request.auth.uid));
+      return request.auth.uid == userId;
     }
 
-    // Rules for the 'users' collection
+    function isAdmin() {
+      // Replace this with your actual admin UID
+      return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+    }
+
+    // Rules for 'users' collection
     match /users/{userId} {
-      // Admins can read and write to any user document
-      allow read, write: if isAdmin();
-      // Users can read and update their own document
-      allow get, update: if isOwner(userId);
+      allow read: if isUserAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isUserAuthenticated(); // Anyone can sign up
+      allow update: if isUserAuthenticated() && (isOwner(userId) || isAdmin());
+      // No one can delete a user document except maybe an admin in the future
+      allow delete: if false;
     }
     
-    // Rules for the 'rides' collection
+    // Rules for 'rides' collection
     match /rides/{rideId} {
-        // Admins can perform any action
-        allow read, write: if isAdmin();
-        // Logged-in users can create rides
-        allow create: if request.auth != null;
-        // The customer who created the ride, or the assigned driver, can read/update it
-        allow get, update: if request.auth != null && (isOwner(resource.data.customerId) || (resource.data.driverId != null && isOwner(resource.data.driverId)));
+      allow read: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId));
+      allow list: if isUserAuthenticated() && isAdmin(); // Only Admin can list all rides
+      allow create: if isUserAuthenticated(); // Customer creates a ride
+      allow update: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId));
+      allow delete: if isAdmin();
     }
     
-    // Rules for chat messages within a ride
-    match /rides/{rideId}/messages/{messageId} {
-        // Only customer or driver of the ride can read/write messages
-        allow read, write: if request.auth != null && (isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId));
-    }
-    
-    // Rules for general chats between admin and users
-    match /chats/{chatId}/messages/{messageId} {
-       // Only the admin or a user who is part of the chat can read/write messages
-       allow read, write: if isAdmin() || isUserInChat(chatId);
-    }
-
-    // Rules for wallet top-up requests
+    // Rules for 'walletRequests' collection
     match /walletRequests/{requestId} {
-      // Admins can read and write any request
-      allow read, write: if isAdmin();
-      // Users can create requests for themselves and read their own requests
-      allow create: if request.auth != null && isOwner(request.resource.data.userId);
-      allow get: if request.auth != null && isOwner(resource.data.userId);
-    }
-    
-    // Payout requests made by the admin
-    match /payoutRequests/{payoutId} {
-        // Only admin can create and read payout requests
-        allow read, write: if isAdmin();
-    }
-    
-    // General notifications sent by admin
-    match /notifications/{notificationId} {
-       // Only admin can create and read notifications
-       allow read, write: if isAdmin();
+      allow read, list: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.userId));
+      allow create: if isUserAuthenticated(); // Users can create their own requests
+      allow update, delete: if isAdmin(); // Only admin can update (approve/reject) or delete
     }
 
-    // Manual wallet transactions made by admin
+    // Rules for 'payoutRequests' collection
+    match /payoutRequests/{requestId} {
+      allow read, list: if isUserAuthenticated() && isAdmin(); // Only admin can see these
+      allow create: if isUserAuthenticated() && isAdmin(); // Only admin can create these for now
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for 'notifications' collection (broadcast history)
+    match /notifications/{notificationId} {
+      allow read, list: if isUserAuthenticated() && isAdmin(); // Only admin can see these
+      allow create, update, delete: if isUserAuthenticated() && isAdmin();
+    }
+    
+    function isUserInChat(chatId) {
+        return isUserAuthenticated() && request.auth.uid.matches(chatId);
+    }
+    
+    // Rules for 'chats' collection
+    match /chats/{chatId}/messages/{messageId} {
+        allow read, create: if isUserAuthenticated() && (isAdmin() || isUserInChat(chatId));
+        allow update, delete: if false; // Messages are immutable
+    }
+
+    // Rules for ride-specific chats
+    match /rides/{rideId}/messages/{messageId} {
+      allow read, create: if isUserAuthenticated() && (
+        isAdmin() || 
+        isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) ||
+        isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId)
+      );
+      allow update, delete: if false; // Messages are immutable
+    }
+
+    // Rules for wallet transactions
     match /walletTransactions/{transactionId} {
-        // Only admin can create and read these transactions
-        allow read, write: if isAdmin();
+      allow read, list: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // Immutable
     }
   }
 }
