@@ -75,23 +75,15 @@ const CustomerPage = () => {
         setRideId(null);
     };
 
-    const renderBookingStage = () => {
+    const renderContent = () => {
         if (!currentRide) {
-            return (
-                <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full h-full flex flex-col">
-                    <CardContent className="p-4 flex-1 flex flex-col justify-center">
-                        <RideBookingForm onFindRide={handleFindRide} />
-                    </CardContent>
-                </Card>
-            );
+            return <RideBookingForm onFindRide={handleFindRide} />;
         }
         
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
         
-        // This is the key change: Show AvailableRides only after a ride has been created ('pending' status)
-        // and before it's confirmed ('booked')
         if (currentRide.status === 'pending') {
              return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
         }
@@ -109,9 +101,11 @@ const CustomerPage = () => {
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-muted/30">
-            <div className="w-full max-w-md">
-                {renderBookingStage()}
-            </div>
+            <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md">
+                <CardContent className="p-4">
+                    {renderContent()}
+                </CardContent>
+            </Card>
         </div>
     );
 }
