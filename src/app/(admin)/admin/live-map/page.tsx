@@ -121,7 +121,7 @@ export default function LiveMapPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 h-full">
-      <Card className="h-full flex flex-col gap-4">
+      <Card className="h-[75vh] flex flex-col gap-4">
         <CardHeader className="flex-row items-center justify-between">
           <div>
             <CardTitle>{t.liveMap}</CardTitle>
@@ -140,7 +140,7 @@ export default function LiveMapPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 p-0">
+        <CardContent className="flex-1 p-0 relative">
           {loading ? (
             <div className="h-full w-full bg-muted flex items-center justify-center">
               <Loader2 className="h-16 w-16 animate-spin text-primary" />
