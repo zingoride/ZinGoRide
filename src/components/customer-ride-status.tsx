@@ -223,7 +223,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     return (
        <div className="flex flex-col gap-4 h-full w-full p-2">
             {showDriverDetails && (
-                <div className="h-64 w-full rounded-lg overflow-hidden border">
+                <div className="h-56 w-full rounded-lg overflow-hidden border">
                     <DynamicMap markers={mapMarkers} />
                 </div>
             )}
@@ -314,4 +314,5 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             </Card>
        </div>
     )
-}
+
+    
