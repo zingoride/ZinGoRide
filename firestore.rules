@@ -3,70 +3,50 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuth() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    function isAdmin() {
-        // In a real app, use custom claims instead of hardcoding email.
-        return request.auth.token.email == 'info@zingoride.vercel.app' || request.auth.token.email == 'admin@example.com';
-    }
-
-    // User collection rules
-    match /users/{userId} {
-        // Any authenticated user can read another user's profile (needed for driver/customer info)
-        allow read: if isAuth();
-        // A user can create their own document and update their own document
-        allow create, update: if isAuth() && isOwner(userId);
-    }
-    
-    match /chats/{chatId}/{messages=**} {
-        allow read, write: if isAuth();
-    }
-    
-    match /walletRequests/{requestId} {
-        allow create: if isAuth();
-        allow read, update: if isAdmin();
-    }
-    
-     match /payoutRequests/{requestId} {
-        allow create, read: if isAdmin();
-    }
-
-    // Rides collection rules
     match /rides/{rideId} {
-      allow read: if isAuth();
+      allow read: if request.auth != null;
 
-      // Customers can create a new ride request for themselves
-      // We check that the incoming request has all the required fields.
-      allow create: if isAuth() 
-                    && request.resource.data.customerId == request.auth.uid
-                    && "pickup" in request.resource.data
-                    && "dropoff" in request.resource.data
-                    && "status" in request.resource.data
-                    && ("pickupCoords" in request.resource.data || !("pickupCoords" in request.resource.data)); // Allow if it exists or doesn't
-      
-      // Allow customer to cancel, or driver to accept/update
-      allow update: if isAuth() && (
-        // Customer can update to 'booked' (selecting vehicle type) or cancel
-        (get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid && (
-            (request.resource.data.status == 'booked' && "vehicleType" in request.resource.data) ||
-            request.resource.data.status == 'cancelled_by_customer'
-        )) ||
-        // Driver can accept, start, complete, or cancel the ride
-        (get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid || request.resource.data.driverId == request.auth.uid)
-      );
+      allow create: if request.auth.uid == request.resource.data.customerId &&
+                       "pickup" in request.resource.data &&
+                       "dropoff" in request.resource.data &&
+                       "customerId" in request.resource.data &&
+                       "customerName" in request.resource.data &&
+                       "status" in request.resource.data &&
+                       request.resource.data.status == "pending" &&
+                       (!("pickupCoords" in request.resource.data) || request.resource.data.pickupCoords is latlng);
+
+      // Customer can update to 'booked' or 'cancelled_by_customer'
+      // Driver can update to 'accepted', 'in_progress', 'completed', or 'cancelled_by_driver'
+      allow update: if 
+          // Customer permissions
+          (request.auth.uid == resource.data.customerId &&
+            // Customer can book a pending ride
+            (resource.data.status == 'pending' && request.resource.data.status == 'booked' &&
+             request.resource.data.keys().hasAll(['vehicleType', 'fare'])
+            ) ||
+            // Customer can cancel a ride before it's completed
+            (request.resource.data.status == 'cancelled_by_customer' && resource.data.status != 'completed')
+          ) ||
+          // Driver permissions
+          (request.auth.uid == request.resource.data.driverId &&
+            (request.resource.data.status == 'in_progress' ||
+             request.resource.data.status == 'completed' ||
+             request.resource_data.status == 'cancelled_by_driver')
+          ) ||
+          // Driver can accept a booked ride
+          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver' &&
+            resource.data.status == 'booked' && request.resource.data.status == 'accepted' &&
+            request.resource.data.driverId == request.auth.uid
+          );
     }
 
-    // Allow admins to do anything
-    match /{document=**} {
-      allow read, write: if isAdmin();
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    match /chats/{chatId}/messages/{messageId} {
+        allow read, write: if request.auth != null; // Simple rule for now
     }
   }
 }
