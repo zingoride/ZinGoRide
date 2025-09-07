@@ -16,10 +16,10 @@ import { Upload, Loader2 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { Separator } from "./ui/separator"
 import { useAuth } from "@/context/AuthContext"
-import { storage, db } from "@/lib/firebase"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { db } from "@/lib/firebase"
 import { doc, updateDoc, arrayUnion } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
+import { uploadToCloudinary } from "@/app/actions"
 
 const translations = {
     ur: {
@@ -89,19 +89,23 @@ export function DocumentUploadForm() {
     setUploading(prev => ({ ...prev, [type]: true }));
 
     try {
-      const storageRef = ref(storage, `documents/${user.uid}/${type}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', `documents/${user.uid}`);
+      
+      const result = await uploadToCloudinary(formData);
+
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
       const userDocRef = doc(db, "users", user.uid);
       const documentData = {
           name: type === 'cnicFront' ? t.cnicFront : type === 'cnicBack' ? t.cnicBack : t.drivingLicense,
-          url: downloadURL,
+          url: result.url,
           uploadedAt: new Date(),
       };
       
-      // We use arrayUnion to add to the array without duplicating.
-      // For a more robust solution, one might first read the doc, filter out old docs of the same type, then update.
       await updateDoc(userDocRef, {
         documents: arrayUnion(documentData)
       });

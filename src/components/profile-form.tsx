@@ -18,11 +18,11 @@ import { useAuth } from "@/context/AuthContext"
 import { useEffect, useState, useRef } from "react"
 import { updateProfile } from "firebase/auth"
 import { doc, updateDoc, getDoc } from "firebase/firestore"
-import { auth, db, storage } from "@/lib/firebase"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { auth, db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Upload } from "lucide-react"
 import { Skeleton } from "./ui/skeleton"
+import { uploadToCloudinary } from "@/app/actions"
 
 const translations = {
     ur: {
@@ -95,9 +95,17 @@ export function ProfileForm() {
 
     setUploading(true);
     try {
-        const storageRef = ref(storage, `profile-pictures/${user.uid}/${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const photoURL = await getDownloadURL(snapshot.ref);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', `profile-pictures/${user.uid}`);
+        
+        const result = await uploadToCloudinary(formData);
+
+        if (!result.success || !result.url) {
+            throw new Error(result.error || 'Upload failed');
+        }
+
+        const photoURL = result.url;
 
         // Update Firebase Auth profile
         if (auth.currentUser) {
