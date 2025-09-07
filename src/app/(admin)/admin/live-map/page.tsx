@@ -120,7 +120,7 @@ export default function LiveMapPage() {
   }, [filteredUsers]);
 
   return (
-    <Card className="w-full h-[75vh] flex flex-col">
+    <Card className="w-full h-[75vh] flex flex-col gap-4">
       <CardHeader className="flex-row items-center justify-between">
         <div>
           <CardTitle>{t.liveMap}</CardTitle>
