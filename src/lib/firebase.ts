@@ -16,13 +16,23 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if all keys are present
-const app = firebaseConfig.apiKey && !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// Add a check to ensure the API key is present
+if (!firebaseConfig.apiKey) {
+    throw new Error("Missing Firebase API Key. Please set NEXT_PUBLIC_FIREBASE_API_KEY in your environment variables.");
+}
+
+// Fix for Firebase initialization race condition
+let app;
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+} else {
+    app = getApp();
+}
 
 // Services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Analytics (will only work in the browser)
 let analytics: any = null;
@@ -33,3 +43,5 @@ if (typeof window !== "undefined") {
     }
   });
 }
+
+export { app, auth, db, storage, analytics };

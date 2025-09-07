@@ -46,8 +46,8 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState('info@zingoride.vercel.app');
-  const [password, setPassword] = useState('RazaHaq@9876');
+  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'info@zingoride.vercel.app');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
 
