@@ -120,36 +120,38 @@ export default function LiveMapPage() {
   }, [filteredUsers]);
 
   return (
-    <Card className="w-full h-[75vh] flex flex-col gap-4">
-      <CardHeader className="flex-row items-center justify-between">
-        <div>
-          <CardTitle>{t.liveMap}</CardTitle>
-          <CardDescription>{t.description}</CardDescription>
-        </div>
-        <div className="w-[180px] relative z-10">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder={t.filterUsers} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.allUsers}</SelectItem>
-              <SelectItem value="driver">{t.driversOnly}</SelectItem>
-              <SelectItem value="customer">{t.customersOnly}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-0">
-        {loading ? (
-          <div className="h-full w-full bg-muted flex items-center justify-center">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+    <div className="p-4 md:p-6 lg:p-8 h-full">
+      <Card className="w-full h-full flex flex-col gap-4">
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>{t.liveMap}</CardTitle>
+            <CardDescription>{t.description}</CardDescription>
           </div>
-        ) : (
-          <div className="w-full h-full rounded-b-lg overflow-hidden">
-            <DynamicMap markers={mapMarkers} />
+          <div className="w-[180px] relative z-10">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t.filterUsers} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.allUsers}</SelectItem>
+                <SelectItem value="driver">{t.driversOnly}</SelectItem>
+                <SelectItem value="customer">{t.customersOnly}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="flex-1 p-0">
+          {loading ? (
+            <div className="h-full w-full bg-muted flex items-center justify-center">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="w-full h-full rounded-b-lg overflow-hidden">
+              <DynamicMap markers={mapMarkers} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
