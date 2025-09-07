@@ -133,7 +133,7 @@ body {
     --card-foreground: 142.1 83.3% 10.8%;
     --popover: 142.1 76.2% 96.3%;
     --popover-foreground: 142.1 83.3% 10.8%;
-    --primary: 142.1 70.6% 35.3%;
+    --primary: 142.1 76% 36%;
     --primary-foreground: 144.9 80.4% 97.1%;
     --secondary: 142.1 76.2% 92.3%;
     --secondary-foreground: 142.1 83.3% 10.8%;
@@ -155,7 +155,7 @@ body {
     --card-foreground: 144.9 80.4% 97.1%;
     --popover: 142.1 83.3% 10.8%;
     --popover-foreground: 144.9 80.4% 97.1%;
-    --primary: 142.1 70.6% 45.3%;
+    --primary: 142.1 76% 28%;
     --primary-foreground: 144.9 80.4% 97.1%;
     --secondary: 142.1 83.3% 14.8%;
     --secondary-foreground: 144.9 80.4% 97.1%;
@@ -167,7 +167,7 @@ body {
     --destructive-foreground: 144.9 80.4% 97.1%;
     --border: 142.1 83.3% 14.8%;
     --input: 142.1 83.3% 14.8%;
-    --ring: 142.1 70.6% 45.3%;
+    --ring: 142.1 76% 28%;
   }
 
   .theme-orange {
