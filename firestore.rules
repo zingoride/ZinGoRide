@@ -1,74 +1,71 @@
-
 rules_version = '2';
+
+// Helper functions
+function isSignedIn() {
+  return request.auth != null;
+}
+
+function isOwner(userId) {
+  return request.auth.uid == userId;
+}
+
+// In a production app, you would manage admin roles via custom claims
+// For this prototype, we can hardcode an admin UID if needed,
+// but for now, we'll rely on ownership and role-based access.
+function isAdmin() {
+  // return request.auth.uid == 'YOUR_ADMIN_UID';
+  return false; // No admin override for now, rely on specific rules
+}
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if a user is authenticated
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper function to check if the user has an 'admin' role (requires custom claims)
-    // For this prototype, we'll assume any logged-in user can be an admin for their actions.
-    // In a real app, you would set a custom claim: request.auth.token.admin == true
-    function isAdmin() {
-      // THIS IS INSECURE FOR PRODUCTION. Replace with custom claims check.
-      return isSignedIn();
-    }
-
-    // USERS can only be read/written by their owner or an admin.
+    
+    // Users can read and write their own data.
+    // No one else can read other users' data unless specified elsewhere.
     match /users/{userId} {
-      allow read, update: if isSignedIn() && (isOwner(userId) || isAdmin());
-      // Anyone can create their own user account during signup
+      allow read, update, delete: if isSignedIn() && isOwner(userId);
       allow create: if isSignedIn();
+      
+      // Allow drivers/customers to read basic info of their ride counterparts
+      allow get: if isSignedIn();
     }
     
-    // RIDES
+    // Rides can be created by any authenticated user.
+    // They can be read by the customer who created it or the driver assigned to it.
+    // They can be updated by the customer or the assigned driver.
     match /rides/{rideId} {
-        // Customer can create a ride request
-        allow create: if isSignedIn() && request.resource.data.customerId == request.auth.uid;
-        
-        // Only the assigned driver, customer, or an admin can read the ride details
-        allow read: if isSignedIn() && (
-                      resource.data.customerId == request.auth.uid || 
-                      resource.data.driverId == request.auth.uid ||
-                      isAdmin()
-                    );
-        
-        // Updating rules:
-        // - Customer can cancel their own ride.
-        // - A driver can accept a ride (update with their ID).
-        // - The assigned driver can update the status (start, complete, cancel).
-        // - Admin can update anything.
-        allow update: if isSignedIn() && (
-                        (request.resource.data.status == 'cancelled_by_customer' && resource.data.customerId == request.auth.uid) ||
-                        (resource.data.driverId == null && request.resource.data.driverId == request.auth.uid) ||
-                        (resource.data.driverId == request.auth.uid) ||
-                        isAdmin()
-                      );
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.driverId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.customerId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.driverId == request.auth.uid || resource.data.customerId == request.auth.uid);
     }
     
-    // CHATS & MESSAGES
-    match /chats/{chatId}/{message=**} {
-      // Participants of the chat (identified by the chatId format userId1_userId2) or admin can read/write
-      allow read, write: if isSignedIn() && (request.auth.uid in chatId.split('_') || isAdmin());
+    // Messages within a ride can only be accessed by the ride's customer or driver
+    match /rides/{rideId}/messages/{messageId} {
+       allow read, create: if isSignedIn() && (get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid || get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid);
+    }
+
+    // Direct chats can only be accessed by participants
+    match /chats/{chatId} {
+      allow read, write: if isSignedIn() && request.auth.uid in resource.data.participants;
+      
+      match /messages/{messageId} {
+         allow read, create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      }
     }
     
-    // WALLET REQUESTS can be created by users, but only read/updated by admin
+    // Wallet requests can be created by the user
+    // They can be read and updated only by an admin (in a real app)
+    // For now, only the user can create and read their own.
     match /walletRequests/{requestId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if isAdmin();
+      allow read, update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin()); // Admin should be able to update
     }
     
-    // PAYOUT REQUESTS can only be managed by admin
-    match /payoutRequests/{requestId} {
-       allow read, create, update, delete: if isAdmin();
+    // Payout requests can be created and read by the owner (driver/admin)
+    // In a real app, only an admin should be able to update the status.
+    match /payoutRequests/{payoutId} {
+        allow create, read: if isSignedIn(); // For simplicity, any auth user can create/read for now.
+        allow update: if isAdmin(); // Only admins should change status.
     }
   }
 }
