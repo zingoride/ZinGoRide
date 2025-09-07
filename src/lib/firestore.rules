@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // A user can read & update their own document
+    // Admin can read, list & write any user document
+    match /users/{userId} {
+      allow get, update: if isOwner(userId) || isAdmin();
+      allow list, create, delete: if isAdmin();
+    }
+    
+    // Any authenticated user can create a ride
+    // Customer can see their own ride, Driver can see their own ride
+    // Admin can see any ride
+    match /rides/{rideId} {
+      allow create: if request.auth != null;
+      allow get, update: if (isOwner(resource.data.customerId) || isOwner(resource.data.driverId)) || isAdmin();
+      allow list, delete: if isAdmin();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read, create: if isOwner(resource.data.senderId) || isOwner(rules.firestore.get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(rules.firestore.get(/databases/$(database)/documents/rides/$(rideId)).data.driverId) || isAdmin();
+        allow list, update, delete: if isAdmin();
+      }
+    }
+
+    // Any authenticated user can create a wallet request
+    // Admin can manage all wallet requests
+    match /walletRequests/{requestId} {
+      allow create: if request.auth != null;
+      allow read, update, delete, list: if isAdmin();
+    }
+
+    // Admin can manage all payout requests
+    match /payoutRequests/{payoutId} {
+        allow read, list, create, update, delete: if isAdmin();
+    }
+    
+    // Admin can manage all notifications
+    match /notifications/{notificationId} {
+       allow read, list, create, update, delete: if isAdmin();
+    }
+    
+    function isUserInChat(chatId) {
+        return string(request.auth.uid).matches(chatId);
+    }
+    
+    // Users can read/write to chats they are part of
+    // Admin can read/write any chat
+    match /chats/{chatId} {
+        allow list, get: if isUserInChat(chatId) || isAdmin();
+        match /messages/{messageId} {
+            allow read, create: if isUserInChat(chatId) || isAdmin();
+            allow list, update, delete: if isAdmin();
+        }
+    }
+    
+     match /walletTransactions/{transactionId} {
+      allow read, write, list: if isAdmin();
+    }
+
+  }
+}
