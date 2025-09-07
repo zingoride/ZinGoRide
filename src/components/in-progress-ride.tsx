@@ -24,7 +24,7 @@ import { Loader2 } from 'lucide-react';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
@@ -48,12 +48,6 @@ export const customerIcon = new L.Icon({
   iconAnchor: [15, 30],
   popupAnchor: [0, -30],
 });
-
-const mockCoordinates = {
-    driver: [24.88, 67.05], // Driver initial position
-    customer: [24.8607, 67.0011] // Customer pickup
-};
-
 
 const translations = {
     ur: {
@@ -95,6 +89,8 @@ const translations = {
 export function InProgressRide() {
   const { activeRide, completeRide: completeRideInContext, cancelRide: cancelRideInContext } = useRide();
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
+  const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(null);
+  const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
@@ -105,7 +101,29 @@ export function InProgressRide() {
     } else {
         setRideStage('pickup');
     }
-  }, [activeRide?.status]);
+    
+    // Listen to customer location
+    if (activeRide?.customerId) {
+        const unsubCustomer = onSnapshot(doc(db, "users", activeRide.customerId), (doc) => {
+             if (doc.exists() && doc.data().location) {
+                const { latitude, longitude } = doc.data().location;
+                setCustomerPosition([latitude, longitude]);
+            }
+        });
+        return () => unsubCustomer();
+    }
+
+  }, [activeRide?.status, activeRide?.customerId]);
+
+  useEffect(() => {
+    // Listen to own (driver) location
+    if (navigator.geolocation) {
+        const watchId = navigator.geolocation.watchPosition((position) => {
+            setDriverPosition([position.coords.latitude, position.coords.longitude]);
+        });
+        return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
 
   if (!activeRide) {
@@ -147,10 +165,9 @@ export function InProgressRide() {
       }
   }
   
-  const mapMarkers = [
-    { position: [mockCoordinates.customer[0], mockCoordinates.customer[1]], popupText: 'Customer Location', icon: customerIcon },
-    { position: [mockCoordinates.driver[0], mockCoordinates.driver[1]], popupText: 'Your Location', icon: carIcon }
-  ];
+  const mapMarkers = [];
+  if(customerPosition) mapMarkers.push({ position: customerPosition, popupText: 'Customer Location', icon: customerIcon });
+  if(driverPosition) mapMarkers.push({ position: driverPosition, popupText: 'Your Location', icon: carIcon });
 
 
   return (
