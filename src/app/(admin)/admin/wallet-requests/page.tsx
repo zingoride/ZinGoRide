@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -210,13 +209,15 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const requestsCollection = collection(db, "walletRequests");
-            const q = query(requestsCollection, orderBy("createdAt", "desc"));
+            const q = query(requestsCollection); // Removed orderBy("createdAt", "desc")
             const requestSnapshot = await getDocs(q);
             const requestList = requestSnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 date: (doc.data().createdAt as any).toDate(),
             } as TopUpRequest));
+            // Sort manually after fetching
+            requestList.sort((a, b) => b.date.getTime() - a.date.getTime());
             setRequests(requestList);
         } catch (error) {
             console.error("Error fetching wallet requests: ", error);
