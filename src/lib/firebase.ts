@@ -1,5 +1,5 @@
 
-import { initializeApp, getApp, getApps, FirebaseOptions } from "firebase/app";
+import { initializeApp, getApp, getApps, FirebaseOptions, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -16,19 +16,24 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if it hasn't been initialized yet
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Initialize Firebase only if it hasn't been initialized yet and all keys are present
+let app: FirebaseApp;
+if (firebaseConfig.apiKey) {
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+}
 
-// Services
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// Ensure services are initialized only if the app was initialized.
+// Provide dummy objects or handle errors if not initialized, although for this app,
+// it should always be initialized in the client-side context where these are used.
+const auth = app ? getAuth(app) : ({} as any);
+const db = app ? getFirestore(app) : ({} as any);
+const storage = app ? getStorage(app) : ({} as any);
 
 // Analytics (will only work in the browser)
 let analytics: any = null;
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && app) {
   isSupported().then((yes) => {
-    if (yes && firebaseConfig.apiKey) {
+    if (yes) {
       analytics = getAnalytics(app);
     }
   });
