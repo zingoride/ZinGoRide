@@ -41,19 +41,19 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     const storedLogo = localStorage.getItem('appLogo') as LogoType;
     if (storedLogo && logoMap[storedLogo]) {
       setLogo(storedLogo);
-      setLogoComponent(() => logoMap[storedLogo]);
-    } else {
-      // If nothing is stored, or stored logo is invalid, default to ZR
-      setLogo('Bike');
-      setLogoComponent(() => Bike);
     }
   }, []);
+
+  useEffect(() => {
+    if (logoMap[logo]) {
+        setLogoComponent(() => logoMap[logo]);
+    }
+  }, [logo]);
 
   const handleSetLogo = (newLogo: LogoType) => {
     if (logoMap[newLogo]) {
         setLogo(newLogo);
         localStorage.setItem('appLogo', newLogo);
-        setLogoComponent(() => logoMap[newLogo]);
     }
   };
 
