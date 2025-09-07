@@ -1,5 +1,5 @@
 
-import { FieldValue } from "firebase/firestore";
+import { FieldValue, GeoPoint } from "firebase/firestore";
 
 export interface RideRequest {
     id: string;
@@ -24,5 +24,7 @@ export interface RideRequest {
         rating: number;
         phone: string;
         avatarUrl: string;
-    }
+    };
+    pickupCoords?: GeoPoint;
+    dropoffCoords?: GeoPoint;
 }
