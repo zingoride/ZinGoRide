@@ -121,7 +121,7 @@ export default function LiveMapPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 h-full">
-      <Card className="w-full h-full flex flex-col gap-4">
+      <Card className="h-full flex flex-col gap-4">
         <CardHeader className="flex-row items-center justify-between">
           <div>
             <CardTitle>{t.liveMap}</CardTitle>
