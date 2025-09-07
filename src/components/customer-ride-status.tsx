@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
 import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, GeoPoint } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { Separator } from './ui/separator';
@@ -22,7 +22,6 @@ const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
     loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
 });
 
-// Mock driver/customer icons for the map
 export const carIcon = new L.Icon({
   iconUrl: 'https://img.icons8.com/ios-filled/50/000000/car.png',
   iconRetinaUrl: 'https://img.icons8.com/ios-filled/100/000000/car.png',
@@ -39,12 +38,10 @@ export const customerIcon = new L.Icon({
   popupAnchor: [0, -30],
 });
 
-// Mock driver/customer coordinates
-const mockCoordinates = {
-    driver: [24.88, 67.05], // Driver initial position
-    customer: [24.8607, 67.0011] // Customer pickup
+const defaultPositions = {
+    driver: [24.88, 67.05] as [number, number],
+    customer: [24.8607, 67.0011] as [number, number]
 };
-
 
 const driverDetails = {
     name: 'Ali Khan',
@@ -103,10 +100,43 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const { language } = useLanguage();
     const { toast } = useToast();
     const t = translations[language];
-    const { status, driverName, driverAvatar, pickup, dropoff } = ride;
+    const { status, driverId, driverName, driverAvatar, pickup, dropoff } = ride;
     
-    // For tracking status changes to show notifications
     const prevStatusRef = useState<RideRequest['status']>();
+    const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
+    const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(defaultPositions.customer);
+
+
+    useEffect(() => {
+      // Get customer's current location for the map
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCustomerPosition([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          console.warn("Could not get customer's geolocation.");
+          setCustomerPosition(defaultPositions.customer); // Fallback
+        }
+      );
+    }, []);
+
+    // Listen to driver's location updates from Firestore
+    useEffect(() => {
+        if (!driverId) return;
+
+        const driverRef = doc(db, "users", driverId);
+        const unsubscribe = onSnapshot(driverRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                if (data.location instanceof GeoPoint) {
+                    setDriverPosition([data.location.latitude, data.location.longitude]);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [driverId]);
+
 
     useEffect(() => {
         if (status === 'booked') {
@@ -135,7 +165,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                 });
             }
         }
-        // Update previous status ref
         prevStatusRef.current = status;
 
     }, [status, driverName, t, toast]);
@@ -176,25 +205,29 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         }
     }
     
-    const mapMarkers = [
-        { position: [mockCoordinates.customer[0], mockCoordinates.customer[1]], popupText: 'Your Location', icon: customerIcon },
-        { position: [mockCoordinates.driver[0], mockCoordinates.driver[1]], popupText: 'Driver Location', icon: carIcon }
-    ];
+    const mapMarkers = useMemo(() => {
+        const markers = [];
+        if(customerPosition) {
+            markers.push({ position: customerPosition, popupText: 'Your Location', icon: customerIcon });
+        }
+        if(driverPosition) {
+             markers.push({ position: driverPosition, popupText: 'Driver Location', icon: carIcon });
+        }
+        return markers;
+    }, [customerPosition, driverPosition]);
+    
 
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full w-full p-4">
-            {/* Panel 1: Map */}
             <div className="lg:col-span-2 h-full min-h-[300px] lg:min-h-full rounded-lg overflow-hidden border">
                  <DynamicMap markers={mapMarkers} />
             </div>
 
-            {/* Panels 2 & 3: Details & Actions */}
             <div className="flex flex-col gap-6">
                 
-                {/* Panel 2: Ride Status & Driver Info */}
                 <Card className="flex-grow flex flex-col">
                     <CardHeader>
                         <CardTitle>{title}</CardTitle>
@@ -234,7 +267,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                     </CardContent>
                 </Card>
 
-                {/* Panel 3: Ride Details & Actions */}
                 <Card>
                     <CardHeader>
                         <CardTitle>{t.rideDetails}</CardTitle>
