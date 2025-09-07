@@ -22,7 +22,7 @@ export default function CustomerLayout({
                         <CustomerSidebar />
                     </SheetContent>
                 </Sheet>
-                 <main className="flex flex-1 flex-col overflow-y-auto relative">
+                 <main className="flex flex-1 flex-col overflow-hidden relative">
                     {children}
                 </main>
             </div>

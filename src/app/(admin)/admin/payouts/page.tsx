@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, runTransaction, doc } from "firebase/firestore";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type PayoutStatus = 'Pending' | 'Completed' | 'Failed';
 type PayoutMethod = 'Easypaisa' | 'Jazzcash' | 'Bank Transfer';
@@ -104,7 +105,6 @@ export default function PayoutsPage() {
     const fetchCommissionAndPayouts = async () => {
       setLoadingCommission(true);
       
-      // Fetch completed rides to calculate total commission
       const ridesRef = collection(db, "rides");
       const ridesQuery = query(ridesRef, where("status", "==", "completed"));
       const ridesSnapshot = await getDocs(ridesQuery);
@@ -112,9 +112,8 @@ export default function PayoutsPage() {
       ridesSnapshot.forEach(doc => {
         totalFare += doc.data().fare || 0;
       });
-      const calculatedCommission = totalFare * 0.15; // 15% commission
+      const calculatedCommission = totalFare * 0.15;
 
-      // Fetch existing payouts to calculate remaining commission
       const payoutRef = collection(db, "payoutRequests");
       const payoutQuery = query(payoutRef, orderBy("date", "desc"));
       const payoutSnapshot = await getDocs(payoutQuery);
@@ -171,7 +170,6 @@ export default function PayoutsPage() {
 
         const docRef = await addDoc(collection(db, "payoutRequests"), newPayoutRequest);
 
-        // Optimistically update UI
         setPayouts(prev => [{ id: docRef.id, ...newPayoutRequest, date: new Date() }, ...prev]);
         setTotalCommission(prev => prev - payoutAmount);
 
@@ -180,7 +178,6 @@ export default function PayoutsPage() {
             description: t.payoutSuccessDesc(payoutAmount, payoutMethod as PayoutMethod),
         });
 
-        // Reset form
         setPayoutMethod('');
         setAccountNumber('');
         setAmount('');
@@ -257,6 +254,7 @@ export default function PayoutsPage() {
                 <CardTitle>{t.payoutHistory}</CardTitle>
             </CardHeader>
             <CardContent>
+                <ScrollArea className="h-72">
                  {payouts.length > 0 ? (
                     <Table>
                     <TableHeader>
@@ -287,6 +285,7 @@ export default function PayoutsPage() {
                 ) : (
                     <div className="text-center text-muted-foreground py-8">{t.noHistory}</div>
                 )}
+                </ScrollArea>
             </CardContent>
         </Card>
       </div>

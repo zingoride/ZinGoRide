@@ -13,6 +13,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
   ssr: false,
@@ -23,6 +24,7 @@ const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
+    const isMobile = useIsMobile();
 
     useEffect(() => {
         setIsClient(true);
@@ -106,12 +108,12 @@ const CustomerPage = () => {
      }
 
     return (
-       <div className="relative h-full w-full">
-            <div className="absolute inset-0 z-0">
+       <div className="h-full w-full flex flex-col md:flex-row">
+            <div className="relative flex-1 md:order-2">
                 <DynamicMap />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
-                 <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md mx-auto">
+            <div className="md:order-1 md:w-[450px] md:border-r md:p-4 md:flex md:items-center">
+                 <Card className="shadow-lg rounded-t-2xl md:rounded-lg w-full">
                     <CardContent className="p-4">
                         {renderContent()}
                     </CardContent>

@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, Star, Car, X, MapPin, Navigation } from 'lucide-react';
+import { Loader2, Phone, Star, Car, X, MapPin, Navigation, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
@@ -98,7 +98,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
 
     useEffect(() => {
-      // Get customer's current location for the map
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setCustomerPosition([position.coords.latitude, position.coords.longitude]);
@@ -106,12 +105,11 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         () => {
           console.warn("Could not get customer's geolocation.");
           const pickupGeo = ride.pickupCoords;
-          setCustomerPosition(pickupGeo ? [pickupGeo.latitude, pickupGeo.longitude] : defaultPositions.customer); // Fallback
+          setCustomerPosition(pickupGeo ? [pickupGeo.latitude, pickupGeo.longitude] : defaultPositions.customer);
         }
       );
     }, [ride.pickupCoords]);
 
-    // Listen to driver's location updates from Firestore
     useEffect(() => {
         if (!driverId) return;
 
@@ -162,7 +160,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
 
     const handleCall = () => {
-        // Dummy phone number for now
         window.location.href = `tel:+923001234567`;
     };
     
@@ -173,7 +170,6 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             await updateDoc(rideRef, {
                 status: 'cancelled_by_customer',
             });
-            // onCancel will be triggered by the snapshot listener on the parent page
         } catch (error) {
             console.error("Error cancelling ride: ", error);
         } finally {
@@ -246,7 +242,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                                 rideId={id}
                                 chatPartnerName={driverName || "Driver"}
                                 chatPartnerId={driverId}
-                                trigger={<Button variant="outline" size="icon"><ChatDialog.Icon className="h-4 w-4" /></Button>}
+                                trigger={<Button variant="outline" size="icon"><MessageSquare className="h-4 w-4" /></Button>}
                             />
                         )}
                     </div>
@@ -280,8 +276,8 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             <div className="absolute inset-0 z-0">
                  <DynamicMap markers={mapMarkers} />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
-                 <Card className="shadow-lg rounded-2xl border-t-4 border-primary w-full max-w-md mx-auto">
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 md:relative md:max-w-md md:mx-auto">
+                 <Card className="shadow-lg rounded-2xl md:rounded-lg border-t-4 border-primary w-full">
                     <CardHeader>
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>

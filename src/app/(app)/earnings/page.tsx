@@ -36,7 +36,7 @@ export default function EarningsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-4 md:gap-8">
+      <div className="grid gap-4 md:grid-cols-3 md:gap-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.todaysEarnings}</CardTitle>
@@ -61,7 +61,7 @@ export default function EarningsPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="md:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.weeklyGoal}</CardTitle>
             <Goal className="h-4 w-4 text-muted-foreground" />
