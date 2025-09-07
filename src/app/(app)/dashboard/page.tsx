@@ -36,6 +36,8 @@ const translations = {
     locationPermissionDesc: "Live location share karne ke liye, please browser mein location ki ijazat dein.",
     newRideRequestToast: "Nayi Ride Request!",
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `${pickup} se ${dropoff} tak.`,
+    fetchError: "Error",
+    fetchErrorDesc: "Could not fetch new ride requests. Please ensure you have created the necessary Firestore index.",
   },
   en: {
     youAreOffline: "You are Offline",
@@ -55,6 +57,8 @@ const translations = {
     locationPermissionDesc: "To share your live location, please enable location permissions in your browser.",
     newRideRequestToast: "New Ride Request!",
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `From ${pickup} to ${dropoff}.`,
+    fetchError: "Error",
+    fetchErrorDesc: "Could not fetch new ride requests. Please ensure you have created the necessary Firestore index.",
   }
 }
 
@@ -179,13 +183,13 @@ export default function Dashboard() {
         console.error("Error fetching ride requests: ", error);
         toast({
             variant: "destructive",
-            title: "Error",
-            description: "Could not fetch new ride requests.",
+            title: t.fetchError,
+            description: t.fetchErrorDesc,
         });
     });
 
     return () => unsubscribe();
-  }, [isOnline, activeRide, toast, t.newRideRequestToast, t.newRideRequestToastDesc]);
+  }, [isOnline, activeRide, toast, t]);
 
   if (completedRide) {
     return <RideInvoice ride={completedRide} />;
