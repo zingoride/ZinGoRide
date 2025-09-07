@@ -106,14 +106,9 @@ const CustomerPage = () => {
      }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 h-full w-full">
-            <div className="md:col-span-2 lg:col-span-1 xl:col-span-2 h-56 md:h-full w-full">
-                 <DynamicMap />
-            </div>
-            <div className="md:col-span-1 lg:col-span-1 xl:col-span-1 p-4 flex flex-col items-center justify-center bg-background md:border-l">
-                 <div className="w-full max-w-md">
-                     {renderBookingStage()}
-                 </div>
+        <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-muted/30">
+            <div className="w-full max-w-md">
+                {renderBookingStage()}
             </div>
         </div>
     );

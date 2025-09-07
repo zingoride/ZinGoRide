@@ -104,7 +104,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     
     const prevStatusRef = useRef<RideRequest['status']>();
     const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
-    const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(defaultPositions.customer);
+    const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(null);
 
 
     useEffect(() => {
@@ -221,7 +221,12 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
 
     return (
-       <div className="flex flex-col gap-6 h-full w-full">
+       <div className="flex flex-col gap-4 h-full w-full p-2">
+            {showDriverDetails && (
+                <div className="h-64 w-full rounded-lg overflow-hidden border">
+                    <DynamicMap markers={mapMarkers} />
+                </div>
+            )}
             <Card className="flex-grow flex flex-col">
                 <CardHeader>
                     <CardTitle>{title}</CardTitle>
