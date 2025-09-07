@@ -209,22 +209,20 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const requestsCollection = collection(db, "walletRequests");
-            const q = query(requestsCollection); // Removed orderBy("createdAt", "desc")
+            const q = query(requestsCollection, orderBy("createdAt", "desc"));
             const requestSnapshot = await getDocs(q);
             const requestList = requestSnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 date: (doc.data().createdAt as any).toDate(),
             } as TopUpRequest));
-            // Sort manually after fetching
-            requestList.sort((a, b) => b.date.getTime() - a.date.getTime());
             setRequests(requestList);
         } catch (error) {
             console.error("Error fetching wallet requests: ", error);
             toast({
                 variant: "destructive",
                 title: "Error fetching requests",
-                description: "Could not retrieve wallet requests from Firestore. Please ensure the collection exists and you have created the necessary indexes in Firestore.",
+                description: "Could not retrieve wallet requests. Please ensure you have created the necessary indexes in Firestore.",
             });
         }
         setLoading(false);
