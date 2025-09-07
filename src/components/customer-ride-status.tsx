@@ -305,8 +305,5 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                 </CardContent>
             </Card>
        </div>
-    )
-
-    
-
-    
+    );
+}
