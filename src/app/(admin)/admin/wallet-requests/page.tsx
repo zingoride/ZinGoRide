@@ -209,7 +209,7 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const requestsCollection = collection(db, "walletRequests");
-            const q = query(requestsCollection, orderBy("createdAt", "desc"));
+            const q = query(requestsCollection);
             const requestSnapshot = await getDocs(q);
             const requestList = requestSnapshot.docs.map(doc => ({
                 id: doc.id,
