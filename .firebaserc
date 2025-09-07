@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "zingo-ride-rider-app"
-  }
+    "default": "zingo-ride-rider-app",
+    "main": "zingo-ride-48221"
+  },
+  "targets": {},
+  "etags": {}
 }
