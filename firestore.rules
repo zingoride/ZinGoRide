@@ -1,85 +1,69 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
     // Helper Functions
     function isUserAuthenticated() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+
+    function isUser(userId) {
+      return isUserAuthenticated() && request.auth.uid == userId;
     }
 
     function isAdmin() {
-      // Replace this with your actual admin UID
+      // UID for info@zingoride.vercel.app
       return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
     }
 
-    // Rules for 'users' collection
+    // Collection Rules
+
     match /users/{userId} {
-      allow read: if isUserAuthenticated() && (isOwner(userId) || isAdmin());
-      allow create: if isUserAuthenticated(); // Anyone can sign up
-      allow update: if isUserAuthenticated() && (isOwner(userId) || isAdmin());
-      // No one can delete a user document except maybe an admin in the future
-      allow delete: if false;
+      allow read: if isUser(userId) || isAdmin();
+      allow write: if isUser(userId) || isAdmin();
+      // Allow list for admin only
+      allow list: if isAdmin();
     }
     
-    // Rules for 'rides' collection
     match /rides/{rideId} {
-      allow read: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId));
-      allow list: if isUserAuthenticated() && isAdmin(); // Only Admin can list all rides
-      allow create: if isUserAuthenticated(); // Customer creates a ride
-      allow update: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId));
-      allow delete: if isAdmin();
+      allow read: if isUser(request.resource.data.customerId) || isUser(request.resource.data.driverId) || isAdmin();
+      allow write: if isUser(request.resource.data.customerId) || isUser(request.resource.data.driverId) || isAdmin();
+      allow list: if isAdmin();
     }
-    
-    // Rules for 'walletRequests' collection
+
     match /walletRequests/{requestId} {
-      allow read, list: if isUserAuthenticated() && (isAdmin() || isOwner(resource.data.userId));
-      allow create: if isUserAuthenticated(); // Users can create their own requests
-      allow update, delete: if isAdmin(); // Only admin can update (approve/reject) or delete
-    }
-
-    // Rules for 'payoutRequests' collection
-    match /payoutRequests/{requestId} {
-      allow read, list: if isUserAuthenticated() && isAdmin(); // Only admin can see these
-      allow create: if isUserAuthenticated() && isAdmin(); // Only admin can create these for now
+      allow read: if isUser(request.resource.data.userId) || isAdmin();
+      allow create: if isUser(request.resource.data.userId);
       allow update, delete: if isAdmin();
-    }
-
-    // Rules for 'notifications' collection (broadcast history)
-    match /notifications/{notificationId} {
-      allow read, list: if isUserAuthenticated() && isAdmin(); // Only admin can see these
-      allow create, update, delete: if isUserAuthenticated() && isAdmin();
+       allow list: if isAdmin();
     }
     
-    function isUserInChat(chatId) {
-        return isUserAuthenticated() && request.auth.uid.matches(chatId);
-    }
-    
-    // Rules for 'chats' collection
-    match /chats/{chatId}/messages/{messageId} {
-        allow read, create: if isUserAuthenticated() && (isAdmin() || isUserInChat(chatId));
-        allow update, delete: if false; // Messages are immutable
-    }
-
-    // Rules for ride-specific chats
-    match /rides/{rideId}/messages/{messageId} {
-      allow read, create: if isUserAuthenticated() && (
-        isAdmin() || 
-        isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) ||
-        isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId)
-      );
-      allow update, delete: if false; // Messages are immutable
-    }
-
-    // Rules for wallet transactions
-    match /walletTransactions/{transactionId} {
+    match /payoutRequests/{requestId} {
       allow read, list: if isAdmin();
-      allow create: if isAdmin();
-      allow update, delete: if false; // Immutable
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /notifications/{notificationId} {
+        allow read, list: if isAdmin();
+        allow create, update, delete: if isAdmin();
+    }
+    
+    match /chats/{chatId}/{message=**} {
+      allow read, write: if isUser(request.auth.uid) && request.auth.uid.matches(chatId) || isAdmin();
+    }
+    
+    match /walletTransactions/{transactionId} {
+       allow read: if isUser(request.resource.data.userId) || isAdmin();
+       allow create: if isUser(request.resource.data.userId) || isAdmin();
+       allow list: if isAdmin();
+    }
+    
+    // Auto-generated index for wallet requests
+    // This allows admins to query and order requests by date.
+    match /walletRequests/{requestId} {
+      // Existing rules...
     }
   }
 }
