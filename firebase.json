@@ -2,11 +2,5 @@
 {
   "firestore": {
     "rules": "firestore.rules"
-  },
-  "hosting": {
-    "source": ".",
-    "frameworksBackend": {
-      "region": "us-central1"
-    }
   }
 }
