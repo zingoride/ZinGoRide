@@ -101,13 +101,13 @@ const CustomerPage = () => {
         return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
     }
     
-     if (currentRide && (status === 'accepted' || status === 'in_progress')) {
+     if (currentRide && (currentRide.status === 'accepted' || currentRide.status === 'in_progress')) {
         return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
      }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 h-full w-full">
-            <div className="md:col-span-2 lg:col-span-1 xl:col-span-2 h-64 md:h-full w-full">
+            <div className="md:col-span-2 lg:col-span-1 xl:col-span-2 h-56 md:h-full w-full">
                  <DynamicMap />
             </div>
             <div className="md:col-span-1 lg:col-span-1 xl:col-span-1 p-4 flex flex-col items-center justify-center bg-background md:border-l">
