@@ -3,8 +3,8 @@ import { ImageResponse } from 'next/og'
 export const runtime = 'edge'
  
 export const size = {
-  width: 32,
-  height: 32,
+  width: 512,
+  height: 512,
 }
  
 export default function Icon() {
@@ -12,7 +12,7 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 24,
+          fontSize: 256,
           background: 'linear-gradient(to right, #f97316, #ec4899)',
           width: '100%',
           height: '100%',
@@ -20,13 +20,13 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          borderRadius: '8px',
+          borderRadius: '96px',
         }}
       >
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
+            width="300"
+            height="300"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

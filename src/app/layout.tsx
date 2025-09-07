@@ -19,6 +19,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "ZinGo Ride: Rider App",
   description: "Bykea, Careem, Uber jaisi mukammal application.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
