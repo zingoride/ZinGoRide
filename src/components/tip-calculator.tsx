@@ -38,6 +38,7 @@ import type { SuggestDynamicTipsOutput } from "@/ai/flows/suggest-dynamic-tips";
 import { Loader2, Wand2, ThumbsUp, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 
 const translations = {
   ur: {
@@ -46,22 +47,19 @@ const translations = {
     fareLabel: "Ride ka Kiraya (PKR)",
     farePlaceholder: "e.g. 450",
     ratingLabel: "Rider ki Rating",
-    profileLabel: "Rider Profile",
-    profilePlaceholder: "Rider ka profile chunein",
-    newUser: "Naya User",
-    frequentRider: "Aksar Safar Karne Wala",
-    businessTraveler: "Karobari Musafir",
+    riderIdLabel: "Rider ID",
+    riderIdPlaceholder: "Rider ki ID darj karein",
     conditionsLabel: "Safar ke Halaat",
     conditionsPlaceholder: "e.g. Heavy traffic...",
     buttonText: "Tip Ki Tajveez Dein",
-    loadingText: "Tip Ki Tajveez Dein",
+    loadingText: "Tajveez di ja rahi hai...",
     errorTitle: "Oh oh! Kuch ghalat ho gaya.",
     errorDescription: "Tip ki tajaveez hasil karne mein masla hua.",
     suggestedTips: "Tajweez Shuda Tips",
     reasoning: "Wajah",
     approve: "Manzoor Karein",
     fareMinError: "Kiraya kam se kam 50 hona chahiye.",
-    profileReqError: "Rider profile zaroori hai.",
+    riderIdReqError: "Rider ID zaroori hai.",
     conditionsReqError: "Safar ki tafseelat likhein.",
   },
   en: {
@@ -70,22 +68,19 @@ const translations = {
     fareLabel: "Ride Fare (PKR)",
     farePlaceholder: "e.g. 450",
     ratingLabel: "Rider Rating",
-    profileLabel: "Rider Profile",
-    profilePlaceholder: "Select rider profile",
-    newUser: "New User",
-    frequentRider: "Frequent Rider",
-    businessTraveler: "Business Traveler",
+    riderIdLabel: "Rider ID",
+    riderIdPlaceholder: "Enter Rider's ID",
     conditionsLabel: "Travel Conditions",
     conditionsPlaceholder: "e.g. Heavy traffic...",
     buttonText: "Suggest Tip",
-    loadingText: "Suggesting Tip",
+    loadingText: "Suggesting Tip...",
     errorTitle: "Uh oh! Something went wrong.",
     errorDescription: "There was a problem getting tip suggestions.",
     suggestedTips: "Suggested Tips",
     reasoning: "Reasoning",
     approve: "Approve",
     fareMinError: "Fare must be at least 50.",
-    profileReqError: "Rider profile is required.",
+    riderIdReqError: "Rider ID is required.",
     conditionsReqError: "Please describe the travel conditions.",
   },
 };
@@ -94,6 +89,7 @@ const translations = {
 export function TipCalculator() {
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = translations[language];
 
   const formSchema = z.object({
@@ -101,7 +97,7 @@ export function TipCalculator() {
       .number()
       .min(50, { message: t.fareMinError }),
     riderRating: z.number().min(1).max(5),
-    riderProfile: z.string().min(1, { message: t.profileReqError }),
+    riderId: z.string().min(1, { message: t.riderIdReqError }),
     travelConditions: z
       .string()
       .min(10, { message: t.conditionsReqError }),
@@ -116,7 +112,7 @@ export function TipCalculator() {
     defaultValues: {
       displayedFare: 350,
       riderRating: 4.5,
-      riderProfile: "Frequent Rider",
+      riderId: user?.uid || "",
       travelConditions: "Heavy traffic during peak hours.",
     },
   });
@@ -166,6 +162,19 @@ export function TipCalculator() {
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="riderId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.riderIdLabel}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t.riderIdPlaceholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="riderRating"
@@ -184,31 +193,7 @@ export function TipCalculator() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="riderProfile"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.profileLabel}</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t.profilePlaceholder} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="New User">{t.newUser}</SelectItem>
-                      <SelectItem value="Frequent Rider">{t.frequentRider}</SelectItem>
-                      <SelectItem value="Business Traveler">{t.businessTraveler}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           
             <FormField
               control={form.control}
               name="travelConditions"

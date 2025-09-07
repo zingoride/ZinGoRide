@@ -10,15 +10,47 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
+
+// Tool to get user profile from Firestore
+const getUserProfile = ai.defineTool(
+  {
+    name: 'getUserProfile',
+    description: 'Returns the profile of a user from the database.',
+    inputSchema: z.object({
+      userId: z.string().describe('The ID of the user to fetch.'),
+    }),
+    outputSchema: z.object({
+      name: z.string(),
+      email: z.string(),
+      type: z.string(),
+      walletBalance: z.number(),
+      approvalStatus: z.string().optional(),
+    }),
+  },
+  async ({ userId }) => {
+    const { db } = getFirebaseAdmin();
+    const userRef = db.collection('users').doc(userId);
+    const doc = await userRef.get();
+    if (!doc.exists) {
+      throw new Error('User not found');
+    }
+    const userData = doc.data()!;
+    return {
+      name: userData.name || '',
+      email: userData.email || '',
+      type: userData.type || 'Customer',
+      walletBalance: userData.walletBalance || 0,
+      approvalStatus: userData.approvalStatus || undefined,
+    };
+  }
+);
+
 
 const SuggestDynamicTipsInputSchema = z.object({
   displayedFare: z.number().describe('The displayed fare for the ride.'),
   riderRating: z.number().describe('The rider rating (e.g., 4.5 out of 5).'),
-  riderProfile: z
-    .string()
-    .describe(
-      'A short description of the rider profile, including information such as whether they are a frequent rider or a new user.'
-    ),
+  riderId: z.string().describe("The unique ID of the rider."),
   travelConditions: z
     .string()
     .describe(
@@ -49,16 +81,19 @@ const prompt = ai.definePrompt({
   name: 'suggestDynamicTipsPrompt',
   input: {schema: SuggestDynamicTipsInputSchema},
   output: {schema: SuggestDynamicTipsOutputSchema},
+  tools: [getUserProfile],
   prompt: `You are an expert in suggesting appropriate tip amounts for rideshare services.
 
-  Based on the following information, suggest three tip amounts in local currency (Pakistani Rupees) and provide a brief explanation for your suggestions.
+  First, get the rider's profile using their ID.
+  Rider ID: {{{riderId}}}
+
+  Then, based on their profile and the following ride information, suggest three tip amounts in local currency (Pakistani Rupees) and provide a brief explanation for your suggestions.
 
   Displayed Fare: {{{displayedFare}}} PKR
   Rider Rating: {{{riderRating}}}
-  Rider Profile: {{{riderProfile}}}
   Travel Conditions: {{{travelConditions}}}
 
-  Consider factors like excellent service, difficult travel conditions, and the rider's profile when determining the tip amounts. The suggested amounts should be reasonable and appealing to the rider.
+  Consider factors like excellent service, difficult travel conditions, and the rider's profile (e.g., wallet balance, user type) when determining the tip amounts. The suggested amounts should be reasonable and appealing to the rider.
 
   Output the suggested tip amounts and the reasoning in JSON format.
 `,
