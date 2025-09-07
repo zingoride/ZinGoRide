@@ -75,7 +75,7 @@ export default function Dashboard() {
   const t = translations[language];
   const locationWatchId = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const knownRideIds = useRef(new Set());
+  const knownRideIds = useRef(new Set<string>());
 
 
   const updateLocationInFirestore = async (position: GeolocationPosition) => {
@@ -129,6 +129,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (isOnline) {
       startWatchingLocation();
+      knownRideIds.current.clear(); // Reset known rides when going online
     } else {
       stopWatchingLocation();
     }
@@ -224,7 +225,7 @@ export default function Dashboard() {
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
           <div className="grid gap-4">
             {rideRequests.map((request) => (
-              <RideRequestComponent key={request.id} {...request} />
+              <RideRequestComponent key={`${request.id}-${isOnline}`} {...request} />
             ))}
           </div>
         </div>
