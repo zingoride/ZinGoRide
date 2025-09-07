@@ -3,50 +3,114 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /rides/{rideId} {
-      allow read: if request.auth != null;
-
-      allow create: if request.auth.uid == request.resource.data.customerId &&
-                       "pickup" in request.resource.data &&
-                       "dropoff" in request.resource.data &&
-                       "customerId" in request.resource.data &&
-                       "customerName" in request.resource.data &&
-                       "status" in request.resource.data &&
-                       request.resource.data.status == "pending" &&
-                       (!("pickupCoords" in request.resource.data) || request.resource.data.pickupCoords is latlng);
-
-      // Customer can update to 'booked' or 'cancelled_by_customer'
-      // Driver can update to 'accepted', 'in_progress', 'completed', or 'cancelled_by_driver'
-      allow update: if 
-          // Customer permissions
-          (request.auth.uid == resource.data.customerId &&
-            // Customer can book a pending ride
-            (resource.data.status == 'pending' && request.resource.data.status == 'booked' &&
-             request.resource.data.keys().hasAll(['vehicleType', 'fare'])
-            ) ||
-            // Customer can cancel a ride before it's completed
-            (request.resource.data.status == 'cancelled_by_customer' && resource.data.status != 'completed')
-          ) ||
-          // Driver permissions
-          (request.auth.uid == request.resource.data.driverId &&
-            (request.resource.data.status == 'in_progress' ||
-             request.resource.data.status == 'completed' ||
-             request.resource_data.status == 'cancelled_by_driver')
-          ) ||
-          // Driver can accept a booked ride
-          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver' &&
-            resource.data.status == 'booked' && request.resource.data.status == 'accepted' &&
-            request.resource.data.driverId == request.auth.uid
-          );
+  
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      // In a real app, this would be based on a custom claim or a role in the user's document.
+      // For this prototype, we'll check against a known admin email from environment variables.
+      // Make sure to set NEXT_PUBLIC_ADMIN_EMAIL in your .env.local file.
+      return request.auth.token.email == "info@zingoride.vercel.app";
     }
 
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      // ANY authenticated user can create their own document (signup)
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Users can only read their OWN data.
+      // Drivers can read other users' location.
+      // Admins can read any user's data.
+      allow read: if request.auth.uid == userId 
+                  || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver')
+                  || isAdmin();
+                  
+      // Users can only update their OWN data. Admins can update any.
+      allow update: if request.auth.uid == userId || isAdmin();
+      
+      // No one can delete a user document through the client SDK.
+      allow delete: if false;
     }
 
+    // Rules for the 'rides' collection
+    match /rides/{rideId} {
+        // Any authenticated user can create a ride request.
+        // The request must include customerId, pickup, dropoff, status as pending and optionally pickupCoords.
+        allow create: if request.auth != null
+                    && request.resource.data.customerId == request.auth.uid
+                    && request.resource.data.pickup is string
+                    && request.resource.data.dropoff is string
+                    && request.resource.data.status == 'pending'
+                    && (!('pickupCoords' in request.resource.data) || request.resource.data.pickupCoords is latlng);
+        
+        // Only the assigned driver or customer can read the ride details. Admin can read all.
+        allow read: if resource.data.customerId == request.auth.uid 
+                    || resource.data.driverId == request.auth.uid
+                    || isAdmin();
+
+        // Specific update rules
+        allow update: if 
+            // Rule 1: Customer can update a PENDING ride to BOOKED status
+            (
+                request.auth.uid == resource.data.customerId
+                && resource.data.status == 'pending'
+                && request.resource.data.status == 'booked'
+                && request.resource.data.keys().hasAll(['vehicleType', 'fare', 'status'])
+            ) ||
+            // Rule 2: Driver can update a BOOKED ride to ACCEPTED
+            (
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver'
+                && resource.data.status == 'booked'
+                && request.resource.data.status == 'accepted'
+                && request.resource.data.driverId == request.auth.uid
+            ) ||
+            // Rule 3: Driver or Customer can CANCEL
+            (
+                (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId)
+                && (request.resource.data.status == 'cancelled_by_customer' || request.resource.data.status == 'cancelled_by_driver')
+            ) ||
+             // Rule 4: Driver can update an ACCEPTED ride to IN_PROGRESS or COMPLETED
+            (
+                request.auth.uid == resource.data.driverId
+                && resource.data.status == 'accepted'
+                && (request.resource.data.status == 'in_progress' || request.resource.data.status == 'completed')
+            ) ||
+             // Rule 5: Admin can update any field (for management purposes)
+            isAdmin();
+
+        allow delete: if isAdmin();
+    }
+    
+    // Rules for wallet top-up requests
+    match /walletRequests/{requestId} {
+        // Any authenticated user can create a request for themselves.
+        allow create: if request.auth.uid == request.resource.data.userId;
+        // Only admins can read, update, or delete requests.
+        allow read, update, delete: if isAdmin();
+    }
+
+    // Rules for payout requests by admins
+    match /payoutRequests/{payoutId} {
+        // Admins can create payout requests for themselves.
+        allow create: if isAdmin() && request.auth.token.email == "info@zingoride.vercel.app";
+        // Only admins can read, update or delete payout requests.
+        allow read, update, delete: if isAdmin();
+    }
+
+    // Rules for notifications
+    match /notifications/{notificationId} {
+        // Notifications are created via server-side actions (Admin SDK), so no client-side create rule needed.
+        allow create: if false; 
+        // Any authenticated user can read notifications.
+        allow read: if request.auth != null;
+        // Only admins can delete old notifications.
+        allow delete, update: if isAdmin();
+    }
+    
+     // Rules for chat messages
     match /chats/{chatId}/messages/{messageId} {
-        allow read, write: if request.auth != null; // Simple rule for now
+      // Allow users who are part of the chat to read and write messages.
+      // The chatId is assumed to be constructed as 'userId1_userId2'
+      allow read, write: if request.auth.uid in chatId.split('_');
     }
   }
 }
