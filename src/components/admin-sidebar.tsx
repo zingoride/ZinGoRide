@@ -12,6 +12,7 @@ import {
   Banknote,
   Map,
   Bell,
+  Megaphone,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const translations = {
     payouts: "Payouts",
     liveMap: "Live Map",
     notifications: "Notifications",
+    advertisements: "Ishtiharat",
   },
   en: {
     dashboard: "Dashboard",
@@ -37,6 +39,7 @@ const translations = {
     payouts: "Payouts",
     liveMap: "Live Map",
     notifications: "Notifications",
+    advertisements: "Advertisements",
   },
 };
 
@@ -52,6 +55,7 @@ export function AdminSidebar() {
     { href: "/admin/rides", label: t.rides, icon: Car },
     { href: "/admin/users", label: t.users, icon: Users },
     { href: "/admin/notifications", label: t.notifications, icon: Bell },
+    { href: "/admin/advertisements", label: t.advertisements, icon: Megaphone },
     { href: "/admin/wallet-requests", label: t.walletRequests, icon: CreditCard },
     { href: "/admin/payouts", label: t.payouts, icon: Banknote },
     { href: "/admin/settings", label: t.settings, icon: Settings },

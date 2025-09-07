@@ -12,6 +12,7 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { AdBanner } from '@/components/ad-banner';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
   ssr: false,
@@ -77,7 +78,12 @@ const CustomerPage = () => {
 
     const renderContent = () => {
         if (!currentRide) {
-            return <RideBookingForm onFindRide={handleFindRide} />;
+            return (
+                <div className="flex flex-col gap-4">
+                    <RideBookingForm onFindRide={handleFindRide} />
+                    <AdBanner />
+                </div>
+            );
         }
         
         if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
