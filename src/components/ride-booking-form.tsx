@@ -57,7 +57,7 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
-            status: 'pending',
+            status: 'pending', // Important: Status is 'pending' to show vehicle selection
         }
         
         const ridesCollection = collection(db, "rides");
@@ -66,7 +66,8 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             createdAt: serverTimestamp(),
         });
         
-        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date(), status: 'booked' });
+        // Pass the newly created ride (with 'pending' status) to the parent page
+        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date() });
 
     } catch (error) {
         console.error("Error creating ride request:", error);
@@ -74,9 +75,9 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             variant: "destructive",
             title: t.rideRequestError,
         });
-    } finally {
-        setLoading(false);
+        setLoading(false); // Only set loading to false on error
     }
+    // On success, the parent component will switch views, so no need to set loading to false.
   };
 
   return (
