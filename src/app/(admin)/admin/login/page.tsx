@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'info@zingoride.vercel.app');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="info@zingoride.vercel.app" required value={email} onChange={e => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="admin@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>

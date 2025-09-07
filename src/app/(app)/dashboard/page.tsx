@@ -16,7 +16,6 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc, setDoc, GeoPoint } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { TipCalculator } from '@/components/tip-calculator';
 
 const translations = {
   ur: {
@@ -198,7 +197,7 @@ export default function Dashboard() {
 
   if (!isOnline) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-start gap-8 text-center p-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center p-4">
         <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
         <div className="flex flex-col items-center gap-2">
             <WifiOff className="h-16 w-16 text-muted-foreground" />
@@ -209,22 +208,6 @@ export default function Dashboard() {
              <Button onClick={toggleStatus} size="lg" className="w-full max-w-sm mt-4">
                 {t.goOnline}
             </Button>
-        </div>
-        
-        <div className="grid w-full max-w-3xl gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.todaysEarnings}</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">PKR 0</div>
-                <p className="text-xs text-muted-foreground">
-                  {t.fromYesterday}
-                </p>
-              </CardContent>
-            </Card>
-            <TipCalculator />
         </div>
       </div>
     );

@@ -35,7 +35,7 @@ const rideOptions = [
   },
   {
     type: 'Rickshaw',
-    icon: PersonStanding,
+    icon: Car,
     eta: '6 min',
     price: '200',
     seats: 3,

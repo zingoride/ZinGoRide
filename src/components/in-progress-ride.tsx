@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import {
   MapPin,
@@ -10,6 +10,7 @@ import {
   Star,
   Navigation,
   Map,
+  Car,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import { Loader2 } from 'lucide-react';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
@@ -66,6 +67,7 @@ const translations = {
         rideCompleted: "Safar mukammal ho gaya!",
         errorUpdating: "Status update karne mein masla hua.",
         rideCancelled: "Ride has been cancelled.",
+        vehicleInfo: "Gaari Ki Maloomat"
     },
     en: {
         toPickup: "On the way to Pickup",
@@ -83,14 +85,25 @@ const translations = {
         rideCompleted: "Ride completed!",
         errorUpdating: "Error updating status.",
         rideCancelled: "Ride has been cancelled.",
+        vehicleInfo: "Vehicle Information"
     }
 }
+
+interface Vehicle {
+  make: string;
+  model: string;
+  licensePlate: string;
+  type: string;
+}
+
 
 export function InProgressRide() {
   const { activeRide, completeRide: completeRideInContext, cancelRide: cancelRideInContext } = useRide();
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
   const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(null);
   const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
+  const [customerVehicle, setCustomerVehicle] = useState<Vehicle | null>(null);
+
   const { language } = useLanguage();
   const { toast } = useToast();
   const t = translations[language];
@@ -102,12 +115,18 @@ export function InProgressRide() {
         setRideStage('pickup');
     }
     
-    // Listen to customer location
+    // Listen to customer location and vehicle info
     if (activeRide?.customerId) {
         const unsubCustomer = onSnapshot(doc(db, "users", activeRide.customerId), (doc) => {
-             if (doc.exists() && doc.data().location) {
-                const { latitude, longitude } = doc.data().location;
-                setCustomerPosition([latitude, longitude]);
+             if (doc.exists()) {
+                 const data = doc.data();
+                if (data.location) {
+                    const { latitude, longitude } = data.location;
+                    setCustomerPosition([latitude, longitude]);
+                }
+                if (data.vehicle) {
+                    setCustomerVehicle(data.vehicle);
+                }
             }
         });
         return () => unsubCustomer();
@@ -130,13 +149,11 @@ export function InProgressRide() {
     return null;
   }
   
-  const { id, pickup, dropoff, customerId, customerName, rider } = activeRide;
-  const riderInfo = rider || { name: customerName, rating: 4.8, phone: '+923011112222', avatarUrl: `https://picsum.photos/seed/${customerName}/100/100` };
+  const { id, pickup, dropoff, customerId, customerName } = activeRide;
   
   const handleCall = () => {
-    if (riderInfo?.phone) {
-      window.location.href = `tel:${riderInfo.phone}`;
-    }
+    // In a real app, you would fetch the customer's real number
+    window.location.href = `tel:+923001234567`;
   };
   
   const handleNavigate = () => {
@@ -192,17 +209,17 @@ export function InProgressRide() {
                     <Avatar className="h-16 w-16">
                         <AvatarImage src={activeRide?.customerAvatar} data-ai-hint="portrait woman" />
                         <AvatarFallback>
-                        {riderInfo?.name
+                        {(customerName || 'C')
                             .split(' ')
                             .map((n) => n[0])
                             .join('')}
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-xl font-bold">{riderInfo?.name}</p>
+                        <p className="text-xl font-bold">{customerName}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{riderInfo?.rating.toFixed(1)}</span>
+                        <span>4.9</span>
                         </div>
                     </div>
                 </div>
@@ -211,12 +228,25 @@ export function InProgressRide() {
                         <Phone className="h-5 w-5" />
                     </Button>
                     <ChatDialog 
-                        chatPartnerName={riderInfo?.name || 'Customer'}
+                        chatPartnerName={customerName || 'Customer'}
                         chatPartnerId={customerId}
                         rideId={id}
                     />
                 </div>
             </div>
+            {customerVehicle && (
+                <>
+                <Separator className="my-4" />
+                <Card className='w-full bg-muted/50 border-dashed'>
+                    <CardContent className='p-3'>
+                        <div className="flex items-center justify-center gap-2">
+                            <Car className='h-6 w-6' />
+                            <p className="text-lg font-semibold">{customerVehicle.make} {customerVehicle.model} - {customerVehicle.licensePlate}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                </>
+            )}
           </CardContent>
         </Card>
 
