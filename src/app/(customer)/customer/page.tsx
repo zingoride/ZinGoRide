@@ -90,7 +90,7 @@ const CustomerPage = () => {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />
         }
         
-        if (currentRide.status === 'booked') {
+        if (currentRide.status === 'booked' || currentRide.status === 'pending') {
              return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
         }
         
