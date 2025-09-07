@@ -69,7 +69,7 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const { user } = useAuth();
   const t = translations[language];
 
-  const tip = 50; // Dummy tip for now
+  const tip = ride.tip || 0;
   const commissionRate = 0.15; // 15%
   const fare = ride.fare || 0;
   const commission = fare * commissionRate;

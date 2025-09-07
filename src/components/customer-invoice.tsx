@@ -18,6 +18,8 @@ import { CheckCircle2, Star } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
 import { Textarea } from './ui/textarea';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const translations = {
   ur: {
@@ -57,10 +59,25 @@ const translations = {
 export function CustomerInvoice({ ride, onDone }: { ride: RideRequest, onDone: () => void }) {
   const [rating, setRating] = useState(0);
   const [tip, setTip] = useState(0);
+  const [comment, setComment] = useState("");
   const { language } = useLanguage();
   const t = translations[language];
 
   const total = (ride.fare || 0) + tip;
+
+  const handleSubmit = async () => {
+    try {
+      const rideRef = doc(db, "rides", ride.id);
+      await updateDoc(rideRef, {
+        rating: rating,
+        tip: tip,
+        feedback: comment,
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    }
+    onDone();
+  };
 
   if (ride.status === 'cancelled_by_driver') {
     return (
@@ -79,7 +96,7 @@ export function CustomerInvoice({ ride, onDone }: { ride: RideRequest, onDone: (
   }
 
   return (
-    <Dialog open={true} onOpenChange={(isOpen) => !isOpen && onDone()}>
+    <Dialog open={true} onOpenChange={(isOpen) => !isOpen && handleSubmit()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className='flex flex-col items-center text-center'>
@@ -91,7 +108,7 @@ export function CustomerInvoice({ ride, onDone }: { ride: RideRequest, onDone: (
         <div className="py-4 space-y-4">
           <div className="text-center">
             <h3 className='font-semibold'>{t.howWasRide}</h3>
-            <p className='text-sm text-muted-foreground'>{ride.driverName || "Ali Khan"}</p>
+            <p className='text-sm text-muted-foreground'>{ride.driverName || "Driver"}</p>
           </div>
           
           <div className='flex justify-center gap-2'>
@@ -139,12 +156,12 @@ export function CustomerInvoice({ ride, onDone }: { ride: RideRequest, onDone: (
           </div>
 
           <div>
-            <Textarea placeholder={t.addComment} />
+            <Textarea placeholder={t.addComment} value={comment} onChange={(e) => setComment(e.target.value)} />
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={onDone} className="w-full" size="lg">
+          <Button onClick={handleSubmit} className="w-full" size="lg">
             {t.submitFeedback}
           </Button>
         </DialogFooter>

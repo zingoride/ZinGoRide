@@ -7,13 +7,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const data = [
-  { name: 'Jan', revenue: 4000, rides: 2400 },
-  { name: 'Feb', revenue: 3000, rides: 1398 },
-  { name: 'Mar', revenue: 2000, rides: 9800 },
-  { name: 'Apr', revenue: 2780, rides: 3908 },
-  { name: 'May', revenue: 1890, rides: 4800 },
-  { name: 'Jun', revenue: 2390, rides: 3800 },
-  { name: 'Jul', revenue: 3490, rides: 4300 },
+  { name: 'Jan', revenue: 0, rides: 0 },
+  { name: 'Feb', revenue: 0, rides: 0 },
+  { name: 'Mar', revenue: 0, rides: 0 },
+  { name: 'Apr', revenue: 0, rides: 0 },
+  { name: 'May', revenue: 0, rides: 0 },
+  { name: 'Jun', revenue: 0, rides: 0 },
+  { name: 'Jul', revenue: 0, rides: 0 },
 ];
 
 
@@ -56,8 +56,8 @@ export default function AdminDashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">PKR 1,250,000</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <div className="text-lg font-bold">PKR 0</div>
+            <p className="text-xs text-muted-foreground">+0% from last month</p>
           </CardContent>
         </Card>
         <Card>
@@ -66,8 +66,8 @@ export default function AdminDashboardPage() {
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">PKR 187,500</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <div className="text-lg font-bold">PKR 0</div>
+            <p className="text-xs text-muted-foreground">+0% from last month</p>
           </CardContent>
         </Card>
         <Card>
@@ -76,8 +76,8 @@ export default function AdminDashboardPage() {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">+12,234</div>
-            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+            <div className="text-lg font-bold">0</div>
+            <p className="text-xs text-muted-foreground">+0% from last month</p>
           </CardContent>
         </Card>
         <Card>
@@ -86,8 +86,8 @@ export default function AdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">+19% from last month</p>
+            <div className="text-lg font-bold">0</div>
+            <p className="text-xs text-muted-foreground">+0% from last month</p>
           </CardContent>
         </Card>
       </div>

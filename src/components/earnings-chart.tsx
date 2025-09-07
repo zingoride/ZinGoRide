@@ -11,23 +11,23 @@ import {
 } from "@/components/ui/chart"
 
 const chartDataUr = [
-  { day: "Som", earnings: 2800 },
-  { day: "Mangal", earnings: 3200 },
-  { day: "Budh", earnings: 2500 },
-  { day: "Jumma", earnings: 4100 },
-  { day: "Hafta", earnings: 5200 },
-  { day: "Itwar", earnings: 4800 },
-  { day: "Aaj", earnings: 4250 },
+  { day: "Som", earnings: 0 },
+  { day: "Mangal", earnings: 0 },
+  { day: "Budh", earnings: 0 },
+  { day: "Jumma", earnings: 0 },
+  { day: "Hafta", earnings: 0 },
+  { day: "Itwar", earnings: 0 },
+  { day: "Aaj", earnings: 0 },
 ]
 
 const chartDataEn = [
-  { day: "Mon", earnings: 2800 },
-  { day: "Tue", earnings: 3200 },
-  { day: "Wed", earnings: 2500 },
-  { day: "Fri", earnings: 4100 },
-  { day: "Sat", earnings: 5200 },
-  { day: "Sun", earnings: 4800 },
-  { day: "Today", earnings: 4250 },
+  { day: "Mon", earnings: 0 },
+  { day: "Tue", earnings: 0 },
+  { day: "Wed", earnings: 0 },
+  { day: "Fri", earnings: 0 },
+  { day: "Sat", earnings: 0 },
+  { day: "Sun", earnings: 0 },
+  { day: "Today", earnings: 0 },
 ]
 
 

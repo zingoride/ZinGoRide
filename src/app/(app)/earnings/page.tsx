@@ -10,21 +10,21 @@ import { useLanguage } from "@/context/LanguageContext";
 const translations = {
   ur: {
     todaysEarnings: "Aaj Ki Kamai",
-    fromYesterday: "+15% pichle din se",
+    fromYesterday: "+0% pichle din se",
     thisWeekEarnings: "Is Haftay Ki Kamai",
-    fromLastWeek: "+8% pichle haftay se",
+    fromLastWeek: "+0% pichle haftay se",
     weeklyGoal: "Haftawar Had",
-    goalCompleted: "72% hadaf mukammal",
+    goalCompleted: "0% hadaf mukammal",
     earningsOverview: "Kamai Ka Jaiza",
     last7Days: "Pichle 7 dinon ki kamai.",
   },
   en: {
     todaysEarnings: "Today's Earnings",
-    fromYesterday: "+15% from yesterday",
+    fromYesterday: "+0% from yesterday",
     thisWeekEarnings: "This Week's Earnings",
-    fromLastWeek: "+8% from last week",
+    fromLastWeek: "+0% from last week",
     weeklyGoal: "Weekly Goal",
-    goalCompleted: "72% goal completed",
+    goalCompleted: "0% goal completed",
     earningsOverview: "Earnings Overview",
     last7Days: "Earnings for the last 7 days.",
   },
@@ -43,7 +43,7 @@ export default function EarningsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">PKR 4,250</div>
+            <div className="text-2xl font-bold">PKR 0</div>
             <p className="text-xs text-muted-foreground">
               {t.fromYesterday}
             </p>
@@ -55,7 +55,7 @@ export default function EarningsPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">PKR 21,800</div>
+            <div className="text-2xl font-bold">PKR 0</div>
             <p className="text-xs text-muted-foreground">
               {t.fromLastWeek}
             </p>
@@ -71,7 +71,7 @@ export default function EarningsPage() {
             <p className="text-xs text-muted-foreground mb-2">
               {t.goalCompleted}
             </p>
-            <Progress value={72} aria-label="72% complete" />
+            <Progress value={0} aria-label="0% complete" />
           </CardContent>
         </Card>
       </div>

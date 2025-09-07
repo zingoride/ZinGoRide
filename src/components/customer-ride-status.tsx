@@ -43,16 +43,6 @@ const defaultPositions = {
     customer: [24.8607, 67.0011] as [number, number]
 };
 
-const driverDetails = {
-    name: 'Ali Khan',
-    rating: 4.9,
-    vehicle: 'Toyota Corolla - ABC-123',
-    etaUr: '5 minute',
-    etaEn: '5 minutes',
-    avatar: 'https://picsum.photos/100/100?random=driver',
-    phone: '+923001234567'
-}
-
 const translations = {
     ur: {
         rideStatus: "Ride Status",
@@ -156,7 +146,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             if (status === 'accepted') {
                 toast({
                     title: t.toastDriverAcceptedTitle,
-                    description: t.toastDriverAcceptedDesc(driverName || driverDetails.name),
+                    description: t.toastDriverAcceptedDesc(driverName || 'Your Driver'),
                 });
             } else if (status === 'in_progress') {
                  toast({
@@ -167,13 +157,12 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         }
         prevStatusRef.current = status;
 
-    }, [status, driverName, t, toast, t.toastDriverAcceptedDesc, t.toastDriverAcceptedTitle, t.toastRideStartedDesc, t.toastRideStartedTitle]);
+    }, [status, driverName, t, toast]);
 
 
     const handleCall = () => {
-        if (driverDetails.phone) {
-            window.location.href = `tel:${driverDetails.phone}`;
-        }
+        // Dummy phone number for now
+        window.location.href = `tel:+923001234567`;
     };
     
     const handleCancelRide = async () => {
@@ -192,7 +181,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     };
 
     const getStatusInfo = () => {
-        const eta = language === 'ur' ? driverDetails.etaUr : driverDetails.etaEn;
+        const eta = "5 minutes";
         switch(status) {
             case 'booked':
                  return { title: t.rideStatus, description: t.findingDesc };
@@ -219,6 +208,9 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
+    const currentDriverName = driverName || "Finding Driver...";
+    const currentDriverAvatar = driverAvatar || `https://picsum.photos/seed/${driverId || 'driver'}/100/100`;
+
 
     return (
        <div className="flex flex-col gap-4 h-full w-full p-2">
@@ -242,14 +234,14 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                     ) : (
                             <div className="w-full flex flex-col items-center gap-4">
                             <Avatar className="h-24 w-24 border-4 border-primary">
-                                <AvatarImage src={driverAvatar || driverDetails.avatar} alt={driverName || driverDetails.name} data-ai-hint="portrait man" />
-                                <AvatarFallback>{(driverName || driverDetails.name).charAt(0)}</AvatarFallback>
+                                <AvatarImage src={currentDriverAvatar} alt={currentDriverName} data-ai-hint="portrait man" />
+                                <AvatarFallback>{currentDriverName.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className='text-center'>
-                                <p className="text-2xl font-bold">{driverName || driverDetails.name}</p>
+                                <p className="text-2xl font-bold">{currentDriverName}</p>
                                 <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span>{driverDetails.rating.toFixed(1)}</span>
+                                    <span>4.9</span>
                                 </div>
                             </div>
                         
@@ -257,7 +249,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                                 <CardContent className='p-3'>
                                     <div className="flex items-center justify-center gap-2">
                                         <Car className='h-6 w-6' />
-                                        <p className="text-lg font-semibold">{driverDetails.vehicle}</p>
+                                        <p className="text-lg font-semibold">Toyota Corolla - ABC-123</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -293,7 +285,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                         {driverId && (
                             <ChatDialog 
                                 rideId={id}
-                                chatPartnerName={driverName || driverDetails.name}
+                                chatPartnerName={driverName || "Driver"}
                                 chatPartnerId={driverId}
                             />
                         )}

@@ -260,11 +260,7 @@ export default function AdminSettingsPage() {
     const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
-    const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([
-        { name: 'Car', icon: 'Car', active: true, baseFare: 100, perKmRate: 25, perMinRate: 5 },
-        { name: 'Bike', icon: 'Bike', active: true, baseFare: 50, perKmRate: 15, perMinRate: 3 },
-        { name: 'Rickshaw', icon: 'Bus', active: true, baseFare: 70, perKmRate: 20, perMinRate: 4 },
-    ]);
+    const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [newVehicleName, setNewVehicleName] = useState('');
     const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
     const t = translations[language];
@@ -539,41 +535,45 @@ export default function AdminSettingsPage() {
                             <CardDescription>{t.fareManagementDesc}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue={vehicleTypes[0]?.name || 'car'} className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
-                                    {vehicleTypes.map(v => {
-                                        const Icon = allIcons[v.icon];
-                                        return <TabsTrigger key={v.name} value={v.name}><Icon className="mr-2" /> {v.name}</TabsTrigger>
-                                    })}
-                                </TabsList>
-                                {vehicleTypes.map(v => (
-                                <TabsContent key={v.name} value={v.name} className="mt-4">
-                                    <div className="space-y-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor={`${v.name}-base-fare`}>{t.baseFare}</Label>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <Input id={`${v.name}-base-fare`} type="number" placeholder="e.g., 100" defaultValue={v.baseFare} className="pl-8" />
+                            {vehicleTypes.length > 0 ? (
+                                <Tabs defaultValue={vehicleTypes[0]?.name || 'car'} className="w-full">
+                                    <TabsList className={`grid w-full grid-cols-${vehicleTypes.length}`}>
+                                        {vehicleTypes.map(v => {
+                                            const Icon = allIcons[v.icon];
+                                            return <TabsTrigger key={v.name} value={v.name}><Icon className="mr-2 h-4 w-4" /> {v.name}</TabsTrigger>
+                                        })}
+                                    </TabsList>
+                                    {vehicleTypes.map(v => (
+                                    <TabsContent key={v.name} value={v.name} className="mt-4">
+                                        <div className="space-y-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor={`${v.name}-base-fare`}>{t.baseFare}</Label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input id={`${v.name}-base-fare`} type="number" placeholder="e.g., 100" defaultValue={v.baseFare} className="pl-8" />
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor={`${v.name}-km-rate`}>{t.perKmRate}</Label>
+                                                <div className="relative">
+                                                    <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input id={`${v.name}-km-rate`} type="number" placeholder="e.g., 25" defaultValue={v.perKmRate} className="pl-8" />
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor={`${v.name}-min-rate`}>{t.perMinRate}</Label>
+                                                <div className="relative">
+                                                    <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input id={`${v.name}-min-rate`} type="number" placeholder="e.g., 5" defaultValue={v.perMinRate} className="pl-8" />
+                                                </div>
                                             </div>
                                         </div>
-                                         <div className="grid gap-2">
-                                            <Label htmlFor={`${v.name}-km-rate`}>{t.perKmRate}</Label>
-                                             <div className="relative">
-                                                <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <Input id={`${v.name}-km-rate`} type="number" placeholder="e.g., 25" defaultValue={v.perKmRate} className="pl-8" />
-                                            </div>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor={`${v.name}-min-rate`}>{t.perMinRate}</Label>
-                                            <div className="relative">
-                                                <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <Input id={`${v.name}-min-rate`} type="number" placeholder="e.g., 5" defaultValue={v.perMinRate} className="pl-8" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                                ))}
-                            </Tabs>
+                                    </TabsContent>
+                                    ))}
+                                </Tabs>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-4">No vehicle types added.</div>
+                            )}
                         </CardContent>
                     </Card>
                     <Card>

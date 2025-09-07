@@ -110,10 +110,10 @@ export function TipCalculator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      displayedFare: 350,
-      riderRating: 4.5,
+      displayedFare: 0,
+      riderRating: 5,
       riderId: user?.uid || "",
-      travelConditions: "Heavy traffic during peak hours.",
+      travelConditions: "",
     },
   });
 

@@ -190,7 +190,7 @@ export function InProgressRide() {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
-                        <AvatarImage src={riderInfo?.avatarUrl} data-ai-hint="portrait woman" />
+                        <AvatarImage src={activeRide?.customerAvatar} data-ai-hint="portrait woman" />
                         <AvatarFallback>
                         {riderInfo?.name
                             .split(' ')
@@ -268,4 +268,3 @@ export function InProgressRide() {
     </div>
   );
 }
-
