@@ -1,83 +1,80 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isUserAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isUser(userId) {
-      return isUserAuthenticated() && request.auth.uid == userId;
-    }
-
+    // Helper function to check if the user is an admin
     function isAdmin() {
-      // UID for the admin user
-      return isUserAuthenticated() && request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+      return request.auth != null && request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
     }
     
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Helper function to check if the user is part of a chat
     function isUserInChat(chatId) {
-        // A chat ID is formed by "userId1_userId2"
-        // This rule ensures the authenticated user's ID is part of the chat ID string.
-        return isUserAuthenticated() && string(chatId).matches('.*' + request.auth.uid + '.*');
+      // Matches if the user's UID is at the start or end of the chat ID string
+      return request.auth != null && (chatId.matches(request.auth.uid + '_.*') || chatId.matches('.*_' + request.auth.uid));
     }
 
-    // Collection: users
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow get: if isUserAuthenticated();
-      allow list: if isAdmin();
-      // Allow user creation for anyone (signup)
-      allow create: if true; 
-      // Allow users to update their own data, or admin to update any user
-      allow update: if isUser(userId) || isAdmin();
-      allow delete: if isAdmin();
+      // Admins can read and write to any user document
+      allow read, write: if isAdmin();
+      // Users can read and update their own document
+      allow get, update: if isOwner(userId);
     }
     
-    // Collection: rides
+    // Rules for the 'rides' collection
     match /rides/{rideId} {
-        // An admin can read/write any ride document
+        // Admins can perform any action
         allow read, write: if isAdmin();
-        
-        // A customer can create a ride for themselves
-        allow create: if isUser(request.resource.data.customerId);
-        
-        // Any authenticated user involved in the ride can get or update it
-        allow get, update: if isUserAuthenticated() && (isUser(resource.data.customerId) || isUser(resource.data.driverId));
-        
-        match /messages/{messageId} {
-            // A user can read/write messages in a ride they are part of
-            allow read, write: if isUserAuthenticated() && (isUser(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isUser(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId));
-        }
+        // Logged-in users can create rides
+        allow create: if request.auth != null;
+        // The customer who created the ride, or the assigned driver, can read/update it
+        allow get, update: if request.auth != null && (isOwner(resource.data.customerId) || (resource.data.driverId != null && isOwner(resource.data.driverId)));
+    }
+    
+    // Rules for chat messages within a ride
+    match /rides/{rideId}/messages/{messageId} {
+        // Only customer or driver of the ride can read/write messages
+        allow read, write: if request.auth != null && (isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId));
+    }
+    
+    // Rules for general chats between admin and users
+    match /chats/{chatId}/messages/{messageId} {
+       // Only the admin or a user who is part of the chat can read/write messages
+       allow read, write: if isAdmin() || isUserInChat(chatId);
     }
 
-    // Collection: walletRequests
+    // Rules for wallet top-up requests
     match /walletRequests/{requestId} {
-        // Admin has full access
-        allow read, write: if isAdmin();
-        // Users can create requests for themselves
-        allow create: if isUser(request.resource.data.userId);
+      // Admins can read and write any request
+      allow read, write: if isAdmin();
+      // Users can create requests for themselves and read their own requests
+      allow create: if request.auth != null && isOwner(request.resource.data.userId);
+      allow get: if request.auth != null && isOwner(resource.data.userId);
     }
     
-    // Collection: payoutRequests
-     match /payoutRequests/{payoutId} {
-        // Only admin can manage payout requests
+    // Payout requests made by the admin
+    match /payoutRequests/{payoutId} {
+        // Only admin can create and read payout requests
         allow read, write: if isAdmin();
     }
     
-    // Collection: notifications
+    // General notifications sent by admin
     match /notifications/{notificationId} {
-        // Only admin can manage notifications
-        allow read, write: if isAdmin();
+       // Only admin can create and read notifications
+       allow read, write: if isAdmin();
     }
-    
-    // Collection: chats (for admin-user communication)
-    match /chats/{chatId} {
-        allow read, write: if isAdmin() || isUserInChat(chatId);
-        
-        match /messages/{messageId} {
-           allow read, write: if isAdmin() || isUserInChat(chatId);
-        }
+
+    // Manual wallet transactions made by admin
+    match /walletTransactions/{transactionId} {
+        // Only admin can create and read these transactions
+        allow read, write: if isAdmin();
     }
   }
 }

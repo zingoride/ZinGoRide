@@ -8,7 +8,7 @@ import {
 } from "@/ai/flows/suggest-dynamic-tips";
 import { v2 as cloudinary } from 'cloudinary';
 import { getFirebaseAdmin } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // Configure Cloudinary
 cloudinary.config({ 
@@ -121,6 +121,54 @@ export async function sendBroadcastNotification(formData: FormData): Promise<{ s
 
     } catch (error: any) {
         console.error("Error sending broadcast notification: ", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function manualTopUp(formData: FormData): Promise<{ success: boolean; error?: string }> {
+    const userId = formData.get('userId') as string;
+    const amount = Number(formData.get('amount'));
+    const adminId = formData.get('adminId') as string;
+    const adminName = formData.get('adminName') as string;
+
+    if (!userId || !amount || !adminId) {
+        return { success: false, error: "User ID, amount, and admin ID are required." };
+    }
+
+    if (amount <= 0) {
+        return { success: false, error: "Amount must be positive." };
+    }
+
+    const { db } = getFirebaseAdmin();
+    const userRef = db.collection('users').doc(userId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) {
+                throw new Error("User not found");
+            }
+            
+            // Increment user's wallet balance
+            transaction.update(userRef, { walletBalance: FieldValue.increment(amount) });
+            
+            // Create a record of the manual transaction
+            const transactionRef = db.collection('walletTransactions').doc();
+            transaction.set(transactionRef, {
+                type: 'admin_topup',
+                userId: userId,
+                userName: userDoc.data()?.name || '',
+                amount: amount,
+                status: 'Completed',
+                adminId: adminId,
+                adminName: adminName,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error in manual top-up: ", error);
         return { success: false, error: error.message };
     }
 }
