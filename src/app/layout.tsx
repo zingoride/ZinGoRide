@@ -12,6 +12,7 @@ import { LogoProvider } from "@/context/LogoContext";
 import { ThemeColorProvider } from "@/context/ThemeColorContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { WalletProvider } from "@/context/WalletContext";
+import { FcmTokenManager } from "@/components/fcm-token-manager";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -46,7 +47,8 @@ export default function RootLayout({
                     <WalletProvider>
                         <RiderStatusProvider>
                             <RideProvider>
-                            {children}
+                              <FcmTokenManager />
+                              {children}
                             </RideProvider>
                         </RiderStatusProvider>
                     </WalletProvider>

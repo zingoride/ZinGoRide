@@ -7,6 +7,8 @@ import {
   type SuggestDynamicTipsOutput,
 } from "@/ai/flows/suggest-dynamic-tips";
 import { v2 as cloudinary } from 'cloudinary';
+import { getFirebaseAdmin } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Configure Cloudinary
 cloudinary.config({ 
@@ -64,21 +66,61 @@ export async function sendBroadcastNotification(formData: FormData): Promise<{ s
     if (!title || !message) {
         return { success: false, error: "Title and message are required." };
     }
-
-    console.log("--- Sending Broadcast Notification ---");
-    console.log("Title:", title);
-    console.log("Message:", message);
-    console.log("------------------------------------");
-
-    // In a real application, you would integrate with Firebase Cloud Messaging (FCM) here.
-    // 1. You would need to set up the Firebase Admin SDK.
-    // 2. Collect FCM tokens from all user devices and store them.
-    // 3. Use the Admin SDK to send a message to a topic (e.g., 'all_users') or to all tokens.
-    // For this prototype, we'll just simulate a successful sending.
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+        const { db, messaging } = getFirebaseAdmin();
+        
+        // 1. Get all users from Firestore
+        const usersSnapshot = await db.collection("users").get();
+        
+        // 2. Filter out users who have an FCM token
+        const tokens: string[] = [];
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            if (userData.fcmToken) {
+                tokens.push(userData.fcmToken);
+            }
+        });
+        
+        if (tokens.length === 0) {
+            return { success: true, error: "No users have enabled notifications." };
+        }
+        
+        // 3. Send a multicast message to all tokens
+        // Note: sendMulticast can send to up to 500 tokens at once.
+        // For a larger audience, you would need to batch these requests.
+        const response = await messaging.sendMulticast({
+            tokens,
+            notification: {
+                title: title,
+                body: message,
+            },
+            webpush: {
+                fcmOptions: {
+                    link: '/login' // Optional: Link to open when notification is clicked
+                }
+            }
+        });
+        
+        console.log(`Successfully sent message to ${response.successCount} users.`);
+        if (response.failureCount > 0) {
+            console.log(`Failed to send to ${response.failureCount} users.`);
+            // You can inspect response.responses for detailed errors
+        }
 
-    // Simulate success
-    return { success: true };
+        // 4. (Optional) Save the notification to a collection for history
+        await db.collection("notifications").add({
+            title,
+            message,
+            sentAt: FieldValue.serverTimestamp(),
+            sentTo: tokens.length,
+            successCount: response.successCount,
+        });
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Error sending broadcast notification: ", error);
+        return { success: false, error: error.message };
+    }
 }
