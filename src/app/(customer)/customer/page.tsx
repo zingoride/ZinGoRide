@@ -86,7 +86,7 @@ const CustomerPage = () => {
         
         if (currentRide.status === 'booked') {
              return (
-                <div className="relative w-full h-[calc(100vh-60px)]">
+                <div className="relative w-full h-full">
                     <div className='absolute inset-0'>
                         <DynamicMap />
                     </div>
@@ -120,4 +120,5 @@ const CustomerPage = () => {
 }
 
 export default CustomerPage;
+
 
