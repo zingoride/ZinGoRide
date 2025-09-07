@@ -100,9 +100,9 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const { language } = useLanguage();
     const { toast } = useToast();
     const t = translations[language];
-    const { status, driverId, driverName, driverAvatar, pickup, dropoff } = ride;
+    const { id, status, driverId, driverName, driverAvatar, pickup, dropoff } = ride;
     
-    const prevStatusRef = useState<RideRequest['status']>();
+    const prevStatusRef = useRef<RideRequest['status']>();
     const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
     const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(defaultPositions.customer);
 
@@ -167,7 +167,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         }
         prevStatusRef.current = status;
 
-    }, [status, driverName, t, toast]);
+    }, [status, driverName, t, toast, t.toastDriverAcceptedDesc, t.toastDriverAcceptedTitle, t.toastRideStartedDesc, t.toastRideStartedTitle]);
 
 
     const handleCall = () => {
@@ -291,7 +291,13 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                             <Button variant="outline" className="w-full" onClick={handleCall} disabled={!showDriverDetails}>
                                 <Phone className="mr-2 h-4 w-4" /> {t.call}
                             </Button>
-                            <ChatDialog riderName={driverName || driverDetails.name} />
+                            {driverId && (
+                               <ChatDialog 
+                                    rideId={id}
+                                    chatPartnerName={driverName || driverDetails.name}
+                                    chatPartnerId={driverId}
+                                />
+                            )}
                         </div>
                          <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
                             {loading ? (

@@ -34,6 +34,7 @@ const translations = {
         typeMessage: "Apna pegham likhein...",
         noMessages: "Abhi tak koi pegham nahi.",
         loadingChat: "Chat load ho rahi hai...",
+        chat: "Chat",
     },
     en: {
         message: "Message",
@@ -41,11 +42,24 @@ const translations = {
         typeMessage: "Type a message...",
         noMessages: "No messages yet.",
         loadingChat: "Loading chat...",
+        chat: "Chat",
     }
 }
 
 
-export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPartnerName: string, chatPartnerId: string, rideId: string }) {
+export function ChatDialog({ 
+    chatPartnerName, 
+    chatPartnerId, 
+    rideId, 
+    chatId,
+    trigger,
+ } : { 
+    chatPartnerName: string, 
+    chatPartnerId: string, 
+    rideId?: string,
+    chatId?: string,
+    trigger?: React.ReactNode,
+}) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const t = translations[language];
@@ -54,12 +68,22 @@ export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPar
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!rideId) return;
+    if (!isOpen) return;
+
+    let chatPath;
+    if (rideId) {
+        chatPath = `rides/${rideId}/messages`;
+    } else if (chatId) {
+        chatPath = `chats/${chatId}/messages`;
+    } else {
+        return;
+    }
 
     setLoading(true);
-    const messagesCollection = collection(db, 'rides', rideId, 'messages');
+    const messagesCollection = collection(db, chatPath);
     const q = query(messagesCollection, orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -75,7 +99,7 @@ export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPar
     });
 
     return () => unsubscribe();
-  }, [rideId]);
+  }, [rideId, chatId, isOpen]);
   
   useEffect(() => {
     // Auto-scroll to bottom
@@ -92,7 +116,16 @@ export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPar
     e.preventDefault();
     if (newMessage.trim() === '' || !user) return;
 
-    const messagesCollection = collection(db, 'rides', rideId, 'messages');
+     let chatPath;
+    if (rideId) {
+        chatPath = `rides/${rideId}/messages`;
+    } else if (chatId) {
+        chatPath = `chats/${chatId}/messages`;
+    } else {
+        return;
+    }
+
+    const messagesCollection = collection(db, chatPath);
     
     await addDoc(messagesCollection, {
         senderId: user.uid,
@@ -103,12 +136,16 @@ export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPar
     setNewMessage('');
   };
 
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+  const defaultTrigger = (
+     <Button variant="outline" className="w-full">
           <MessageSquare className="mr-2 h-4 w-4" /> {t.message}
-        </Button>
+     </Button>
+  )
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[70vh]">
         <DialogHeader>
@@ -149,6 +186,12 @@ export function ChatDialog({ chatPartnerName, chatPartnerId, rideId }: { chatPar
                       {msg.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'}) || ''}
                   </p>
                 </div>
+                 {msg.senderId === user?.uid && (
+                  <Avatar className="h-8 w-8">
+                     <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} />
+                    <AvatarFallback>{(user.displayName || "A").charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
               </div>
             )) : (
                 <div className="text-center text-muted-foreground py-8">{t.noMessages}</div>

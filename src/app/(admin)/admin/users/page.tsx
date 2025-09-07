@@ -13,12 +13,13 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban } from "lucide-react";
+import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban, MessageSquare } from "lucide-react";
 import { DocumentViewer } from "@/components/document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, query, where } from "firebase/firestore";
-
+import { useAuth } from "@/context/AuthContext";
+import { ChatDialog } from "@/components/chat-dialog";
 
 type UserStatus = 'Active' | 'Inactive';
 type UserType = 'Customer' | 'Driver';
@@ -56,9 +57,10 @@ const approvalStatusConfig = {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserForDocs, setSelectedUserForDocs] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -96,8 +98,8 @@ export default function UsersPage() {
             title: "Status Updated",
             description: `User status changed to ${newStatus}`,
         });
-        if (selectedUser?.id === userId) {
-            setSelectedUser(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
+        if (selectedUserForDocs?.id === userId) {
+            setSelectedUserForDocs(prev => prev ? { ...prev, approvalStatus: newStatus } : null);
         }
     } catch (error) {
         console.error("Error updating status: ", error);
@@ -110,9 +112,13 @@ export default function UsersPage() {
   
   const handleViewDocuments = (user: User) => {
     if (user.type === 'Driver' && user.documents) {
-      setSelectedUser(user);
+      setSelectedUserForDocs(user);
     }
   };
+
+  const getChatId = (userId1: string, userId2: string) => {
+    return [userId1, userId2].sort().join('_');
+  }
 
   if (loading) {
       return <div className="text-center text-muted-foreground py-16">Loading users...</div>
@@ -120,11 +126,11 @@ export default function UsersPage() {
 
   return (
     <>
-      {selectedUser && (
+      {selectedUserForDocs && (
         <DocumentViewer 
-          user={selectedUser} 
-          isOpen={!!selectedUser} 
-          onOpenChange={(isOpen) => !isOpen && setSelectedUser(null)}
+          user={selectedUserForDocs} 
+          isOpen={!!selectedUserForDocs} 
+          onOpenChange={(isOpen) => !isOpen && setSelectedUserForDocs(null)}
           onApprovalChange={handleStatusChange}
         />
       )}
@@ -149,6 +155,7 @@ export default function UsersPage() {
                 <TableBody>
                 {users.map((user) => {
                     const approvalConfig = approvalStatusConfig[user.approvalStatus] || approvalStatusConfig.Pending;
+                    const chatId = adminUser ? getChatId(adminUser.uid, user.id) : null;
                     return (
                     <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.id.substring(0, 8)}</TableCell>
@@ -166,52 +173,60 @@ export default function UsersPage() {
                         </Badge>
                         )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex items-center justify-end gap-2">
+                        {chatId && (
+                           <ChatDialog 
+                                chatId={chatId}
+                                chatPartnerId={user.id}
+                                chatPartnerName={user.name}
+                                trigger={<Button variant="ghost" size="icon"><MessageSquare className="h-4 w-4" /></Button>}
+                            />
+                        )}
                         {user.type === 'Driver' && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            {user.documents && user.documents.length > 0 && (
-                                <DropdownMenuItem onClick={() => handleViewDocuments(user)}>
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    <span>View Documents</span>
-                                </DropdownMenuItem>
-                            )}
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                              {user.documents && user.documents.length > 0 && (
+                                  <DropdownMenuItem onClick={() => handleViewDocuments(user)}>
+                                      <FileText className="mr-2 h-4 w-4" />
+                                      <span>View Documents</span>
+                                  </DropdownMenuItem>
+                              )}
 
-                            {user.approvalStatus === 'Pending' && (
-                                <>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        <span>Approve</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Rejected')}>
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        <span>Reject</span>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
+                              {user.approvalStatus === 'Pending' && (
+                                  <>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
+                                          <CheckCircle className="mr-2 h-4 w-4" />
+                                          <span>Approve</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Rejected')}>
+                                          <XCircle className="mr-2 h-4 w-4" />
+                                          <span>Reject</span>
+                                      </DropdownMenuItem>
+                                  </>
+                              )}
 
-                            {user.approvalStatus === 'Approved' && (
-                                <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Blocked')}>
-                                    <Ban className="mr-2 h-4 w-4" />
-                                    <span>Block</span>
-                                </DropdownMenuItem>
-                            )}
-                            
-                            {(user.approvalStatus === 'Rejected' || user.approvalStatus === 'Blocked') && (
-                                <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    <span>Re-Approve</span>
-                                </DropdownMenuItem>
-                            )}
-                            
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                              {user.approvalStatus === 'Approved' && (
+                                  <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Blocked')}>
+                                      <Ban className="mr-2 h-4 w-4" />
+                                      <span>Block</span>
+                                  </DropdownMenuItem>
+                              )}
+                              
+                              {(user.approvalStatus === 'Rejected' || user.approvalStatus === 'Blocked') && (
+                                  <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Approved')}>
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      <span>Re-Approve</span>
+                                  </DropdownMenuItem>
+                              )}
+                              
+                              </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                     </TableCell>
                     </TableRow>
