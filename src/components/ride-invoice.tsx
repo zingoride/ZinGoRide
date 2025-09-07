@@ -19,6 +19,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useWallet } from '@/context/WalletContext';
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+
 
 const translations = {
   ur: {
@@ -63,7 +66,6 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const { closeInvoice } = useRide();
   const { toast } = useToast();
   const { language } = useLanguage();
-  const { addFunds } = useWallet();
   const { user } = useAuth();
   const t = translations[language];
 
@@ -75,17 +77,28 @@ export function RideInvoice({ ride }: { ride: RideDetails }) {
   const totalPayable = fare + tip;
 
   useEffect(() => {
-    // Add only the net earnings to the wallet when invoice is shown
-    // This should only run for the driver. We assume if this component is shown, the user is a driver.
-    if (netEarnings > 0 && user?.uid === ride.driverId) {
-      addFunds(netEarnings);
-      toast({
-        title: t.earningsAdded,
-        description: `PKR ${netEarnings.toFixed(2)} credited.`,
-      });
+    // This effect runs once when the invoice is mounted.
+    // It updates the driver's wallet balance in Firestore.
+    const addEarningsToWallet = async () => {
+        if (netEarnings > 0 && user?.uid === ride.driverId) {
+            try {
+                const driverRef = doc(db, "users", ride.driverId);
+                await updateDoc(driverRef, {
+                    walletBalance: increment(netEarnings)
+                });
+                toast({
+                    title: t.earningsAdded,
+                    description: `PKR ${netEarnings.toFixed(2)} credited.`,
+                });
+            } catch (error) {
+                console.error("Error adding earnings to wallet: ", error);
+            }
+        }
     }
+    
+    addEarningsToWallet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ride.fare, user, ride.driverId]);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const handlePaymentMethodClick = () => {
     toast({
