@@ -1,69 +1,79 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
-    function isUserAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isUser(userId) {
-      return isUserAuthenticated() && request.auth.uid == userId;
-    }
-
     function isAdmin() {
-      // UID for info@zingoride.vercel.app
+      // Allow access for the admin user
       return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
     }
 
-    // Collection Rules
+    function isOwner(userId) {
+      // Allow access if the user is the owner of the document
+      return request.auth.uid == userId;
+    }
+    
+    function isUserInChat(chatId) {
+      // Allow access if the user's UID is part of the chatId
+      // This is a simplified way to check for participation in a 1-on-1 chat
+      return chatId.matches('.*' + request.auth.uid + '.*');
+    }
 
+    // Rules for the users collection
     match /users/{userId} {
-      allow read: if isUser(userId) || isAdmin();
-      allow write: if isUser(userId) || isAdmin();
-      // Allow list for admin only
-      allow list: if isAdmin();
-    }
-    
-    match /rides/{rideId} {
-      allow read: if isUser(request.resource.data.customerId) || isUser(request.resource.data.driverId) || isAdmin();
-      allow write: if isUser(request.resource.data.customerId) || isUser(request.resource.data.driverId) || isAdmin();
+      // Admin can do anything. Users can read/update their own profile.
+      allow get, update, delete: if isAdmin() || isOwner(userId);
+      // Anyone can create a user account (signup)
+      allow create: if request.auth.uid != null;
+      // Only admin can list all users
       allow list: if isAdmin();
     }
 
-    match /walletRequests/{requestId} {
-      allow read: if isUser(request.resource.data.userId) || isAdmin();
-      allow create: if isUser(request.resource.data.userId);
-      allow update, delete: if isAdmin();
-       allow list: if isAdmin();
+    // Rules for the rides collection
+    match /rides/{rideId} {
+      // Admin can do anything.
+      allow read, write: if isAdmin();
+      
+      // Customer can create a ride for themselves.
+      // Customer or the assigned driver can get/update the ride details.
+      allow create: if isOwner(request.resource.data.customerId);
+      allow get, update: if isOwner(request.resource.data.customerId) || isOwner(request.resource.data.driverId);
     }
     
+    // Rules for wallet top-up requests
+    match /walletRequests/{requestId} {
+      // Admin can read/write all requests.
+      allow read, write: if isAdmin();
+      // Users can create their own requests.
+      allow create: if isOwner(request.resource.data.userId);
+    }
+
+    // Rules for commission payout requests
     match /payoutRequests/{requestId} {
-      allow read, list: if isAdmin();
-      allow create, update, delete: if isAdmin();
+      // Admin can read/write all requests.
+      allow read, write: if isAdmin();
+      // Admins (in this case, the one user) can create their own requests.
+      allow create: if isAdmin();
     }
-    
+
+    // Rules for broadcast notifications
     match /notifications/{notificationId} {
-        allow read, list: if isAdmin();
-        allow create, update, delete: if isAdmin();
+      // Only admin can manage notifications history.
+      allow read, write: if isAdmin();
     }
     
-    match /chats/{chatId}/{message=**} {
-      allow read, write: if isUser(request.auth.uid) && request.auth.uid.matches(chatId) || isAdmin();
+    // Rules for chat messages
+    match /chats/{chatId} {
+       match /messages/{messageId} {
+         // Admin or a user participating in the chat can read/create messages.
+         allow read, create: if isAdmin() || isUserInChat(chatId);
+       }
     }
     
+    // Rules for wallet transactions (for manual top-ups)
     match /walletTransactions/{transactionId} {
-       allow read: if isUser(request.resource.data.userId) || isAdmin();
-       allow create: if isUser(request.resource.data.userId) || isAdmin();
-       allow list: if isAdmin();
-    }
-    
-    // Auto-generated index for wallet requests
-    // This allows admins to query and order requests by date.
-    match /walletRequests/{requestId} {
-      // Existing rules...
+        // Only admin can create or read transaction history.
+        allow read, write: if isAdmin();
     }
   }
 }
