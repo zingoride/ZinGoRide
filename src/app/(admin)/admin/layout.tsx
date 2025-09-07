@@ -29,6 +29,8 @@ export default function AdminLayout({
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0 sm:max-w-xs bg-sidebar">
+                            <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+                            <SheetDescription className="sr-only">Main navigation menu for the admin portal.</SheetDescription>
                             <AdminSidebar />
                         </SheetContent>
                     </Sheet>
