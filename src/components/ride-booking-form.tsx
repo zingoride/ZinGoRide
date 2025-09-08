@@ -21,12 +21,13 @@ const translations = {
     findRideButton: "Ride Dhundein",
     findingRide: "Ride dhoondi ja rahi hai...",
     rideRequestError: "Ride request karne mein masla hua.",
-    locationError: "Location hasil karne mein masla hua.",
+    locationError: "Aapki location haasil nahi ho saki.",
     locationSuccess: "Aapki location set ho gayi hai.",
     myLocation: "Meri Maujooda Location",
     useMyLocation: "Meri Location Istemal Karein",
     gettingLocation: "Location haasil ki ja rahi hai...",
-    enableLocation: "Location ki Ijazat Dein"
+    enableLocation: "Location ki Ijazat Dein",
+    noAddressFound: "Is location par koi address nahi mila.",
   },
   en: {
     pickupPlaceholder: "Where from?",
@@ -39,7 +40,8 @@ const translations = {
     myLocation: "My Current Location",
     useMyLocation: "Use My Location",
     gettingLocation: "Getting location...",
-    enableLocation: "Enable Location"
+    enableLocation: "Enable Location",
+    noAddressFound: "No address found for this location.",
   }
 }
 
@@ -60,26 +62,44 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
   const t = translations[language];
 
-  useEffect(() => {
-    if (hasPermission && !pickup) {
-       handleUseMyLocation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPermission]);
-
   const handleUseMyLocation = async () => {
     setManualLocationLoading(true);
     const permissionGranted = await requestPermission();
-    if (permissionGranted) {
-        // We just need to trigger the permission request.
-        // The actual location is fetched inside the context and we can get it from there
-        // For simplicity, we just set the input field text.
-         setPickup(t.myLocation);
-         toast({ title: t.locationSuccess });
-    } else {
+    if (!permissionGranted) {
         toast({ variant: 'destructive', title: t.locationError });
+        setManualLocationLoading(false);
+        return;
     }
-    setManualLocationLoading(false);
+    
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const { latitude, longitude } = position.coords;
+            setPickupCoords({ lat: latitude, lng: longitude });
+
+            // Reverse geocode using OpenStreetMap
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await response.json();
+                if (data && data.display_name) {
+                    setPickup(data.display_name);
+                    toast({ title: t.locationSuccess });
+                } else {
+                    setPickup(t.myLocation);
+                    toast({ variant: 'destructive', title: t.noAddressFound });
+                }
+            } catch (error) {
+                console.error("Reverse geocoding error:", error);
+                setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                toast({ variant: 'destructive', title: t.locationError });
+            } finally {
+                setManualLocationLoading(false);
+            }
+        },
+        () => {
+            toast({ variant: 'destructive', title: t.locationError });
+            setManualLocationLoading(false);
+        }
+    );
   }
 
 
