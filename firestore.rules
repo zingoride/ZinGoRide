@@ -5,119 +5,104 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Helper Functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && getUserData(request.auth.uid).type == 'Admin';
+      return request.auth != null && request.auth.uid == userId;
     }
 
     function isDriver() {
-      return isSignedIn() && getUserData(request.auth.uid).type == 'Driver';
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver';
     }
 
-    function isCustomer() {
-      return isSignedIn() && getUserData(request.auth.uid).type == 'Customer';
-    }
-    
-    function isBookingRide(newData) {
-    	return newData.status == 'booked' && newData.vehicleType in ['Car', 'Bike', 'Rickshaw'] && newData.fare > 0;
-    }
-    
-    function isAcceptingRide(newData) {
-    	return newData.status == 'accepted' && newData.driverId == request.auth.uid;
-    }
-    
-    function isStartingRide(newData) {
-    	return newData.status == 'in_progress';
-    }
-    
-    function isCompletingRide(newData) {
-    	return newData.status == 'completed';
-    }
-    
-    function isCancellingRide(newData, userType) {
-    	return newData.status == 'cancelled_by_' + userType;
-    }
-    
-    function isUpdatingFeedback(newData) {
-    	return newData.rating > 0 || newData.tip >= 0 || newData.feedback != null;
+    function isAdmin() {
+      // Allow if the user is the designated Super Admin
+      if (request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2') {
+        return true;
+      }
+      // Also allow if the user has an "Admin" type in their user document.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
     }
 
-    // Collection Rules
+    // Collection: users
     match /users/{userId} {
-      allow read: if isSignedIn(); // Allow any signed-in user to read basic public data
-      allow update: if isOwner(userId) || isAdmin(); // Allow user to update their own profile, or admin
-      allow create, delete: if isAdmin(); // Only admin can create or delete users
+      // Anyone authenticated can create their own user document
+      allow create: if isOwner(userId);
+
+      // Anyone authenticated can read basic info of any user (for profiles, ride details)
+      allow read: if request.auth != null;
+
+      // Users can only update their own profile. Admin can update any.
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // Nobody can delete user accounts from the client.
+      allow delete: if false;
     }
 
+    // Collection: rides
     match /rides/{rideId} {
-      // ANY logged in user can create a ride request.
-      allow create: if isSignedIn();
-      
-      // ANYONE can read a ride document - this should be locked down in production.
-      allow read: if isSignedIn();
-      
-      allow update: if 
-      	// Customer is booking the vehicle type and fare
-        (isOwner(request.resource.data.customerId) && isBookingRide(request.resource.data)) ||
-        // Customer is cancelling
-        (isOwner(request.resource.data.customerId) && isCancellingRide(request.resource.data, 'customer')) ||
-        // Customer is leaving feedback
-        (isOwner(request.resource.data.customerId) && isUpdatingFeedback(request.resource.data)) ||
-        // Driver is accepting
-        (isDriver() && isAcceptingRide(request.resource.data)) ||
-        // Driver is starting
-        (isOwner(request.resource.data.driverId) && isStartingRide(request.resource.data)) ||
-        // Driver is completing
-        (isOwner(request.resource.data.driverId) && isCompletingRide(request.resource.data)) ||
-        // Driver is cancelling
-        (isOwner(request.resource.data.driverId) && isCancellingRide(request.resource.data, 'driver')) ||
-        // Admin can do anything
-        isAdmin();
+      // An authenticated user can create a ride request for themselves.
+      allow create: if request.auth != null && isOwner(request.resource.data.customerId);
 
-      allow delete: if isAdmin();
+      // Only the customer who owns the ride, the assigned driver, or an admin can read the ride details.
+      allow read: if request.auth != null && (isOwner(resource.data.customerId) || isOwner(resource.data.driverId) || isAdmin());
+
+      // Complex update logic for different stages of a ride.
+      allow update: if 
+        // Case 1: Customer booking the ride (setting vehicle, fare)
+        (isOwner(resource.data.customerId) && request.resource.data.status == 'booked') ||
+        // Case 2: Customer cancelling their own ride
+        (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled_by_customer') ||
+        // Case 3: Driver accepting a ride
+        (isDriver() && resource.data.driverId == null && request.resource.data.driverId == request.auth.uid) ||
+        // Case 4: Assigned driver updating the status (start, complete, cancel)
+        (isOwner(resource.data.driverId) && (
+            request.resource.data.status == 'in_progress' ||
+            request.resource.data.status == 'completed' ||
+            request.resource.data.status == 'cancelled_by_driver'
+        )) ||
+        // Case 5: Admin can update anything.
+        isAdmin();
       
+      // No one can delete a ride document from client.
+      allow delete: if false;
+
+      // Subcollection: messages (for chat)
       match /messages/{messageId} {
-        allow read, write: if isSignedIn() && (isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId)) || isAdmin();
+        // Only the customer or driver of the ride can read/write messages.
+        allow read, write: if request.auth != null && (isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId));
       }
     }
     
-    match /configs/{docId} {
-    	allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    match /advertisements/{adId} {
-    	allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    match /walletRequests/{reqId} {
-    	allow read: if isSignedIn();
-      allow create: if isOwner(request.resource.data.userId);
-      allow update, delete: if isAdmin();
+    // Collection: chats (for admin-user chat)
+    match /chats/{chatId} {
+        match /messages/{messageId} {
+            allow read, write: if request.auth != null && (request.auth.uid in chatId.split('_'));
+        }
     }
 
-    match /payoutRequests/{reqId} {
+    // Admin-only collections
+    match /advertisements/{docId} {
+      allow read, write, delete: if isAdmin();
+    }
+    
+    match /payoutRequests/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /notifications/{docId} {
         allow read, write: if isAdmin();
     }
     
-    match /notifications/{notifId} {
-    	 allow read, write: if isAdmin();
+    match /configs/{docId} {
+      allow read: if request.auth != null; // All users can read configs
+      allow write: if isAdmin(); // Only admin can change configs
     }
-    
-    match /walletTransactions/{transId} {
-    	allow read, write: if isAdmin();
+
+    // Collection: walletRequests
+    match /walletRequests/{reqId} {
+        // User can create their own request
+        allow create: if isOwner(request.resource.data.userId);
+        // Only admin can read/update/delete these requests
+        allow read, update, delete: if isAdmin();
     }
   }
 }
