@@ -474,31 +474,15 @@ export default function AdminSettingsPage() {
                             <CardDescription>{t.logoDesc}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-20 w-20">
-                                    <AvatarImage src="/logo.png" alt="App Logo" />
-                                    <AvatarFallback>
-                                        <LogoComponent className="h-10 w-10" />
-                                    </AvatarFallback>
-                                </Avatar>
-                                <Button asChild variant="outline">
-                                    <label htmlFor="logo-upload" className="cursor-pointer">
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        {t.uploadLogo}
-                                    </label>
-                                </Button>
-                                <input id="logo-upload" type="file" className="hidden" />
-                            </div>
-
                             <RadioGroup 
                                 value={logo} 
                                 onValueChange={(value) => setLogo(value as any)}
-                                className="grid grid-cols-2 md:grid-cols-5 gap-4"
+                                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
                             >
                                 {logoOptions.map(({ name, icon: Icon }) => (
                                      <div key={name}>
                                         <RadioGroupItem value={name} id={name.toLowerCase()} className="peer sr-only" />
-                                        <Label htmlFor={name.toLowerCase()} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                        <Label htmlFor={name.toLowerCase()} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary aspect-square">
                                             <Icon className="h-8 w-8 mb-2" />
                                             {name}
                                         </Label>

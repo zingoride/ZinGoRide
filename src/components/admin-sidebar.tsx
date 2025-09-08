@@ -65,7 +65,7 @@ export function AdminSidebar() {
     <div className="flex h-full max-h-screen flex-col gap-2 bg-sidebar text-sidebar-foreground">
       <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
-          <LogoComponent className="h-6 w-6" />
+          <LogoComponent className="h-6 w-6 text-primary" />
           <span className="">ZinGo Admin</span>
         </Link>
       </div>

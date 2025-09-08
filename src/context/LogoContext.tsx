@@ -36,8 +36,10 @@ const LogoContext = createContext<LogoContextType | undefined>(undefined);
 export function LogoProvider({ children }: { children: ReactNode }) {
   const [logo, setLogo] = useState<LogoType>('Bike');
   const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Bike);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const storedLogo = localStorage.getItem('appLogo') as LogoType;
     if (storedLogo && logoMap[storedLogo]) {
       setLogo(storedLogo);
@@ -49,11 +51,16 @@ export function LogoProvider({ children }: { children: ReactNode }) {
         setLogoComponent(() => logoMap[logo]);
     }
   }, [logo]);
+  
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('appLogo', logo);
+    }
+  }, [logo, isMounted]);
 
   const handleSetLogo = (newLogo: LogoType) => {
     if (logoMap[newLogo]) {
         setLogo(newLogo);
-        localStorage.setItem('appLogo', newLogo);
     }
   };
 
