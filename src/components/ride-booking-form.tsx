@@ -45,15 +45,17 @@ interface RideBookingFormProps {
     initialPickup: string;
     initialPickupCoords: { lat: number; lng: number } | null;
     isLocationLoading: boolean;
+    onSetLocation: (location: { coords: { lat: number, lng: number }, name: string }) => void;
 }
 
-export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords, isLocationLoading }: RideBookingFormProps) {
+export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords, isLocationLoading, onSetLocation }: RideBookingFormProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
+  const [manualLocationLoading, setManualLocationLoading] = useState(false);
   
   const t = translations[language];
 
@@ -62,6 +64,32 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
       setPickup(initialPickup);
     }
   }, [initialPickup]);
+
+  const handleUseMyLocation = () => {
+    setManualLocationLoading(true);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                onSetLocation({
+                    coords: {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    },
+                    name: t.myLocation
+                });
+                toast({ title: t.locationSuccess });
+                setManualLocationLoading(false);
+            },
+            () => {
+                toast({ variant: 'destructive', title: t.locationError });
+                setManualLocationLoading(false);
+            }
+        );
+    } else {
+        toast({ variant: 'destructive', title: "Geolocation is not supported by your browser." });
+        setManualLocationLoading(false);
+    }
+  }
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,7 +128,6 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
             ...rideDetails, 
             id: docRef.id, 
             createdAt: new Date(),
-            pickupCoords: pickupGeoPoint,
         });
 
     } catch (error) {
@@ -117,15 +144,26 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
   return (
     <form onSubmit={handleSubmit} className="grid gap-3">
         <div className="relative">
-            <Circle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Circle className="absolute left-3 top-[1.1rem] -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+             <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={handleUseMyLocation}
+                disabled={manualLocationLoading || isLocationLoading}
+                aria-label={t.useMyLocation}
+            >
+                {manualLocationLoading || isLocationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+            </Button>
             <Input
                 id="pickup"
                 placeholder={isLocationLoading ? t.gettingLocation : t.pickupPlaceholder}
-                className="pl-10 h-12 text-base"
+                className="pl-10 h-12 text-base pr-10"
                 value={pickup}
                 onChange={(e) => setPickup(e.target.value)}
                 required
-                disabled={isLocationLoading}
+                disabled={isLocationLoading || manualLocationLoading}
             />
         </div>
         

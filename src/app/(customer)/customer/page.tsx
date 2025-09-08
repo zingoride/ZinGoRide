@@ -47,7 +47,7 @@ const CustomerPage = () => {
                     setIsGettingLocation(false);
                 },
                 () => {
-                    toast({ variant: 'destructive', title: "Could not get your location." });
+                    toast({ variant: 'destructive', title: "Could not get your location.", description: "Please enter your pickup location manually or use the location button." });
                     setIsGettingLocation(false);
                 }
             );
@@ -101,6 +101,11 @@ const CustomerPage = () => {
         setCurrentRide(null);
         setRideId(null);
     };
+    
+    const handleSetLocation = (location: { coords: { lat: number; lng: number; }; name: string; }) => {
+        setPickupCoords(location.coords);
+        setPickup(location.name);
+    }
 
     const renderContent = () => {
         if (!currentRide) {
@@ -111,6 +116,7 @@ const CustomerPage = () => {
                         initialPickup={pickup}
                         initialPickupCoords={pickupCoords}
                         isLocationLoading={isGettingLocation}
+                        onSetLocation={handleSetLocation}
                     />
                     <AdBanner targetAudience="Customer" />
                 </div>
