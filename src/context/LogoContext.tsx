@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, ComponentType } from 'react';
@@ -44,6 +43,19 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     if (storedLogo && logoMap[storedLogo]) {
       setLogo(storedLogo);
     }
+    
+    // Listen for changes in localStorage from other tabs/windows
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'appLogo' && event.newValue && logoMap[event.newValue as LogoType]) {
+            setLogo(event.newValue as LogoType);
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    }
+
   }, []);
 
   useEffect(() => {
@@ -52,15 +64,11 @@ export function LogoProvider({ children }: { children: ReactNode }) {
     }
   }, [logo]);
   
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('appLogo', logo);
-    }
-  }, [logo, isMounted]);
-
   const handleSetLogo = (newLogo: LogoType) => {
     if (logoMap[newLogo]) {
         setLogo(newLogo);
+        // Set item in localStorage to trigger change in other tabs
+        localStorage.setItem('appLogo', newLogo);
     }
   };
 

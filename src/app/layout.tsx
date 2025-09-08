@@ -46,12 +46,12 @@ export default function RootLayout({
               <AuthProvider>
                 <RiderStatusProvider>
                   <WalletProvider>
+                    <LogoProvider>
                       <RideProvider>
                         <FcmTokenManager />
-                        <LogoProvider>
-                          {children}
-                        </LogoProvider>
+                        {children}
                       </RideProvider>
+                    </LogoProvider>
                   </WalletProvider>
                 </RiderStatusProvider>
               </AuthProvider>

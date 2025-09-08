@@ -20,6 +20,18 @@ export function ThemeColorProvider({ children }: { children: ReactNode }) {
     if (storedTheme) {
       setThemeColor(storedTheme);
     }
+    
+    // Listen for changes in localStorage from other tabs/windows
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'themeColor' && event.newValue) {
+            setThemeColor(event.newValue as ThemeColor);
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    }
   }, []);
 
   useEffect(() => {
@@ -31,6 +43,7 @@ export function ThemeColorProvider({ children }: { children: ReactNode }) {
 
   const handleSetThemeColor = (theme: ThemeColor) => {
     setThemeColor(theme);
+    // Set item in localStorage to trigger change in other tabs
     localStorage.setItem('themeColor', theme);
   };
 
