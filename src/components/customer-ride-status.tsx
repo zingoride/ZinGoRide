@@ -11,7 +11,7 @@ import { Progress } from './ui/progress';
 import { ChatDialog } from './chat-dialog';
 import { useLanguage } from '@/context/LanguageContext';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, GeoPoint } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, GeoPoint, getDoc } from 'firebase/firestore';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { Separator } from './ui/separator';
@@ -42,6 +42,15 @@ const defaultPositions = {
     driver: [24.88, 67.05] as [number, number],
     customer: [24.8607, 67.0011] as [number, number]
 };
+
+interface DriverDetails {
+    rating: number;
+    vehicle?: {
+        make: string;
+        model: string;
+        licensePlate: string;
+    };
+}
 
 const translations = {
     ur: {
@@ -98,6 +107,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const prevStatusRef = useRef<RideRequest['status']>();
     const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
     const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(null);
+    const [driverDetails, setDriverDetails] = useState<DriverDetails | null>(null);
 
 
     useEffect(() => {
@@ -123,6 +133,10 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                 if (data.location instanceof GeoPoint) {
                     setDriverPosition([data.location.latitude, data.location.longitude]);
                 }
+                setDriverDetails({
+                    rating: data.rating || 5.0, // Default rating
+                    vehicle: data.vehicle || { make: 'Toyota', model: 'Corolla', licensePlate: 'ABC-123' }
+                });
             }
         });
 
@@ -255,7 +269,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                         <p className="text-xl font-bold">{currentDriverName}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span>4.9</span>
+                            <span>{driverDetails?.rating?.toFixed(1) || 'N/A'}</span>
                         </div>
                     </div>
                      <div className="flex items-center gap-1">
@@ -275,14 +289,17 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
                 <Separator className="my-4" />
                 
+                {driverDetails?.vehicle && (
                 <Card className='w-full bg-muted/50 border-dashed mb-4'>
                     <CardContent className='p-3'>
                         <div className="flex items-center justify-center gap-2">
                             <Car className='h-6 w-6' />
-                            <p className="text-md font-semibold">Toyota Corolla - ABC-123</p>
+                            <p className="text-md font-semibold">{driverDetails.vehicle.make} {driverDetails.vehicle.model} - {driverDetails.vehicle.licensePlate}</p>
                         </div>
                     </CardContent>
                 </Card>
+                )}
+
 
                  <Button variant="destructive" className="w-full" onClick={handleCancelRide} disabled={loading}>
                     {loading ? (

@@ -25,7 +25,7 @@ import { Loader2 } from 'lucide-react';
 import type { RideRequest } from '@/lib/types';
 import L from 'leaflet';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, getDoc, GeoPoint } from 'firebase/firestore';
 
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { 
     ssr: false,
@@ -49,6 +49,10 @@ export const customerIcon = new L.Icon({
   iconAnchor: [15, 30],
   popupAnchor: [0, -30],
 });
+
+interface CustomerDetails {
+  rating: number;
+}
 
 const translations = {
     ur: {
@@ -89,20 +93,12 @@ const translations = {
     }
 }
 
-interface Vehicle {
-  make: string;
-  model: string;
-  licensePlate: string;
-  type: string;
-}
-
-
 export function InProgressRide() {
   const { activeRide, completeRide: completeRideInContext, cancelRide: cancelRideInContext } = useRide();
   const [rideStage, setRideStage] = useState<'pickup' | 'dropoff'>('pickup');
   const [customerPosition, setCustomerPosition] = useState<[number, number] | null>(null);
   const [driverPosition, setDriverPosition] = useState<[number, number] | null>(null);
-  const [customerVehicle, setCustomerVehicle] = useState<Vehicle | null>(null);
+  const [customerDetails, setCustomerDetails] = useState<CustomerDetails | null>(null);
 
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -115,18 +111,16 @@ export function InProgressRide() {
         setRideStage('pickup');
     }
     
-    // Listen to customer location and vehicle info
     if (activeRide?.customerId) {
         const unsubCustomer = onSnapshot(doc(db, "users", activeRide.customerId), (doc) => {
              if (doc.exists()) {
                  const data = doc.data();
-                if (data.location) {
-                    const { latitude, longitude } = data.location;
-                    setCustomerPosition([latitude, longitude]);
+                if (data.location instanceof GeoPoint) {
+                    setCustomerPosition([data.location.latitude, data.location.longitude]);
                 }
-                if (data.vehicle) {
-                    setCustomerVehicle(data.vehicle);
-                }
+                setCustomerDetails({
+                    rating: data.rating || 5.0, // Default rating
+                });
             }
         });
         return () => unsubCustomer();
@@ -149,15 +143,13 @@ export function InProgressRide() {
     return null;
   }
   
-  const { id, pickup, dropoff, customerId, customerName } = activeRide;
+  const { id, pickup, dropoff, customerId, customerName, customerAvatar } = activeRide;
   
   const handleCall = () => {
-    // In a real app, you would fetch the customer's real number
     window.location.href = `tel:+923001234567`;
   };
   
   const handleNavigate = () => {
-    // In a real app, you would open Google Maps or another navigation app.
     const destination = rideStage === 'pickup' ? pickup : dropoff;
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
   };
@@ -203,7 +195,7 @@ export function InProgressRide() {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
-                        <AvatarImage src={activeRide?.customerAvatar} data-ai-hint="portrait woman" />
+                        <AvatarImage src={customerAvatar} data-ai-hint="portrait woman" />
                         <AvatarFallback>
                         {(customerName || 'C')
                             .split(' ')
@@ -215,7 +207,7 @@ export function InProgressRide() {
                         <p className="text-xl font-bold">{customerName}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.9</span>
+                        <span>{customerDetails?.rating.toFixed(1) || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
@@ -230,19 +222,6 @@ export function InProgressRide() {
                     />
                 </div>
             </div>
-            {customerVehicle && (
-                <>
-                <Separator className="my-4" />
-                <Card className='w-full bg-muted/50 border-dashed'>
-                    <CardContent className='p-3'>
-                        <div className="flex items-center justify-center gap-2">
-                            <Car className='h-6 w-6' />
-                            <p className="text-lg font-semibold">{customerVehicle.make} {customerVehicle.model} - {customerVehicle.licensePlate}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-                </>
-            )}
           </CardContent>
         </Card>
 
