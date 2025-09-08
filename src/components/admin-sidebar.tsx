@@ -13,10 +13,12 @@ import {
   Map,
   Bell,
   Megaphone,
+  UserPlus,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 import { useLogo } from "@/context/LogoContext";
+import { Button } from "./ui/button";
 
 const translations = {
   ur: {
@@ -29,6 +31,7 @@ const translations = {
     liveMap: "Live Map",
     notifications: "Notifications",
     advertisements: "Ishtiharat",
+    registerUser: "Naya User Register Karein"
   },
   en: {
     dashboard: "Dashboard",
@@ -40,6 +43,7 @@ const translations = {
     liveMap: "Live Map",
     notifications: "Notifications",
     advertisements: "Advertisements",
+    registerUser: "Register New User"
   },
 };
 
@@ -53,7 +57,7 @@ export function AdminSidebar() {
     { href: "/admin/dashboard", label: t.dashboard, icon: LayoutDashboard },
     { href: "/admin/live-map", label: t.liveMap, icon: Map },
     { href: "/admin/rides", label: t.rides, icon: Car },
-    { href: "/admin/users", label: t.users, icon: Users },
+    { href: "/admin/users", label: t.users, icon: Users, subAction: { href: "/admin/users/register", label: t.registerUser, icon: UserPlus } },
     { href: "/admin/notifications", label: t.notifications, icon: Bell },
     { href: "/admin/advertisements", label: t.advertisements, icon: Megaphone },
     { href: "/admin/wallet-requests", label: t.walletRequests, icon: CreditCard },
@@ -71,18 +75,32 @@ export function AdminSidebar() {
       </div>
       <div className="flex-1 overflow-auto">
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-          {menuItems.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                pathname.startsWith(href) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Link>
+          {menuItems.map(({ href, label, icon: Icon, subAction }) => (
+            <div key={href}>
+              <div className="flex items-center">
+                 <Link
+                  href={href}
+                  className={cn(
+                    "flex flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    pathname.startsWith(href) && !subAction ? "bg-sidebar-accent text-sidebar-accent-foreground" : "",
+                     (pathname.startsWith(href) && subAction && !pathname.includes(subAction.href)) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+                {subAction && (
+                   <Link href={subAction.href} title={subAction.label}>
+                    <Button variant="ghost" size="icon" className={cn(
+                        "h-8 w-8 shrink-0",
+                        pathname === subAction.href ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                    )}>
+                      <subAction.icon className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
           ))}
         </nav>
       </div>

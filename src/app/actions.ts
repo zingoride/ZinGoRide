@@ -9,6 +9,7 @@ import {
 import { v2 as cloudinary } from 'cloudinary';
 import { getFirebaseAdmin } from "@/lib/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { UserRecord } from "firebase-admin/auth";
 
 // Configure Cloudinary
 cloudinary.config({ 
@@ -214,5 +215,49 @@ export async function manualTopUp(formData: FormData): Promise<{ success: boolea
     } catch (error: any) {
         console.error("Error in manual top-up: ", error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function registerNewUser(formData: FormData): Promise<{ success: boolean; error?: string; userId?: string }> {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const fullName = formData.get('fullName') as string;
+    const userType = formData.get('userType') as 'Customer' | 'Driver';
+
+    if (!email || !password || !fullName || !userType) {
+        return { success: false, error: "All fields are required." };
+    }
+
+    const { auth, db } = getFirebaseAdmin();
+
+    try {
+        // 1. Create user in Firebase Authentication
+        const userRecord: UserRecord = await auth.createUser({
+            email: email,
+            password: password,
+            displayName: fullName,
+        });
+
+        // 2. Create user document in Firestore
+        const userDocRef = db.collection('users').doc(userRecord.uid);
+        await userDocRef.set({
+            name: fullName,
+            email: email,
+            type: userType,
+            status: 'Active',
+            approvalStatus: userType === 'Driver' ? 'Pending' : 'Approved',
+            createdAt: FieldValue.serverTimestamp(),
+            walletBalance: 0,
+        });
+
+        return { success: true, userId: userRecord.uid };
+
+    } catch (error: any) {
+        console.error("Error registering new user:", error);
+        // Provide a more user-friendly error message
+        if (error.code === 'auth/email-already-exists') {
+            return { success: false, error: 'The email address is already in use by another account.' };
+        }
+        return { success: false, error: error.message || 'An unknown error occurred.' };
     }
 }
