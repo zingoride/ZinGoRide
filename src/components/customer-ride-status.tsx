@@ -314,21 +314,19 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     }
 
     return (
-       <div className="relative h-full w-full">
-            <div className="absolute inset-0 z-0">
+       <div className="flex flex-col h-full w-full gap-4">
+            <div className="h-96 w-full rounded-lg overflow-hidden border">
                  <DynamicMap markers={mapMarkers} />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 md:relative md:max-w-md md:mx-auto">
-                 <Card className="shadow-lg rounded-2xl md:rounded-lg border-t-4 border-primary w-full">
-                    <CardHeader>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                       {renderCardContent()}
-                    </CardContent>
-                </Card>
-            </div>
+            <Card className="shadow-lg rounded-2xl w-full">
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {renderCardContent()}
+                </CardContent>
+            </Card>
        </div>
     );
 }
