@@ -18,7 +18,7 @@ const LocationPermissionContext = createContext<LocationPermissionContextType | 
 
 export function LocationPermissionProvider({ children }: { children: ReactNode }) {
   const [hasPermission, setHasPermission] = useState(false);
-  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(false);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
   const { user } = useAuth();
   const { isOnline } = useRiderStatus();
@@ -36,24 +36,51 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
     }
   }, [user]);
 
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    setIsCheckingPermission(true);
+    return new Promise((resolve) => {
+      if (!('geolocation' in navigator)) {
+        setError({
+            code: 0,
+            message: "Geolocation is not supported by your browser.",
+            PERMISSION_DENIED: 1,
+            POSITION_UNAVAILABLE: 2,
+            TIMEOUT: 3,
+        } as GeolocationPositionError);
+        setIsCheckingPermission(false);
+        resolve(false);
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setHasPermission(true);
+          setError(null);
+          updateLocationInFirestore(position);
+          setIsCheckingPermission(false);
+          resolve(true);
+        },
+        (err) => {
+          setError(err);
+          setHasPermission(false);
+          setIsCheckingPermission(false);
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  }, [updateLocationInFirestore]);
+
   const startWatching = useCallback(() => {
-    if ('geolocation' in navigator && locationWatchId.current === null) {
+    if ('geolocation' in navigator && hasPermission && locationWatchId.current === null) {
         locationWatchId.current = navigator.geolocation.watchPosition(
             (position) => {
-                if (!hasPermission) setHasPermission(true);
                 setError(null);
                 updateLocationInFirestore(position);
             },
             (err) => {
-                console.error("Geolocation error:", err);
-                if (hasPermission) setHasPermission(false);
+                console.error("Geolocation watch error:", err);
                 setError(err);
-                if (err.code === err.PERMISSION_DENIED) {
-                    if (locationWatchId.current !== null) {
-                        navigator.geolocation.clearWatch(locationWatchId.current);
-                        locationWatchId.current = null;
-                    }
-                }
             },
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
@@ -66,51 +93,6 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
       locationWatchId.current = null;
     }
   };
-
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (!('geolocation' in navigator)) {
-        // setError should be handled appropriately if needed
-        resolve(false);
-        return;
-      }
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setHasPermission(true);
-          setError(null);
-          updateLocationInFirestore(position);
-          resolve(true);
-        },
-        (err) => {
-          setError(err);
-          setHasPermission(false);
-          resolve(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    });
-  }, [updateLocationInFirestore]);
-  
-  useEffect(() => {
-    setIsCheckingPermission(true);
-    if (typeof window !== 'undefined' && 'permissions' in navigator) {
-        navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-            setHasPermission(permissionStatus.state === 'granted');
-            setIsCheckingPermission(false);
-            permissionStatus.onchange = () => {
-                const isGranted = permissionStatus.state === 'granted';
-                setHasPermission(isGranted);
-                 if(!isGranted) {
-                    stopWatching();
-                }
-            };
-        });
-    } else {
-        setIsCheckingPermission(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (isOnline && hasPermission) {
