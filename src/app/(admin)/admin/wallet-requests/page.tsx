@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -209,6 +210,7 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const requestsCollection = collection(db, "walletRequests");
+            // Removed the orderBy clause to prevent index errors
             const q = query(requestsCollection);
             const requestSnapshot = await getDocs(q);
             const requestList = requestSnapshot.docs.map(doc => {
@@ -217,16 +219,17 @@ export default function WalletRequestsPage() {
                 return {
                     id: doc.id,
                     ...data,
+                    // Handle cases where createdAt might be null temporarily
                     date: timestamp ? timestamp.toDate() : new Date(),
                 } as TopUpRequest;
             }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort manually after fetching
             setRequests(requestList);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching wallet requests: ", error);
             toast({
                 variant: "destructive",
                 title: "Error fetching requests",
-                description: "Could not retrieve wallet requests. Please ensure you have created the necessary indexes in Firestore.",
+                description: error.message || "Could not retrieve wallet requests.",
             });
         }
         setLoading(false);
