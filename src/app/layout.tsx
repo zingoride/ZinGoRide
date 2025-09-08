@@ -49,10 +49,8 @@ export default function RootLayout({
                   <WalletProvider>
                     <LogoProvider>
                       <RideProvider>
-                        <LocationPermissionProvider>
                           <FcmTokenManager />
                           {children}
-                        </LocationPermissionProvider>
                       </RideProvider>
                     </LogoProvider>
                   </WalletProvider>
