@@ -14,14 +14,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Bike, Car, Loader2 } from "lucide-react"
+import { Bike, Car, Loader2, Upload } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { useAuth } from "@/context/AuthContext"
 import { db } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "./ui/skeleton"
+import { uploadToCloudinary } from "@/app/actions"
 
 const translations = {
     ur: {
@@ -35,7 +36,9 @@ const translations = {
         saving: "Saving...",
         vehicleUpdated: "Gaari ki maloomat update ho gayi.",
         updateError: "Update karne mein masla hua.",
-        loadingError: "Gaari ki maloomat load karne mein masla hua."
+        loadingError: "Gaari ki maloomat load karne mein masla hua.",
+        changeImage: "Tasveer Tabdeel Karein",
+        uploading: "Uploading...",
     },
     en: {
         title: "My Vehicle",
@@ -48,7 +51,9 @@ const translations = {
         saving: "Saving...",
         vehicleUpdated: "Vehicle information updated.",
         updateError: "Failed to update information.",
-        loadingError: "Failed to load vehicle information."
+        loadingError: "Failed to load vehicle information.",
+        changeImage: "Change Image",
+        uploading: "Uploading...",
     }
 }
 
@@ -62,8 +67,12 @@ export function VehicleDetails() {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [licensePlate, setLicensePlate] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [formLoading, setFormLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchVehicleData = async () => {
@@ -77,6 +86,8 @@ export function VehicleDetails() {
                     setMake(vehicle.make || '');
                     setModel(vehicle.model || '');
                     setLicensePlate(vehicle.licensePlate || '');
+                    setImageUrl(vehicle.imageUrl || '');
+                    setImagePreview(vehicle.imageUrl || null);
                 }
             } catch (error) {
                 console.error("Error fetching vehicle data: ", error);
@@ -90,23 +101,63 @@ export function VehicleDetails() {
     };
     fetchVehicleData();
   }, [user, toast, t.loadingError]);
+  
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   const handleSaveVehicleInfo = async () => {
       if (!user) return;
       setLoading(true);
       
+      let finalImageUrl = imageUrl;
+
+      if (imageFile) {
+        try {
+          const formData = new FormData();
+          formData.append('file', imageFile);
+          formData.append('folder', `vehicles/${user.uid}`);
+          
+          const result = await uploadToCloudinary(formData);
+
+          if (!result.success || !result.url) {
+            throw new Error(result.error || 'Upload failed');
+          }
+          finalImageUrl = result.url;
+        } catch (error) {
+            console.error("Error updating vehicle image:", error);
+            toast({ variant: "destructive", title: t.updateError });
+            setLoading(false);
+            return;
+        }
+      }
+
       const vehicleData = {
           type: vehicleType,
           make,
           model,
           licensePlate,
+          imageUrl: finalImageUrl,
       };
 
       try {
         const userDocRef = doc(db, "users", user.uid);
         await updateDoc(userDocRef, { vehicle: vehicleData });
         toast({ title: t.vehicleUpdated });
+        setImageFile(null); // Reset file input after successful save
       } catch (error) {
         console.error("Error updating vehicle info: ", error);
         toast({ variant: "destructive", title: t.updateError });
@@ -147,8 +198,20 @@ export function VehicleDetails() {
         <CardDescription>{t.description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
-        <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
-            <Image src={`https://placehold.co/300x200/E2E8F0/E2E8F0`} width={300} height={200} alt="Vehicle Image" className="rounded-md" data-ai-hint="white car" />
+        <div className="relative flex justify-center items-center bg-muted/50 rounded-lg p-4 h-48 cursor-pointer" onClick={handleImageClick}>
+            {imagePreview ? (
+              <Image src={imagePreview} alt="Vehicle Image" layout="fill" className="rounded-md object-contain" />
+            ) : (
+              <div className="text-center text-muted-foreground">
+                  <Car className="h-16 w-16 mx-auto" />
+                  <p>Click to upload vehicle image</p>
+              </div>
+            )}
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+             <Button variant="secondary" size="sm" className="absolute bottom-4" onClick={(e) => { e.stopPropagation(); handleImageClick(); }}>
+                <Upload className="mr-2 h-4 w-4" />
+                {t.changeImage}
+            </Button>
         </div>
         <div className="grid gap-4">
             <div className="grid gap-2">
