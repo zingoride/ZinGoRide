@@ -290,7 +290,7 @@ export function InProgressRide() {
             </Button>
         </div>
       </div>
-       <div className="relative md:col-span-1 h-64 md:h-[calc(100vh-8rem)] rounded-lg overflow-hidden border">
+       <div className="relative md:col-span-1 h-96 md:h-[500px] rounded-lg overflow-hidden border">
          <DynamicMap markers={mapMarkers} />
       </div>
     </div>

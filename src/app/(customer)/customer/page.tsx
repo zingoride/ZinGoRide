@@ -108,7 +108,7 @@ const CustomerPage = () => {
      }
 
     return (
-       <div className="h-full w-full grid md:grid-cols-2 gap-4 items-start">
+       <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             <div className="md:col-span-1">
                  <Card className="shadow-lg w-full">
                     <CardContent className="p-4">
@@ -116,7 +116,7 @@ const CustomerPage = () => {
                     </CardContent>
                 </Card>
             </div>
-            <div className="relative md:col-span-1 h-64 md:h-[calc(100vh-8rem)] rounded-lg overflow-hidden border">
+            <div className="relative md:col-span-1 h-96 md:h-[500px] rounded-lg overflow-hidden border">
                 <DynamicMap />
             </div>
        </div>

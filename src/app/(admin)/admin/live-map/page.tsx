@@ -141,7 +141,7 @@ export default function LiveMapPage() {
           </div>
         </CardHeader>
       </Card>
-      <Card className="flex-1">
+      <Card className="flex-1 h-[calc(100vh-20rem)]">
         <CardContent className="h-full p-0">
           {loading ? (
             <div className="h-full w-full bg-muted flex items-center justify-center">
