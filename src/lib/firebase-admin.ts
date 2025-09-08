@@ -1,7 +1,6 @@
 
 // This file should only be imported on the server-side
 import admin from 'firebase-admin';
-import serviceAccount from '../../serviceAccountKey.json';
 
 let app: admin.app.App | null = null;
 
@@ -13,18 +12,24 @@ function initializeAdminApp() {
     }
   }
 
-  const { project_id, private_key, client_email } = serviceAccount as any;
-  if (!project_id || !private_key || !client_email) {
-    console.error('Firebase Admin SDK service account key is missing or invalid.');
+  // Directly use environment variables
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+  if (!process.env.FIREBASE_PROJECT_ID || !privateKey || !process.env.FIREBASE_CLIENT_EMAIL) {
+    console.error('Firebase Admin SDK environment variables are missing or invalid.');
     return null;
   }
   
   try {
     return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        privateKey: privateKey,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      }),
     });
   } catch (error: any) {
-    console.error("Fatal: Error initializing Firebase Admin SDK:", error.message);
+    console.error("Fatal: Error initializing Firebase Admin SDK from environment variables:", error.message);
     return null;
   }
 }
@@ -35,7 +40,7 @@ export function getFirebaseAdmin() {
   }
 
   if (!app) {
-    const errorMsg = "Firebase Admin SDK is not initialized. This is a critical server error. Check server logs for details, likely due to an invalid or revoked service account key.";
+    const errorMsg = "Firebase Admin SDK is not initialized. This is a critical server error. Check server logs for details, likely due to an invalid or revoked service account key or missing environment variables.";
     // Throw an error to make it clear that the services are not available.
     // This prevents the application from continuing in a broken state.
     throw new Error(errorMsg);
