@@ -21,6 +21,7 @@ import { db } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { Skeleton } from "./ui/skeleton"
 
 const translations = {
     ur: {
@@ -62,6 +63,7 @@ export function VehicleDetails() {
   const [model, setModel] = useState("");
   const [licensePlate, setLicensePlate] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(true);
 
   useEffect(() => {
     const fetchVehicleData = async () => {
@@ -79,7 +81,11 @@ export function VehicleDetails() {
             } catch (error) {
                 console.error("Error fetching vehicle data: ", error);
                 toast({ variant: "destructive", title: t.loadingError });
+            } finally {
+                setFormLoading(false);
             }
+        } else {
+            setFormLoading(false);
         }
     };
     fetchVehicleData();
@@ -107,6 +113,31 @@ export function VehicleDetails() {
       } finally {
         setLoading(false);
       }
+  }
+
+  if (formLoading) {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="grid gap-6">
+                <Skeleton className="h-48 w-full" />
+                <div className="space-y-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="space-y-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Skeleton className="h-10 w-36" />
+            </CardFooter>
+        </Card>
+    );
   }
 
   return (

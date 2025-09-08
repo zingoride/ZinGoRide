@@ -75,12 +75,19 @@ export function ProfileForm() {
         if (user) {
             setFullName(user.displayName || '');
             const userDocRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists()) {
-                setPhone(docSnap.data().phone || '');
+            try {
+              const docSnap = await getDoc(userDocRef);
+              if (docSnap.exists()) {
+                  setPhone(docSnap.data().phone || '');
+              }
+            } catch (e) {
+                console.error("Error loading user data", e);
+            } finally {
+                setFormLoading(false);
             }
+        } else {
+             setFormLoading(false);
         }
-        setFormLoading(false);
       }
       loadUserData();
   }, [user]);
@@ -164,28 +171,35 @@ export function ProfileForm() {
 
   if (formLoading) {
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-24 w-24 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-9 w-36" />
+        <Card>
+            <CardHeader>
+                 <Skeleton className="h-6 w-32" />
+                 <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-24 w-24 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-9 w-36" />
+                    </div>
                 </div>
-            </div>
-            <div className="space-y-4">
-                 <Skeleton className="h-4 w-24" />
-                 <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-4">
-                 <Skeleton className="h-4 w-24" />
-                 <Skeleton className="h-10 w-full" />
-            </div>
-             <div className="space-y-4">
-                 <Skeleton className="h-4 w-24" />
-                 <Skeleton className="h-10 w-full" />
-            </div>
-        </div>
+                <div className="space-y-4">
+                     <Skeleton className="h-4 w-24" />
+                     <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-4">
+                     <Skeleton className="h-4 w-24" />
+                     <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="space-y-4">
+                     <Skeleton className="h-4 w-24" />
+                     <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Skeleton className="h-10 w-28" />
+            </CardFooter>
+        </Card>
     )
   }
 
@@ -194,56 +208,62 @@ export function ProfileForm() {
   }
 
   return (
-    <div className="space-y-6">
-        <div className="flex items-center gap-4">
-            <div className="relative">
-                <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
-                    <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} data-ai-hint="portrait man" />
-                    <AvatarFallback>{(user.displayName || 'U').charAt(0)}</AvatarFallback>
-                </Avatar>
-                {uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                        <Loader2 className="h-8 w-8 text-white animate-spin" />
-                    </div>
-                )}
+    <Card>
+        <CardHeader>
+            <CardTitle>{t.myProfile}</CardTitle>
+            <CardDescription>{t.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+            <div className="flex items-center gap-4">
+                <div className="relative">
+                    <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
+                        <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} data-ai-hint="portrait man" />
+                        <AvatarFallback>{(user.displayName || 'U').charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                            <Loader2 className="h-8 w-8 text-white animate-spin" />
+                        </div>
+                    )}
+                </div>
+                
+                <div className="grid gap-2">
+                    <p className="text-xl font-semibold">{user.displayName}</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <Button variant="outline" size="sm" onClick={handleAvatarClick} disabled={uploading}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploading ? t.uploading : t.changePicture}
+                    </Button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                    />
+                </div>
             </div>
-            
-            <div className="grid gap-2">
-                <p className="text-xl font-semibold">{user.displayName}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-                 <Button variant="outline" size="sm" onClick={handleAvatarClick} disabled={uploading}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {uploading ? t.uploading : t.changePicture}
-                </Button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/png, image/jpeg"
-                />
+            <div className="grid gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="name">{t.fullName}</Label>
+                    <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="phone">{t.phoneNumber}</Label>
+                    <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 1234567" />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="email">{t.email}</Label>
+                    <Input id="email" type="email" value={user.email || ''} disabled />
+                </div>
             </div>
-        </div>
-        <div className="grid gap-4">
-            <div className="grid gap-2">
-                <Label htmlFor="name">{t.fullName}</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor="phone">{t.phoneNumber}</Label>
-                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 1234567" />
-            </div>
-             <div className="grid gap-2">
-                <Label htmlFor="email">{t.email}</Label>
-                <Input id="email" type="email" value={user.email || ''} disabled />
-            </div>
-        </div>
-        <div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
             <Button onClick={handleSaveChanges} disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {loading ? t.saving : t.saveChanges}
             </Button>
-        </div>
-    </div>
+        </CardFooter>
+    </Card>
   )
 }
