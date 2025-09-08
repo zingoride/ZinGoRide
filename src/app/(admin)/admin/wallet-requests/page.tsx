@@ -30,11 +30,10 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc, runTransaction, where, serverTimestamp } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
-import { manualTopUp } from "@/app/actions";
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -91,6 +90,7 @@ const translations = {
     topUpSuccess: "Raqam kamyabi se shamil kar di gayi!",
     topUpError: "Raqam shamil karne mein masla hua.",
     topUpLoading: "Shamil kiya ja raha hai...",
+    userNotFound: "Is ID ya email ke saath koi user nahi mila.",
   },
   en: {
     title: "Wallet Requests",
@@ -117,16 +117,44 @@ const translations = {
     cancel: "Cancel",
     manualTopUp: "Manual Wallet Top-Up",
     manualTopUpDesc: "Directly add funds to any user's wallet.",
-    userId: "User ID",
-    userIdPlaceholder: "Enter User ID",
+    userId: "User ID or Email",
+    userIdPlaceholder: "Enter User ID or Email",
     topUpAmount: "Top-Up Amount (PKR)",
     topUpAmountPlaceholder: "e.g., 500",
     topUpBtn: "Top-Up",
     topUpSuccess: "Funds added successfully!",
     topUpError: "Failed to add funds.",
     topUpLoading: "Topping up...",
+    userNotFound: "No user found with this ID or Email.",
   }
 };
+
+async function getUserByEmailOrId(identifier: string): Promise<{ uid: string; name: string } | null> {
+    try {
+        const usersRef = collection(db, 'users');
+        let userQuery;
+
+        if (identifier.includes('@')) {
+            userQuery = query(usersRef, where('email', '==', identifier));
+        } else {
+            const userDoc = await getDoc(doc(usersRef, identifier));
+            if (userDoc.exists()) {
+                 return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+            }
+            return null;
+        }
+        
+        const querySnapshot = await getDocs(userQuery);
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user by email/id: ", error);
+        return null;
+    }
+}
 
 function ManualTopUpCard() {
     const { user: adminUser } = useAuth();
@@ -142,22 +170,54 @@ function ManualTopUpCard() {
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
-        formData.append('adminId', adminUser.uid);
-        formData.append('adminName', adminUser.displayName || 'Admin');
-        
-        const result = await manualTopUp(formData);
+        const userIdentifier = formData.get('userId') as string;
+        const amount = Number(formData.get('amount'));
 
-        if (result.success) {
-            toast({ title: t.topUpSuccess });
-            formRef.current?.reset();
-        } else {
-            toast({
-                variant: 'destructive',
-                title: t.topUpError,
-                description: result.error,
-            });
+        if (!userIdentifier || !amount) {
+            toast({ variant: 'destructive', title: t.topUpError, description: 'All fields are required.' });
+            setLoading(false);
+            return;
         }
-        setLoading(false);
+
+        try {
+            const userToCredit = await getUserByEmailOrId(userIdentifier);
+            if (!userToCredit) {
+                toast({ variant: 'destructive', title: t.userNotFound });
+                setLoading(false);
+                return;
+            }
+
+            const userRef = doc(db, 'users', userToCredit.uid);
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User not found in transaction");
+                }
+                
+                const newBalance = (userDoc.data().walletBalance || 0) + amount;
+                transaction.update(userRef, { walletBalance: newBalance });
+                
+                const transactionRef = doc(collection(db, 'walletTransactions'));
+                transaction.set(transactionRef, {
+                    type: 'admin_topup',
+                    userId: userToCredit.uid,
+                    userName: userToCredit.name,
+                    amount: amount,
+                    status: 'Completed',
+                    adminId: adminUser.uid,
+                    adminName: adminUser.displayName || 'Admin',
+                    createdAt: serverTimestamp(),
+                });
+            });
+
+            toast({ title: t.topUpSuccess, description: `${t.fundsAdded(amount, userToCredit.name)}` });
+            formRef.current?.reset();
+        } catch (error: any) {
+            console.error("Error in manual top-up: ", error);
+            toast({ variant: 'destructive', title: t.topUpError, description: error.message });
+        } finally {
+            setLoading(false);
+        }
     }
     
     return (
@@ -210,8 +270,7 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const requestsCollection = collection(db, "walletRequests");
-            // Removed the orderBy clause to prevent index errors
-            const q = query(requestsCollection);
+            const q = query(requestsCollection, orderBy("createdAt", "desc"));
             const requestSnapshot = await getDocs(q);
             const requestList = requestSnapshot.docs.map(doc => {
                 const data = doc.data();
@@ -219,10 +278,9 @@ export default function WalletRequestsPage() {
                 return {
                     id: doc.id,
                     ...data,
-                    // Handle cases where createdAt might be null temporarily
                     date: timestamp ? timestamp.toDate() : new Date(),
                 } as TopUpRequest;
-            }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort manually after fetching
+            })
             setRequests(requestList);
         } catch (error: any) {
             console.error("Error fetching wallet requests: ", error);
@@ -407,3 +465,5 @@ export default function WalletRequestsPage() {
     </div>
   )
 }
+
+    
