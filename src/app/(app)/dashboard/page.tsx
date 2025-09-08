@@ -13,10 +13,12 @@ import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, doc, setDoc, GeoPoint } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { AdBanner } from '@/components/ad-banner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useLocationPermission } from '@/context/LocationPermissionContext';
 
 const translations = {
   ur: {
@@ -34,7 +36,7 @@ const translations = {
     searchingForRides: "Rides dhoondi ja rahi hain...",
     newRideRequestsWillAppear: "Aap online hain. Nayi ride requests yahan nazar aayengi.",
     locationPermissionError: "Location ki ijazat chahiye",
-    locationPermissionDesc: "Live location share karne ke liye, please browser mein location ki ijazat dein.",
+    locationPermissionDesc: "Live location share karne ke liye, please browser ki settings mein jaa kar is website ke liye location ki ijazat dein.",
     newRideRequestToast: "Nayi Ride Request!",
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `${pickup} se ${dropoff} tak.`,
     fetchError: "Error",
@@ -55,7 +57,7 @@ const translations = {
     searchingForRides: "Searching for rides...",
     newRideRequestsWillAppear: "You are online. New ride requests will appear here.",
     locationPermissionError: "Location Permission Required",
-    locationPermissionDesc: "To share your live location, please enable location permissions in your browser.",
+    locationPermissionDesc: "To share your live location, please enable location permissions in this site's browser settings.",
     newRideRequestToast: "New Ride Request!",
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `From ${pickup} to ${dropoff}.`,
     fetchError: "Error",
@@ -74,72 +76,21 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const t = translations[language];
-  const locationWatchId = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
+  const { hasPermission, error: locationError } = useLocationPermission();
 
-
-  const updateLocationInFirestore = async (position: GeolocationPosition) => {
-    if (!user) return;
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, {
-        location: new GeoPoint(position.coords.latitude, position.coords.longitude)
-      }, { merge: true });
-    } catch (error) {
-      console.error("Error updating location:", error);
-    }
-  };
-
-  const startWatchingLocation = () => {
-    if (navigator.geolocation) {
-      locationWatchId.current = navigator.geolocation.watchPosition(
-        updateLocationInFirestore,
-        (error) => {
-          console.error("Geolocation error:", error);
-          toast({
-            variant: "destructive",
-            title: t.locationPermissionError,
-            description: t.locationPermissionDesc,
-          });
-          if(isOnline) toggleStatus(); // Go back offline if permission is denied
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
+  const handleToggleOnline = () => {
+    if (!hasPermission) {
        toast({
           variant: "destructive",
           title: t.locationPermissionError,
-          description: "Geolocation is not supported by this browser.",
-       });
-       if(isOnline) toggleStatus();
+          description: t.locationPermissionDesc,
+        });
+        return;
     }
-  };
-
-  const stopWatchingLocation = () => {
-    if (locationWatchId.current !== null) {
-      navigator.geolocation.clearWatch(locationWatchId.current);
-      locationWatchId.current = null;
-    }
-  };
-  
-  useEffect(() => {
-    if (isOnline) {
-      startWatchingLocation();
-      knownRideIds.current.clear(); // Reset known rides when going online
-    } else {
-      stopWatchingLocation();
-    }
-
-    return () => {
-      stopWatchingLocation();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline]);
+    toggleStatus();
+  }
 
 
   useEffect(() => {
@@ -205,13 +156,21 @@ export default function Dashboard() {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center p-4">
         <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
+
+        {!hasPermission && (
+             <Alert variant="destructive" className="w-full max-w-md">
+                <AlertTitle>{t.locationPermissionError}</AlertTitle>
+                <AlertDescription>{t.locationPermissionDesc}</AlertDescription>
+            </Alert>
+        )}
+
         <div className="flex flex-col items-center gap-2">
             <WifiOff className="h-16 w-16 text-muted-foreground" />
             <div className="space-y-1">
                 <h1 className="text-2xl font-bold">{t.youAreOffline}</h1>
                 <p className="text-muted-foreground text-sm">{t.goOnlineToReceive}</p>
             </div>
-             <Button onClick={toggleStatus} size="lg" className="w-full max-w-sm mt-4">
+             <Button onClick={handleToggleOnline} size="lg" className="w-full max-w-sm mt-4">
                 {t.goOnline}
             </Button>
         </div>
