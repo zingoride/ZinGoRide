@@ -2,78 +2,14 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isAdmin() {
-      // Allow access for the admin user
-      return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    function isOwner(userId) {
-      // Allow access if the user is the owner of the document
-      return request.auth.uid == userId;
-    }
-    
-    function isUserInChat(chatId) {
-      // Allow access if the user's UID is part of the chatId
-      // This is a simplified way to check for participation in a 1-on-1 chat
-      return chatId.matches('.*' + request.auth.uid + '.*');
-    }
-
-    // Rules for the users collection
-    match /users/{userId} {
-      // Admin can do anything. Users can read/update their own profile.
-      allow get, update, delete: if isAdmin() || isOwner(userId);
-      // Anyone can create a user account (signup)
-      allow create: if request.auth.uid != null;
-      // Only admin can list all users
-      allow list: if isAdmin();
-    }
-
-    // Rules for the rides collection
-    match /rides/{rideId} {
-      // Admin can do anything.
-      allow read, write: if isAdmin();
-      
-      // Customer can create a ride for themselves.
-      // Customer or the assigned driver can get/update the ride details.
-      allow create: if isOwner(request.resource.data.customerId);
-      allow get, update: if isOwner(request.resource.data.customerId) || isOwner(request.resource.data.driverId);
-    }
-    
-    // Rules for wallet top-up requests
-    match /walletRequests/{requestId} {
-      // Admin can read/write all requests.
-      allow read, write: if isAdmin();
-      // Users can create their own requests.
-      allow create: if isOwner(request.resource.data.userId);
-    }
-
-    // Rules for commission payout requests
-    match /payoutRequests/{requestId} {
-      // Admin can read/write all requests.
-      allow read, write: if isAdmin();
-      // Admins (in this case, the one user) can create their own requests.
-      allow create: if isAdmin();
-    }
-
-    // Rules for broadcast notifications
-    match /notifications/{notificationId} {
-      // Only admin can manage notifications history.
-      allow read, write: if isAdmin();
-    }
-    
-    // Rules for chat messages
-    match /chats/{chatId} {
-       match /messages/{messageId} {
-         // Admin or a user participating in the chat can read/create messages.
-         allow read, create: if isAdmin() || isUserInChat(chatId);
-       }
-    }
-    
-    // Rules for wallet transactions (for manual top-ups)
-    match /walletTransactions/{transactionId} {
-        // Only admin can create or read transaction history.
-        allow read, write: if isAdmin();
+    // Allow read for everyone, but write only for authenticated users for advertisements
+    match /advertisements/{adId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
