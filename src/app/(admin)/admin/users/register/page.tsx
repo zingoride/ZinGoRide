@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, User, ShieldCheck } from 'lucide-react';
+import { Loader2, UserPlus, User, ShieldCheck, Shield } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -20,7 +20,7 @@ import { setDoc, doc } from 'firebase/firestore';
 const translations = {
   ur: {
     title: 'Naya User Register Karein',
-    description: 'Yahan se naye customer ya driver ka account banayein.',
+    description: 'Yahan se naye customer, driver, ya admin ka account banayein.',
     fullName: 'Poora Naam',
     fullNamePlaceholder: 'e.g., Junaid Khan',
     email: 'Email',
@@ -29,6 +29,7 @@ const translations = {
     userType: 'User Ki Qisam',
     customer: 'Customer',
     rider: 'Driver',
+    admin: 'Admin',
     registerButton: 'User Register Karein',
     registeringButton: 'Register kiya ja raha hai...',
     successTitle: 'Kamyabi!',
@@ -39,7 +40,7 @@ const translations = {
   },
   en: {
     title: 'Register a New User',
-    description: 'Create a new customer or driver account here.',
+    description: 'Create a new customer, driver, or admin account here.',
     fullName: 'Full Name',
     fullNamePlaceholder: 'e.g., Junaid Khan',
     email: 'Email',
@@ -48,6 +49,7 @@ const translations = {
     userType: 'User Type',
     customer: 'Customer',
     rider: 'Driver',
+    admin: 'Admin',
     registerButton: 'Register User',
     registeringButton: 'Registering...',
     successTitle: 'Success!',
@@ -75,24 +77,23 @@ export default function RegisterUserPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
-    const userType = formData.get('userType') as 'Customer' | 'Driver';
+    const userType = formData.get('userType') as 'Customer' | 'Driver' | 'Admin';
 
-    // This is a temporary app instance for creating the user.
-    // It's a workaround to avoid conflict with the main logged-in admin user.
-    // This is not standard practice for production but is a fix for this specific context.
     try {
-        // Since we can't have two logged-in users at once, we use the standard SDK method.
-        // In a real app, this should be a server-side action with proper admin privileges.
-        // For this prototype, we'll create the user on the client, which requires relaxing some security rules temporarily if needed.
         const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(newAuthUser, { displayName: fullName });
         
+        let approvalStatus = 'Pending';
+        if (userType === 'Customer' || userType === 'Admin') {
+            approvalStatus = 'Approved';
+        }
+
         await setDoc(doc(db, "users", newAuthUser.uid), {
             name: fullName,
             email: email,
             type: userType,
             status: 'Active',
-            approvalStatus: userType === 'Driver' ? 'Pending' : 'Approved',
+            approvalStatus: approvalStatus,
             createdAt: new Date(),
             walletBalance: 0,
         });
@@ -149,7 +150,7 @@ export default function RegisterUserPage() {
             </div>
             <div className="space-y-2">
                 <Label>{t.userType}</Label>
-                <RadioGroup name="userType" defaultValue="Customer" className="grid grid-cols-2 gap-4">
+                <RadioGroup name="userType" defaultValue="Customer" className="grid grid-cols-3 gap-4">
                     <div>
                         <RadioGroupItem value="Customer" id="customer-radio" className="peer sr-only" />
                         <Label htmlFor="customer-radio" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
@@ -162,6 +163,13 @@ export default function RegisterUserPage() {
                         <Label htmlFor="rider-radio" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                            <ShieldCheck className="h-6 w-6 mb-2" />
                            {t.rider}
+                        </Label>
+                    </div>
+                    <div>
+                        <RadioGroupItem value="Admin" id="admin-radio" className="peer sr-only" />
+                        <Label htmlFor="admin-radio" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                           <Shield className="h-6 w-6 mb-2" />
+                           {t.admin}
                         </Label>
                     </div>
                 </RadioGroup>
