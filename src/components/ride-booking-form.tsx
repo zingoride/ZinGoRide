@@ -77,13 +77,16 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
     setLoading(true);
 
     try {
+        const pickupGeoPoint = initialPickupCoords ? new GeoPoint(initialPickupCoords.lat, initialPickupCoords.lng) : undefined;
+        
         const rideDetails: Omit<RideRequest, 'id' | 'createdAt'> = {
             pickup,
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
+            customerAvatar: user.photoURL || undefined,
             status: 'pending', // Important: Status is 'pending' to show vehicle selection
-            pickupCoords: initialPickupCoords ? new GeoPoint(initialPickupCoords.lat, initialPickupCoords.lng) : undefined
+            pickupCoords: pickupGeoPoint,
         }
         
         const ridesCollection = collection(db, "rides");
@@ -93,7 +96,12 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
         });
         
         // Pass the newly created ride (with 'pending' status) to the parent page
-        onFindRide({ ...rideDetails, id: docRef.id, createdAt: new Date() });
+        onFindRide({ 
+            ...rideDetails, 
+            id: docRef.id, 
+            createdAt: new Date(),
+            pickupCoords: pickupGeoPoint,
+        });
 
     } catch (error) {
         console.error("Error creating ride request:", error);
