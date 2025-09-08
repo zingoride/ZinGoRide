@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Gift } from "lucide-react";
+import { Loader2, Gift, DollarSign, Clock, LifeBuoy } from "lucide-react";
 
 const translations = {
   ur: {
@@ -41,6 +41,13 @@ const translations = {
     signupSuccess: "Account kamyabi se ban gaya!",
     signupError: "Account banane mein masla hua.",
     emailInUse: "Yeh email pehle se istemal mein hai. Baraye meharbani login karein.",
+    whyDrive: "ZinGo ke saath drive kyun karein?",
+    earnMore: "Zyada Kamayein",
+    earnMoreDesc: "Hamari kam commission rates aur zyada demand ke saath apni kamai ko barhayein.",
+    flexibleHours: "Apni Marzi Ke Auqaat",
+    flexibleHoursDesc: "Jab dil chahay drive karein. Koi pabandi nahi, aap apne boss khud hain.",
+    support247: "24/7 Support",
+    support247Desc: "Humari dedicated support team har waqt aapki madad ke liye tayyar hai.",
   },
   en: {
     title: "Rider Sign Up",
@@ -58,6 +65,13 @@ const translations = {
     signupSuccess: "Account created successfully!",
     signupError: "Error creating account.",
     emailInUse: "This email is already in use. Please login instead.",
+    whyDrive: "Why Drive with ZinGo?",
+    earnMore: "Earn More",
+    earnMoreDesc: "Maximize your earnings with our low commission rates and high demand.",
+    flexibleHours: "Flexible Hours",
+    flexibleHoursDesc: "Drive whenever you want. No fixed schedules, you are your own boss.",
+    support247: "24/7 Support",
+    support247Desc: "Our dedicated support team is always available to help you on the road.",
   },
 };
 
@@ -174,6 +188,34 @@ export default function RiderSignupPage() {
             </div>
         </CardContent>
         </Card>
+        
+        <div className="mt-8 pt-8 border-t border-border/50 text-center max-w-4xl">
+        <h2 className="text-2xl font-bold mb-6">{t.whyDrive}</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <DollarSign className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.earnMore}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.earnMoreDesc}</p>
+            </div>
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <Clock className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.flexibleHours}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.flexibleHoursDesc}</p>
+            </div>
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <LifeBuoy className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.support247}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.support247Desc}</p>
+            </div>
+        </div>
+      </div>
+
      </div>
   )
 }

@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Gift } from "lucide-react";
+import { Loader2, Gift, Car, ShieldCheck, Tag } from "lucide-react";
 
 const translations = {
   ur: {
@@ -41,6 +41,13 @@ const translations = {
     signupSuccess: "Account kamyabi se ban gaya!",
     signupError: "Account banane mein masla hua.",
     emailInUse: "Yeh email pehle se istemal mein hai. Baraye meharbani login karein.",
+    whyRide: "ZinGo ke saath safar kyun karein?",
+    fastBooking: "Tez aur Aasan Booking",
+    fastBookingDesc: "Chand seconds mein ride book karein. Sirf apni manzil darj karein aur hum aapke liye driver dhoond lenge.",
+    safeReliable: "Mehfooz aur Qabil-e-Aitmaad",
+    safeReliableDesc: "Hamare tamam drivers tasdeeq-shuda hain. Live tracking aur 24/7 support ke saath mehfooz safar karein.",
+    transparentPricing: "Shaffaf Qeemat",
+    transparentPricingDesc: "Ride book karne se pehle kiraya dekhein. Koi posheeda charges nahi.",
   },
   en: {
     title: "Customer Sign Up",
@@ -58,6 +65,13 @@ const translations = {
     signupSuccess: "Account created successfully!",
     signupError: "Error creating account.",
     emailInUse: "This email is already in use. Please login instead.",
+    whyRide: "Why Ride with ZinGo?",
+    fastBooking: "Fast & Easy Booking",
+    fastBookingDesc: "Book a ride in seconds. Just enter your destination and we'll find a driver for you.",
+    safeReliable: "Safe & Reliable",
+    safeReliableDesc: "All our drivers are verified. Travel safely with live tracking and 24/7 support.",
+    transparentPricing: "Transparent Pricing",
+    transparentPricingDesc: "Know the fare before you book a ride. No hidden charges.",
   },
 };
 
@@ -177,6 +191,32 @@ export default function SignupPage() {
             </div>
         </CardContent>
         </Card>
+        <div className="mt-8 pt-8 border-t border-border/50 text-center max-w-4xl">
+        <h2 className="text-2xl font-bold mb-6">{t.whyRide}</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <Car className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.fastBooking}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.fastBookingDesc}</p>
+            </div>
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.safeReliable}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.safeReliableDesc}</p>
+            </div>
+            <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+                <Tag className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mt-4">{t.transparentPricing}</h3>
+            <p className="text-muted-foreground mt-2 text-sm">{t.transparentPricingDesc}</p>
+            </div>
+        </div>
+      </div>
      </div>
   )
 }
