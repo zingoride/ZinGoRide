@@ -12,7 +12,7 @@ import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { AdBanner } from '@/components/ad-banner';
@@ -157,18 +157,21 @@ export default function Dashboard() {
     const q = query(
       ridesRef, 
       where("status", "==", "booked"), 
-      orderBy("createdAt", "desc"),
       limit(10)
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const requests: RideRequest[] = [];
       let isNewRequest = false;
+      const requests: RideRequest[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RideRequest));
+      
+      // Sort manually on the client-side
+      requests.sort((a, b) => {
+        const dateA = (a.createdAt as Timestamp)?.toDate() || new Date(0);
+        const dateB = (b.createdAt as Timestamp)?.toDate() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
 
-      querySnapshot.forEach((doc) => {
-        const requestData = { id: doc.id, ...doc.data() } as RideRequest;
-        requests.push(requestData);
-        
+      requests.forEach((requestData) => {
         if (!knownRideIds.current.has(requestData.id)) {
             isNewRequest = true;
             knownRideIds.current.add(requestData.id);
@@ -190,7 +193,7 @@ export default function Dashboard() {
         toast({
             variant: "destructive",
             title: t.fetchError,
-            description: t.fetchErrorDesc,
+            description: error.message, // Use the actual error message
         });
     });
 
