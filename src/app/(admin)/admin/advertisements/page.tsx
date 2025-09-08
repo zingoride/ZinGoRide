@@ -120,16 +120,15 @@ export default function AdvertisementsPage() {
   
   useEffect(() => {
     const adsCollection = collection(db, "advertisements");
-    // Removed orderBy to prevent Firestore index errors
     const q = query(adsCollection); 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const adsList = snapshot.docs.map(doc => {
             const data = doc.data();
+            const createdAt = data.createdAt;
             return {
                  id: doc.id, 
                  ...data,
-                 // Ensure createdAt is a Date object for sorting
-                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date()
+                 createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date()
             } as Advertisement
         }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort manually
         
