@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { Bike } from 'lucide-react';
 
 export const runtime = 'edge'
  
@@ -13,7 +14,7 @@ export default function Icon() {
       <div
         style={{
           fontSize: 256,
-          background: 'linear-gradient(to right, #f97316, #ec4899)',
+          background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)))',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -30,16 +31,18 @@ export default function Icon() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            <path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5" />
-            <path d="M20 10h-2" />
-            <path d="M6 10H4" />
-            <path d="M17 16.5h.5a1.5 1.5 0 0 0 0-3H14v-2h1.5a1.5 1.5 0 0 0 0-3H7.5a1.5 1.5 0 0 0 0 3H9v2H7.5a1.5 1.5 0 0 0 0 3H9" />
-            <path d="M14 9.5H9.5" />
-            <path d="M5.5 9.5A2.5 2.5 0 0 1 8 7h8a2.5 2.5 0 0 1 2.5 2.5V16" />
+            <path d="m18 17 4 4-4 4"/>
+            <path d="m10 14-4-4 4-4"/>
+            <path d="m18 7-4 4-4-4"/>
+            <path d="m6 21-4-4 4-4"/>
+            <path d="m14 3-4 4-4-4"/>
+            <path d="M7 14h11"/>
+            <path d="M10 3h5"/>
+            <path d="M10 21h5"/>
         </svg>
       </div>
     ),
