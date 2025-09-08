@@ -4,8 +4,9 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +31,8 @@ const translations = {
     loginButton: "Login",
     loginSuccess: "Admin kamyabi se login ho gaya!",
     loginError: "Ghalat email ya password.",
+    creatingAdmin: "Admin account banaya ja raha hai...",
+    adminCreated: "Pehla admin account kamyabi se ban gaya!",
   },
   en: {
     title: "Admin Login",
@@ -39,6 +42,8 @@ const translations = {
     loginButton: "Login",
     loginSuccess: "Admin logged in successfully!",
     loginError: "Incorrect email or password.",
+    creatingAdmin: "Creating admin account...",
+    adminCreated: "First-time admin account created successfully!",
   },
 };
 
@@ -46,7 +51,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_ADMIN_EMAIL || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
@@ -57,21 +62,49 @@ export default function AdminLoginPage() {
     
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // In a real production app, you might want to check if the user
-      // has admin privileges from your database (e.g., Firestore custom claims).
-      // For this prototype, we will assume if they can log in here, they are an admin.
       if (typeof window !== 'undefined') {
         localStorage.setItem('admin_logged_in', 'true');
       }
       toast({ title: t.loginSuccess });
       router.push('/admin/dashboard');
     } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: t.loginError,
-        description: "Please check your credentials or create the admin user in Firebase Authentication.",
-      });
+      // First-time admin setup logic
+      if ((error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') && email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+          try {
+              toast({ title: t.creatingAdmin });
+              const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              const user = userCredential.user;
+              await setDoc(doc(db, "users", user.uid), {
+                  name: "Admin",
+                  email: email,
+                  type: 'Admin',
+                  status: 'Active',
+                  approvalStatus: 'Approved',
+                  createdAt: new Date(),
+                  walletBalance: 0,
+              });
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('admin_logged_in', 'true');
+              }
+              toast({ title: t.adminCreated });
+              router.push('/admin/dashboard');
+
+          } catch (creationError: any) {
+             console.error("Admin creation error:", creationError);
+             toast({
+                variant: "destructive",
+                title: "Admin Creation Failed",
+                description: creationError.message,
+              });
+          }
+      } else {
+        console.error("Login error:", error);
+        toast({
+          variant: "destructive",
+          title: t.loginError,
+          description: "Please check your credentials.",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -96,7 +129,7 @@ export default function AdminLoginPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
-              <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
+              <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
