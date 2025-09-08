@@ -1,95 +1,100 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      // Check if the user making the request has the 'Admin' type.
-      // This requires reading the user's own document.
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
-    }
-    
+  
+    // Helper Functions
     function isUserAuthenticated() {
-        return request.auth != null;
+      return request.auth != null;
     }
 
-    // Rules for the 'users' collection
+    function isExistingUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+    
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isRequestingUser(userId) {
+      return isUserAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isUserType(userId, userType) {
+      return getUserData(userId).type == userType;
+    }
+
+    function isAdmin(userId) {
+      return isUserAuthenticated() && isUserType(userId, 'Admin');
+    }
+
+    function isRideParticipant(ride) {
+      return isUserAuthenticated() && (request.auth.uid == ride.data.customerId || request.auth.uid == ride.data.driverId);
+    }
+
+    // User profiles
     match /users/{userId} {
-      // Any authenticated user can read public profile info (for ride details)
-      // Admins can read everything
-      // The user themselves can read their own document
       allow read: if isUserAuthenticated();
-      allow update: if isOwner(userId);
       allow create: if isUserAuthenticated();
+      allow update: if isRequestingUser(userId) || isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid);
     }
-
-    // Rules for the 'rides' collection
+    
+    // Ride documents
     match /rides/{rideId} {
-      allow read: if isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId);
-      allow create: if isOwner(request.resource.data.customerId);
-      // An admin or the assigned driver can update the ride.
-      // A customer can only update the ride to cancel it.
-      allow update: if isAdmin() || isOwner(resource.data.driverId) || 
-                       (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled_by_customer');
-    }
+      allow create: if isUserAuthenticated();
+      allow read: if isRideParticipant(resource) || isAdmin(request.auth.uid);
+      allow update: if isRideParticipant(resource) || isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid);
 
-    // Rules for ride-specific chat messages
-    match /rides/{rideId}/messages/{msgId} {
-      // The customer or the driver of the ride can read and create messages.
-      allow read, create: if isUserAuthenticated() && (
-                            request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId ||
-                            request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId
-                          );
+      // Chat messages within a ride
+      match /messages/{messageId} {
+        allow read, write: if isRideParticipant(get(/databases/$(database)/documents/rides/$(rideId)));
+      }
     }
     
-    // Rules for direct chats (e.g., admin-to-user)
-    match /chats/{chatId}/messages/{msgId} {
-        // Only the two users involved in the chat can read or write messages.
-        allow read, create: if isUserAuthenticated() && request.auth.uid in split(chatId, '_');
-    }
-
-    // Rules for wallet top-up requests
-    match /walletRequests/{reqId} {
-        // Only an admin can read or update wallet requests.
-        allow read, update: if isAdmin();
-        // A user can only create a wallet request for themselves.
-        allow create: if isOwner(request.resource.data.userId);
+    // General app configuration
+    match /configs/{docId} {
+      allow read: if true;
+      allow write: if isAdmin(request.auth.uid);
     }
     
-    // Rules for admin payout requests
-    match /payoutRequests/{reqId} {
-        allow read, create, update, delete: if isAdmin();
-    }
-    
-    // Rules for wallet transactions (admin-only)
-    match /walletTransactions/{transactionId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Rules for application configuration
-    match /configs/appConfig {
-      // Any authenticated user can read the configuration.
-      allow read: if isUserAuthenticated();
-      // Only admins can write to the configuration.
-      allow write: if isAdmin();
-    }
-    
-    // Rules for advertisements
+    // Advertisements
     match /advertisements/{adId} {
-        // Any authenticated user can read advertisements.
-        allow read: if isUserAuthenticated();
-        // Only admins can manage advertisements.
-        allow create, update, delete: if isAdmin();
+        allow read: if true;
+        allow create, update, delete: if isAdmin(request.auth.uid);
     }
     
-    // Rules for broadcast notifications
-    match /notifications/{notificationId} {
-      allow read, write: if isAdmin();
+    // Wallet top-up requests
+    match /walletRequests/{reqId} {
+        allow create: if isUserAuthenticated();
+        allow read, update, delete: if isAdmin(request.auth.uid);
+    }
+    
+     // Payout requests for admin/company
+    match /payoutRequests/{payoutId} {
+      allow create, read, update, delete: if isAdmin(request.auth.uid);
+    }
+    
+    // Wallet transactions (records of fund movements)
+    match /walletTransactions/{transactionId} {
+      // Only backend/admin can create these records
+      allow create: if isAdmin(request.auth.uid);
+      // Users can read their own transactions, admins can read all
+      allow read: if isRequestingUser(resource.data.userId) || isAdmin(request.auth.uid);
+      allow update, delete: if false; // Transactions should be immutable
+    }
+
+    // Chat documents for admin-user communication
+    match /chats/{chatId} {
+       // Only participants can read/write
+      allow read, write: if isUserAuthenticated() && request.auth.uid in chatId.split('_');
+
+      match /messages/{messageId} {
+         // Only participants can read/write messages
+         allow read, write: if isUserAuthenticated() && request.auth.uid in chatId.split('_');
+      }
     }
   }
 }
