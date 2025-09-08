@@ -96,7 +96,8 @@ const CustomerPage = () => {
              return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
         }
         
-        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
+        // For 'accepted', 'in_progress', 'booked' statuses, the map is shown full screen
+        return null;
     }
 
     if (!isClient) {
