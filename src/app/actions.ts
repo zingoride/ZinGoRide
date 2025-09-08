@@ -254,10 +254,9 @@ export async function registerNewUser(formData: FormData): Promise<{ success: bo
 
     } catch (error: any) {
         console.error("Error registering new user:", error);
-        // Provide a more user-friendly error message
         if (error.code === 'auth/email-already-exists') {
             return { success: false, error: 'The email address is already in use by another account.' };
         }
-        return { success: false, error: error.message || 'An unknown error occurred.' };
+        return { success: false, error: error.message || 'An unknown server error occurred.' };
     }
 }
