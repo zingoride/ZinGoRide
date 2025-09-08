@@ -10,24 +10,42 @@ import type { RideRequest } from '@/lib/types';
 import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, MapPin } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { useLocationPermission } from '@/context/LocationPermissionContext';
+import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/context/LanguageContext';
+
+const translations = {
+  ur: {
+    enableLocationTitle: "Location Ki Ijazat Zaroori Hai",
+    enableLocationDesc: "Behtareen tajurbe ke liye aur apni maujooda location se ride book karne ke liye, baraye meharbani location services ko enable karein.",
+    enableLocationBtn: "Location Enable Karein",
+    enabling: "Enabling...",
+    rideRequestError: "Ride request karne mein masla hua.",
+  },
+  en: {
+    enableLocationTitle: "Location Permission Required",
+    enableLocationDesc: "For the best experience and to book rides from your current location, please enable location services.",
+    enableLocationBtn: "Enable Location",
+    enabling: "Enabling...",
+    rideRequestError: "Error requesting ride.",
+  }
+}
+
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const isMobile = useIsMobile();
     
-    // Location state lifted up from RideBookingForm
-    const [pickup, setPickup] = useState('');
-    const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
     const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
     const { toast } = useToast();
+    const { language } = useLanguage();
+    const t = translations[language];
 
     useEffect(() => {
         setIsClient(true);
@@ -82,14 +100,40 @@ const CustomerPage = () => {
     };
     
     const renderContent = () => {
+        if (!hasPermission) {
+             return (
+                <Card className="shadow-lg w-full">
+                    <CardHeader className="text-center">
+                        <MapPin className="h-12 w-12 mx-auto text-primary" />
+                        <CardTitle className="mt-4">{t.enableLocationTitle}</CardTitle>
+                        <CardDescription>{t.enableLocationDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button 
+                            className="w-full" 
+                            onClick={requestPermission} 
+                            disabled={isCheckingPermission}
+                        >
+                            {isCheckingPermission && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isCheckingPermission ? t.enabling : t.enableLocationBtn}
+                        </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+        
         if (!currentRide) {
             return (
-                <div className="space-y-4">
-                    <RideBookingForm 
-                        onFindRide={handleFindRide} 
-                    />
-                    <AdBanner targetAudience="Customer" />
-                </div>
+                <Card className="shadow-lg w-full">
+                    <CardContent className="p-4">
+                        <div className="space-y-4">
+                            <RideBookingForm 
+                                onFindRide={handleFindRide} 
+                            />
+                            <AdBanner targetAudience="Customer" />
+                        </div>
+                    </CardContent>
+                </Card>
             );
         }
         
@@ -98,10 +142,15 @@ const CustomerPage = () => {
         }
         
         if (currentRide.status === 'pending') {
-             return <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+             return (
+                 <Card className="shadow-lg w-full">
+                    <CardContent className="p-4">
+                        <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+                    </CardContent>
+                 </Card>
+            );
         }
         
-        // For 'accepted', 'in_progress', 'booked' statuses, the map is shown full screen
         return null;
     }
 
@@ -116,11 +165,7 @@ const CustomerPage = () => {
     return (
        <div className="h-full w-full flex items-start justify-center">
             <div className="w-full max-w-md">
-                 <Card className="shadow-lg w-full">
-                    <CardContent className="p-4">
-                        {renderContent()}
-                    </CardContent>
-                </Card>
+                 {renderContent()}
             </div>
        </div>
     );
