@@ -116,16 +116,17 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     setLoading(true);
 
     try {
-        const pickupGeoPoint = pickupCoords ? new GeoPoint(pickupCoords.lat, pickupCoords.lng) : undefined;
-        
         const rideDetails: Omit<RideRequest, 'id' | 'createdAt'> = {
             pickup,
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             customerAvatar: user.photoURL || undefined,
-            status: 'pending', // Important: Status is 'pending' to show vehicle selection
-            pickupCoords: pickupGeoPoint,
+            status: 'pending',
+        };
+
+        if (pickupCoords) {
+            rideDetails.pickupCoords = new GeoPoint(pickupCoords.lat, pickupCoords.lng);
         }
         
         const ridesCollection = collection(db, "rides");
@@ -134,7 +135,6 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             createdAt: serverTimestamp(),
         });
         
-        // Pass the newly created ride (with 'pending' status) to the parent page
         onFindRide({ 
             ...rideDetails, 
             id: docRef.id, 
@@ -147,9 +147,8 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             variant: "destructive",
             title: t.rideRequestError,
         });
-        setLoading(false); // Only set loading to false on error
+        setLoading(false);
     }
-    // On success, the parent component will switch views, so no need to set loading to false.
   };
 
   return (
