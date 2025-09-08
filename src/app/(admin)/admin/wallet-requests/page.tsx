@@ -211,11 +211,15 @@ export default function WalletRequestsPage() {
             const requestsCollection = collection(db, "walletRequests");
             const q = query(requestsCollection);
             const requestSnapshot = await getDocs(q);
-            const requestList = requestSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: (doc.data().createdAt as any).toDate(),
-            } as TopUpRequest)).sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort manually after fetching
+            const requestList = requestSnapshot.docs.map(doc => {
+                const data = doc.data();
+                const timestamp = data.createdAt;
+                return {
+                    id: doc.id,
+                    ...data,
+                    date: timestamp ? timestamp.toDate() : new Date(),
+                } as TopUpRequest;
+            }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort manually after fetching
             setRequests(requestList);
         } catch (error) {
             console.error("Error fetching wallet requests: ", error);
