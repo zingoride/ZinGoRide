@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp, GeoPoint } from 'firebase/firestore';
+import { useLocationPermission } from '@/context/LocationPermissionContext';
 
 
 const translations = {
@@ -25,6 +26,7 @@ const translations = {
     myLocation: "Meri Maujooda Location",
     useMyLocation: "Meri Location Istemal Karein",
     gettingLocation: "Location haasil ki ja rahi hai...",
+    enableLocation: "Location ki Ijazat Dein"
   },
   en: {
     pickupPlaceholder: "Where from?",
@@ -37,58 +39,47 @@ const translations = {
     myLocation: "My Current Location",
     useMyLocation: "Use My Location",
     gettingLocation: "Getting location...",
+    enableLocation: "Enable Location"
   }
 }
 
 interface RideBookingFormProps {
     onFindRide: (rideDetails: RideRequest) => void;
-    initialPickup: string;
-    initialPickupCoords: { lat: number; lng: number } | null;
-    isLocationLoading: boolean;
-    onSetLocation: (location: { coords: { lat: number, lng: number }, name: string }) => void;
 }
 
-export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords, isLocationLoading, onSetLocation }: RideBookingFormProps) {
+export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [pickup, setPickup] = useState('');
+  const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
   const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
   const [manualLocationLoading, setManualLocationLoading] = useState(false);
   
+  const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
   const t = translations[language];
 
   useEffect(() => {
-    if (initialPickup) {
-      setPickup(initialPickup);
+    if (hasPermission && !pickup) {
+       handleUseMyLocation();
     }
-  }, [initialPickup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPermission]);
 
-  const handleUseMyLocation = () => {
+  const handleUseMyLocation = async () => {
     setManualLocationLoading(true);
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                onSetLocation({
-                    coords: {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    },
-                    name: t.myLocation
-                });
-                toast({ title: t.locationSuccess });
-                setManualLocationLoading(false);
-            },
-            () => {
-                toast({ variant: 'destructive', title: t.locationError });
-                setManualLocationLoading(false);
-            }
-        );
+    const permissionGranted = await requestPermission();
+    if (permissionGranted) {
+        // We just need to trigger the permission request.
+        // The actual location is fetched inside the context and we can get it from there
+        // For simplicity, we just set the input field text.
+         setPickup(t.myLocation);
+         toast({ title: t.locationSuccess });
     } else {
-        toast({ variant: 'destructive', title: "Geolocation is not supported by your browser." });
-        setManualLocationLoading(false);
+        toast({ variant: 'destructive', title: t.locationError });
     }
+    setManualLocationLoading(false);
   }
 
 
@@ -105,7 +96,7 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
     setLoading(true);
 
     try {
-        const pickupGeoPoint = initialPickupCoords ? new GeoPoint(initialPickupCoords.lat, initialPickupCoords.lng) : undefined;
+        const pickupGeoPoint = pickupCoords ? new GeoPoint(pickupCoords.lat, pickupCoords.lng) : undefined;
         
         const rideDetails: Omit<RideRequest, 'id' | 'createdAt'> = {
             pickup,
@@ -151,19 +142,19 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
                 size="icon" 
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={handleUseMyLocation}
-                disabled={manualLocationLoading || isLocationLoading}
+                disabled={manualLocationLoading || isCheckingPermission}
                 aria-label={t.useMyLocation}
             >
-                {manualLocationLoading || isLocationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+                {manualLocationLoading || isCheckingPermission ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
             </Button>
             <Input
                 id="pickup"
-                placeholder={isLocationLoading ? t.gettingLocation : t.pickupPlaceholder}
+                placeholder={isCheckingPermission ? t.gettingLocation : t.pickupPlaceholder}
                 className="pl-10 h-12 text-base pr-10"
                 value={pickup}
                 onChange={(e) => setPickup(e.target.value)}
                 required
-                disabled={isLocationLoading || manualLocationLoading}
+                disabled={isCheckingPermission || manualLocationLoading}
             />
         </div>
         
@@ -178,7 +169,7 @@ export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords
                 required
             />
         </div>
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading || isLocationLoading}>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading || isCheckingPermission}>
         {loading ? (
             <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

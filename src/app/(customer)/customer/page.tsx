@@ -15,6 +15,7 @@ import { Loader2 } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
+import { useLocationPermission } from '@/context/LocationPermissionContext';
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
@@ -25,7 +26,7 @@ const CustomerPage = () => {
     // Location state lifted up from RideBookingForm
     const [pickup, setPickup] = useState('');
     const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
-    const [isGettingLocation, setIsGettingLocation] = useState(true);
+    const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -34,29 +35,7 @@ const CustomerPage = () => {
         if (savedRideId) {
             setRideId(savedRideId);
         }
-
-        // Fetch location on initial load
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setPickupCoords({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
-                    setPickup("My Current Location");
-                    setIsGettingLocation(false);
-                },
-                () => {
-                    toast({ variant: 'destructive', title: "Could not get your location.", description: "Please enter your pickup location manually or use the location button." });
-                    setIsGettingLocation(false);
-                }
-            );
-        } else {
-             toast({ variant: 'destructive', title: "Geolocation is not supported by your browser." });
-             setIsGettingLocation(false);
-        }
-
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         if (!rideId) {
@@ -102,21 +81,12 @@ const CustomerPage = () => {
         setRideId(null);
     };
     
-    const handleSetLocation = (location: { coords: { lat: number; lng: number; }; name: string; }) => {
-        setPickupCoords(location.coords);
-        setPickup(location.name);
-    }
-
     const renderContent = () => {
         if (!currentRide) {
             return (
                 <div className="space-y-4">
                     <RideBookingForm 
                         onFindRide={handleFindRide} 
-                        initialPickup={pickup}
-                        initialPickupCoords={pickupCoords}
-                        isLocationLoading={isGettingLocation}
-                        onSetLocation={handleSetLocation}
                     />
                     <AdBanner targetAudience="Customer" />
                 </div>
@@ -135,7 +105,7 @@ const CustomerPage = () => {
         return null;
     }
 
-    if (!isClient) {
+    if (!isClient || isCheckingPermission) {
         return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
     }
     
