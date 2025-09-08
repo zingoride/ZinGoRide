@@ -1,89 +1,95 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
-    }
 
-    // Helper function to check if a user is the owner of a document
+    // Helper functions
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // USERS Collection
-    match /users/{userId} {
-      // Any authenticated user can create their own user document (on signup)
-      allow create: if request.auth.uid != null;
-      // Users can only read and update their own profiles
-      // Admins can read any user's profile
-      allow read: if isOwner(userId) || isAdmin();
-      allow update: if isOwner(userId);
+    function isAdmin() {
+      // Check if the user making the request has the 'Admin' type.
+      // This requires reading the user's own document.
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
     }
     
-    // RIDES Collection
-    match /rides/{rideId} {
-        // Customer can create their own ride request
-        allow create: if isOwner(request.resource.data.customerId);
-        // Customer, assigned driver, or an admin can read the ride details
-        allow read: if isOwner(resource.data.customerId) || isOwner(resource.data.driverId) || isAdmin();
-        // Update permissions:
-        // - Customer can only update to cancel
-        // - Driver can update to accept, start, complete, or cancel
-        // - Admin can update anything
-        allow update: if (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled_by_customer') ||
-                       (isOwner(resource.data.driverId)) ||
-                       isAdmin();
+    function isUserAuthenticated() {
+        return request.auth != null;
     }
 
-    // WALLET REQUESTS Collection
-    match /walletRequests/{requestId} {
-        // A user can create their own wallet request
-        allow create: if isOwner(request.resource.data.userId);
-        // Only admins can read, update (approve/reject), or delete requests
-        allow read, update, delete: if isAdmin();
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Any authenticated user can read public profile info (for ride details)
+      // Admins can read everything
+      // The user themselves can read their own document
+      allow read: if isUserAuthenticated();
+      allow update: if isOwner(userId);
+      allow create: if isUserAuthenticated();
+    }
+
+    // Rules for the 'rides' collection
+    match /rides/{rideId} {
+      allow read: if isAdmin() || isOwner(resource.data.customerId) || isOwner(resource.data.driverId);
+      allow create: if isOwner(request.resource.data.customerId);
+      // An admin or the assigned driver can update the ride.
+      // A customer can only update the ride to cancel it.
+      allow update: if isAdmin() || isOwner(resource.data.driverId) || 
+                       (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled_by_customer');
+    }
+
+    // Rules for ride-specific chat messages
+    match /rides/{rideId}/messages/{msgId} {
+      // The customer or the driver of the ride can read and create messages.
+      allow read, create: if isUserAuthenticated() && (
+                            request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId ||
+                            request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId
+                          );
     }
     
-    // PAYOUT REQUESTS Collection (Admin-only)
-    match /payoutRequests/{payoutId} {
-        // Only admins can manage payout requests
+    // Rules for direct chats (e.g., admin-to-user)
+    match /chats/{chatId}/messages/{msgId} {
+        // Only the two users involved in the chat can read or write messages.
+        allow read, create: if isUserAuthenticated() && request.auth.uid in split(chatId, '_');
+    }
+
+    // Rules for wallet top-up requests
+    match /walletRequests/{reqId} {
+        // Only an admin can read or update wallet requests.
+        allow read, update: if isAdmin();
+        // A user can only create a wallet request for themselves.
+        allow create: if isOwner(request.resource.data.userId);
+    }
+    
+    // Rules for admin payout requests
+    match /payoutRequests/{reqId} {
         allow read, create, update, delete: if isAdmin();
     }
+    
+    // Rules for wallet transactions (admin-only)
+    match /walletTransactions/{transactionId} {
+      allow read, write: if isAdmin();
+    }
 
-    // NOTIFICATIONS Collection (Admin write, anyone can potentially read if needed)
-    match /notifications/{notificationId} {
-        allow read: if request.auth != null; // Or make it public with `if true;`
+    // Rules for application configuration
+    match /configs/appConfig {
+      // Any authenticated user can read the configuration.
+      allow read: if isUserAuthenticated();
+      // Only admins can write to the configuration.
+      allow write: if isAdmin();
+    }
+    
+    // Rules for advertisements
+    match /advertisements/{adId} {
+        // Any authenticated user can read advertisements.
+        allow read: if isUserAuthenticated();
+        // Only admins can manage advertisements.
         allow create, update, delete: if isAdmin();
     }
-
-    // ADVERTISEMENTS Collection (Public read, admin write)
-    match /advertisements/{adId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // CONFIGS Collection (Public read, admin write)
-    match /configs/{configId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
     
-    // CHATS Collection (For admin-user direct messaging)
-    match /chats/{chatId}/messages/{messageId} {
-        // Chat ID is expected to be 'adminId_userId' sorted alphabetically
-        // Only the two users involved in the chat can read or write messages
-        allow read, create: if request.auth.uid in split(chatId, '_');
+    // Rules for broadcast notifications
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
     }
-    
-    // Ride-specific chat messages
-     match /rides/{rideId}/messages/{messageId} {
-      // Only the customer and driver of the ride can read/write messages
-      allow read, create: if get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid ||
-                           get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid;
-    }
-
   }
 }
