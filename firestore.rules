@@ -2,74 +2,72 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
     
-    function isAdmin() {
-      // The primary admin UID is hardcoded for superuser access.
-      // Additionally, checks if a user's type is 'Admin' in the database.
-      return request.auth.uid == 'xMGCQ5b3oic287oK9yTzKSgyTkj2' || 
-             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin');
+    function isAdmin(userId) {
+      return userId == 'xMGCQ5b3oic287oK9yTzKSgyTkj2' || 
+             (exists(/databases/$(database)/documents/users/$(userId)) && 
+              get(/databases/$(database)/documents/users/$(userId)).data.type == 'Admin');
     }
 
-    function isDriver() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver';
-    }
-
+    // Users can read and update their own document, Admins can read any user doc
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if isOwner(userId) || isAdmin();
+      allow read, update: if request.auth != null && (request.auth.uid == userId || isAdmin(request.auth.uid));
+      allow create: if request.auth != null; // Anyone can create a user doc (signup)
     }
 
+    // Rides:
+    // Customer can create a ride.
+    // Customer, assigned Driver, or an Admin can read/update the ride.
     match /rides/{rideId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      // Let's break down the update logic for clarity
-      // Customer can update to book or cancel
-      // Driver can update to accept, start, or complete
-      // Admin can update anything
-      allow update: if (isOwner(request.resource.data.customerId) && (request.resource.data.status == 'cancelled_by_customer' || request.resource.data.status == 'booked')) ||
-                       (isDriver() && (request.resource.data.status == 'accepted' || request.resource.data.status == 'in_progress' || request.resource.data.status == 'completed' || request.resource.data.status == 'cancelled_by_driver')) ||
-                       isAdmin();
-      allow delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.customerId;
+      allow read, update: if request.auth != null && (
+                            request.auth.uid == resource.data.customerId || 
+                            (resource.data.driverId != null && request.auth.uid == resource.data.driverId) ||
+                            isAdmin(request.auth.uid)
+                          );
     }
     
+    // Ride Chat Messages
+    // Customer or assigned Driver can read/write messages in a ride chat.
     match /rides/{rideId}/messages/{messageId} {
-        allow read, write: if get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid ||
-                               get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid ||
-                               isAdmin();
-    }
-
-    match /walletRequests/{requestId} {
-        allow read: if isAdmin();
-        allow create: if isOwner(request.resource.data.userId);
-        allow update, delete: if isAdmin();
-    }
-
-    match /advertisements/{adId} {
-        allow read: if request.auth != null;
-        allow write, delete: if isAdmin();
+        allow read, write: if request.auth != null && (
+                              request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId || 
+                              (get(/databases/$(database)/documents/rides/$(rideId)).data.driverId != null && request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId)
+                           );
     }
     
-    match /payoutRequests/{payoutId} {
-        allow read, write: if isAdmin();
-    }
-
-    match /notifications/{notificationId} {
-        allow read, write: if isAdmin();
-    }
-    
-    match /configs/{configId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-    
+    // Admin-User Chat Messages
      match /chats/{chatId}/messages/{messageId} {
-        allow read, write: if request.auth.uid in chatId.split('_') || isAdmin();
+        allow read, write: if request.auth != null; // Allow any authenticated user to read/write for now
+    }
+
+    // Wallet Requests
+    // Any user can create a request, only admins can view/manage them.
+    match /walletRequests/{requestId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+    
+    // Notifications - Only Admins can manage
+    match /notifications/{notificationId} {
+        allow read, write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+    
+    // Payout Requests - Only Admins can manage
+     match /payoutRequests/{requestId} {
+        allow read, write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // Advertisements - Publicly readable, only admins can write
+    match /advertisements/{adId} {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+    
+    // Configs - Publicly readable, only admins can write
+    match /configs/appConfig {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
     }
   }
 }
