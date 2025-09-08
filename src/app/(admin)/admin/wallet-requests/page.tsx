@@ -215,7 +215,7 @@ export default function WalletRequestsPage() {
                 id: doc.id,
                 ...doc.data(),
                 date: (doc.data().createdAt as any).toDate(),
-            } as TopUpRequest));
+            } as TopUpRequest)).sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort manually after fetching
             setRequests(requestList);
         } catch (error) {
             console.error("Error fetching wallet requests: ", error);
