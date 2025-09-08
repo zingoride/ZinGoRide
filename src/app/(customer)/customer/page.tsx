@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
@@ -13,7 +12,6 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MapPin } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { useLocationPermission } from '@/context/LocationPermissionContext';
 import { Button } from '@/components/ui/button';
@@ -80,10 +78,13 @@ const CustomerPage = () => {
             } else {
                 handleReset();
             }
+        }, (error) => {
+            console.error("Error listening to ride document:", error);
+            toast({ variant: 'destructive', title: "Database Error", description: "Could not fetch ride updates." });
         });
 
         return () => unsubscribe();
-    }, [rideId]);
+    }, [rideId, toast]);
     
 
     const handleFindRide = (ride: RideRequest) => {
@@ -98,11 +99,15 @@ const CustomerPage = () => {
         setCurrentRide(null);
         setRideId(null);
     };
+
+    if (!isClient || isCheckingPermission) {
+        return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+    }
     
-    const renderContent = () => {
-        if (!hasPermission) {
-             return (
-                <Card className="shadow-lg w-full">
+    if (!hasPermission) {
+        return (
+            <div className="h-full w-full flex items-start justify-center pt-8">
+                <Card className="shadow-lg w-full max-w-md">
                     <CardHeader className="text-center">
                         <MapPin className="h-12 w-12 mx-auto text-primary" />
                         <CardTitle className="mt-4">{t.enableLocationTitle}</CardTitle>
@@ -114,17 +119,43 @@ const CustomerPage = () => {
                             onClick={requestPermission} 
                             disabled={isCheckingPermission}
                         >
-                            {isCheckingPermission && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isCheckingPermission ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             {isCheckingPermission ? t.enabling : t.enableLocationBtn}
                         </Button>
                     </CardContent>
                 </Card>
-            );
+            </div>
+        );
+    }
+    
+    if (currentRide) {
+        if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
+            return <CustomerInvoice ride={currentRide} onDone={handleReset} />;
         }
         
-        if (!currentRide) {
-            return (
-                <Card className="shadow-lg w-full">
+        if (currentRide.status === 'pending') {
+             return (
+                 <div className="h-full w-full flex items-start justify-center">
+                     <div className="w-full max-w-md">
+                        <Card className="shadow-lg w-full">
+                            <CardContent className="p-4">
+                                <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+                            </CardContent>
+                        </Card>
+                     </div>
+                 </div>
+            );
+        }
+
+        // For accepted, in_progress, booked
+        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
+    }
+
+    // Default view: Ride booking form
+    return (
+       <div className="h-full w-full flex items-start justify-center">
+            <div className="w-full max-w-md">
+                 <Card className="shadow-lg w-full">
                     <CardContent className="p-4">
                         <div className="space-y-4">
                             <RideBookingForm 
@@ -134,38 +165,6 @@ const CustomerPage = () => {
                         </div>
                     </CardContent>
                 </Card>
-            );
-        }
-        
-        if (currentRide.status === 'completed' || currentRide.status === 'cancelled_by_driver') {
-            return <CustomerInvoice ride={currentRide} onDone={handleReset} />
-        }
-        
-        if (currentRide.status === 'pending') {
-             return (
-                 <Card className="shadow-lg w-full">
-                    <CardContent className="p-4">
-                        <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
-                    </CardContent>
-                 </Card>
-            );
-        }
-        
-        return null;
-    }
-
-    if (!isClient || isCheckingPermission) {
-        return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-    }
-    
-     if (currentRide && (currentRide.status === 'accepted' || currentRide.status === 'in_progress' || currentRide.status === 'booked')) {
-        return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
-     }
-
-    return (
-       <div className="h-full w-full flex items-start justify-center">
-            <div className="w-full max-w-md">
-                 {renderContent()}
             </div>
        </div>
     );
