@@ -15,11 +15,6 @@ import { Loader2 } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const DynamicMap = dynamic(() => import('@/components/dynamic-map'), {
-  ssr: false,
-  loading: () => <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
-});
-
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
@@ -109,16 +104,13 @@ const CustomerPage = () => {
      }
 
     return (
-       <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <div className="md:col-span-1">
+       <div className="h-full w-full flex items-start justify-center">
+            <div className="w-full max-w-md">
                  <Card className="shadow-lg w-full">
                     <CardContent className="p-4">
                         {renderContent()}
                     </CardContent>
                 </Card>
-            </div>
-            <div className="relative md:col-span-1 h-96 md:h-[500px] rounded-lg overflow-hidden border">
-                <DynamicMap />
             </div>
        </div>
     );
