@@ -3,10 +3,10 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { setDoc, doc } from "firebase/firestore";
+import { setDoc, doc, getDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,6 +48,11 @@ const translations = {
     flexibleHoursDesc: "Jab dil chahay drive karein. Koi pabandi nahi, aap apne boss khud hain.",
     support247: "24/7 Support",
     support247Desc: "Humari dedicated support team har waqt aapki madad ke liye tayyar hai.",
+    terms: "account bana kar, aap hamari",
+    termsLink: "Terms of Service",
+    privacy: "aur",
+    privacyLink: "Privacy Policy",
+    agree: "se ittefaq karte hain."
   },
   en: {
     title: "Rider Sign Up",
@@ -72,8 +77,19 @@ const translations = {
     flexibleHoursDesc: "Drive whenever you want. No fixed schedules, you are your own boss.",
     support247: "24/7 Support",
     support247Desc: "Our dedicated support team is always available to help you on the road.",
+    terms: "By creating an account, you agree to our",
+    termsLink: "Terms of Service",
+    privacy: "and",
+    privacyLink: "Privacy Policy",
+    agree: "."
   },
 };
+
+type ConfigType = {
+    termsOfServiceUrl?: string;
+    privacyPolicyUrl?: string;
+};
+
 
 export default function RiderSignupPage() {
   const router = useRouter();
@@ -85,7 +101,19 @@ export default function RiderSignupPage() {
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [config, setConfig] = useState<ConfigType>({});
   const t = translations[language];
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+        const configRef = doc(db, 'configs', 'appConfig');
+        const configSnap = await getDoc(configRef);
+        if (configSnap.exists()) {
+            setConfig(configSnap.data());
+        }
+    };
+    fetchConfig();
+  }, []);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -174,14 +202,25 @@ export default function RiderSignupPage() {
                 {t.createAccountButton}
             </Button>
           </form>
+            <div className="mt-4 text-center text-xs text-muted-foreground">
+                {t.terms}{" "}
+                <Link href={config.termsOfServiceUrl || '#'} target="_blank" className="underline underline-offset-4">
+                    {t.termsLink}
+                </Link>{" "}
+                {t.privacy}{" "}
+                <Link href={config.privacyPolicyUrl || '#'} target="_blank" className="underline underline-offset-4">
+                    {t.privacyLink}
+                </Link>
+                {t.agree}
+            </div>
+            <Separator className="my-4" />
             <div className="mt-4 text-center text-sm">
                 {t.loginPrompt}{" "}
                 <Link href="/rider-login" className="underline">
                     {t.loginLink}
                 </Link>
             </div>
-            <Separator className="my-4" />
-             <div className="text-center text-sm">
+             <div className="text-center text-sm mt-2">
                  <Link href="/signup" className="underline">
                     {t.customerPrompt} {t.customerLink}
                 </Link>

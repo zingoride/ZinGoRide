@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "next-themes";
 import { useLogo } from "@/context/LogoContext";
-import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock, Building, Settings2, CreditCard, LifeBuoy, Phone, Mail, Link as LinkIcon, FileText, Gift, Users, Zap, PlusCircle, Trash2, Edit } from "lucide-react";
+import { Car, Rocket, Bike, Package2, Upload, Palette, Shield, Ship, Bus, Train, Plane, Bot, DollarSign, Timer, Milestone, Percent, ReceiptText, Lock, Building, Settings2, CreditCard, LifeBuoy, Phone, Mail, Link as LinkIcon, FileText, Gift, Users, Zap, PlusCircle, Trash2, Edit, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useThemeColor } from "@/context/ThemeColorContext";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,8 @@ import { Switch } from "@/components/ui/switch";
 import { PasswordManagementForm } from "@/components/password-management-form";
 import { ProfileForm } from "@/components/profile-form";
 import { Slider } from "@/components/ui/slider";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const translations = {
   ur: {
@@ -111,6 +113,7 @@ const translations = {
     vehicleTypeName: "Vehicle Type Name",
     addNewVehicle: "Add New Vehicle",
     vehicleIcon: "Vehicle Icon",
+    saving: "Saving...",
   },
   en: {
     settings: "Settings",
@@ -200,6 +203,7 @@ const translations = {
     vehicleTypeName: "Vehicle Type Name",
     addNewVehicle: "Add New Vehicle",
     vehicleIcon: "Vehicle Icon",
+    saving: "Saving...",
   },
 };
 
@@ -252,6 +256,16 @@ const templateOptions = [
 
 type VehicleType = { name: string; icon: keyof typeof allIcons; active: boolean; baseFare: number; perKmRate: number; perMinRate: number; };
 
+type ConfigType = {
+    appName?: string;
+    appCurrency?: string;
+    supportPhone?: string;
+    supportEmail?: string;
+    privacyPolicyUrl?: string;
+    termsOfServiceUrl?: string;
+    [key: string]: any;
+};
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
@@ -259,21 +273,50 @@ export default function AdminSettingsPage() {
     const { logo, setLogo, LogoComponent } = useLogo();
     const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
     const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [newVehicleName, setNewVehicleName] = useState('');
     const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
+    const [config, setConfig] = useState<ConfigType>({});
     const t = translations[language];
 
     useEffect(() => {
         setMounted(true);
+        const fetchConfig = async () => {
+            const configRef = doc(db, 'configs', 'appConfig');
+            const configSnap = await getDoc(configRef);
+            if (configSnap.exists()) {
+                setConfig(configSnap.data());
+            }
+        };
+        fetchConfig();
     }, []);
 
-    const handleSave = () => {
-        toast({
-            title: t.saveSuccessTitle,
-            description: t.saveSuccessDesc,
-        });
+    const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setConfig(prev => ({...prev, [e.target.id]: e.target.value}));
+    }
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const configRef = doc(db, 'configs', 'appConfig');
+            await setDoc(configRef, config, { merge: true });
+
+            toast({
+                title: t.saveSuccessTitle,
+                description: t.saveSuccessDesc,
+            });
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not save settings.',
+            });
+        } finally {
+            setSaving(false);
+        }
     };
     
     const handleTemplateChange = (templateName: string) => {
@@ -339,17 +382,17 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="app-name">{t.appName}</Label>
+                                <Label htmlFor="appName">{t.appName}</Label>
                                 <div className="relative">
                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                   <Input id="app-name" placeholder={t.appNamePlaceholder} defaultValue="ZinGo Ride" className="pl-8" />
+                                   <Input id="appName" placeholder={t.appNamePlaceholder} value={config.appName || 'ZinGo Ride'} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="app-currency">{t.appCurrency}</Label>
+                                <Label htmlFor="appCurrency">{t.appCurrency}</Label>
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="app-currency" placeholder={t.appCurrencyPlaceholder} defaultValue="PKR" className="pl-8" />
+                                    <Input id="appCurrency" placeholder={t.appCurrencyPlaceholder} value={config.appCurrency || 'PKR'} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                         </CardContent>
@@ -361,17 +404,17 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="support-phone">{t.supportPhone}</Label>
+                                <Label htmlFor="supportPhone">{t.supportPhone}</Label>
                                 <div className="relative">
                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="support-phone" type="tel" placeholder="+92 300 1234567" className="pl-8" />
+                                    <Input id="supportPhone" type="tel" placeholder="+92 300 1234567" value={config.supportPhone || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="support-email">{t.supportEmail}</Label>
+                                <Label htmlFor="supportEmail">{t.supportEmail}</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="support-email" type="email" placeholder="support@zingo.com" className="pl-8" />
+                                    <Input id="supportEmail" type="email" placeholder="support@zingo.com" value={config.supportEmail || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                         </CardContent>
@@ -682,24 +725,24 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="privacy-policy-url">{t.privacyPolicyUrl}</Label>
+                                <Label htmlFor="privacyPolicyUrl">{t.privacyPolicyUrl}</Label>
                                 <div className="relative">
                                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="privacy-policy-url" type="url" placeholder="https://zingo.com/privacy" className="pl-8" />
+                                    <Input id="privacyPolicyUrl" type="url" placeholder="https://zingo.com/privacy" value={config.privacyPolicyUrl || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="terms-url">{t.termsOfServiceUrl}</Label>
+                                <Label htmlFor="termsOfServiceUrl">{t.termsOfServiceUrl}</Label>
                                 <div className="relative">
                                     <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="terms-url" type="url" placeholder="https://zingo.com/terms" className="pl-8" />
+                                    <Input id="termsOfServiceUrl" type="url" placeholder="https://zingo.com/terms" value={config.termsOfServiceUrl || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="data-retention">{t.dataRetentionDays}</Label>
+                                <Label htmlFor="dataRetentionDays">{t.dataRetentionDays}</Label>
                                 <div className="relative">
                                     <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="data-retention" type="number" placeholder="e.g., 365" className="pl-8" />
+                                    <Input id="dataRetentionDays" type="number" placeholder="e.g., 365" className="pl-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{t.dataRetentionDesc}</p>
                             </div>
@@ -758,7 +801,10 @@ export default function AdminSettingsPage() {
             </Tabs>
             
             <div className="border-t pt-4">
-                <Button onClick={handleSave} className="w-full md:w-auto">{t.saveButton}</Button>
+                <Button onClick={handleSave} className="w-full md:w-auto" disabled={saving}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {saving ? t.saving : t.saveButton}
+                </Button>
             </div>
         </div>
     )
