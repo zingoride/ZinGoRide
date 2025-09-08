@@ -56,7 +56,7 @@ export function AdminHeader() {
           >
               <Avatar>
               <AvatarImage
-                  src={user?.photoURL || "https://picsum.photos/100/100?random=admin"}
+                  src={user?.photoURL || undefined}
                   alt="Admin Avatar"
                   data-ai-hint="portrait man glasses"
               />

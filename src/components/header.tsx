@@ -91,7 +91,7 @@ export function Header() {
           <Button variant="secondary" size="icon" className="rounded-full">
             <Avatar>
               <AvatarImage
-                src="https://picsum.photos/100/100"
+                src={undefined}
                 alt="Rider Avatar"
                 data-ai-hint="portrait man"
               />

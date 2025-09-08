@@ -236,7 +236,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const { title, description } = getStatusInfo();
     const showDriverDetails = status === 'accepted' || status === 'in_progress';
     const currentDriverName = driverName || "Finding Driver...";
-    const currentDriverAvatar = driverAvatar || `https://picsum.photos/seed/${driverId || 'driver'}/100/100`;
+    const currentDriverAvatar = driverAvatar || undefined;
 
     const renderCardContent = () => {
         if (!showDriverDetails) {

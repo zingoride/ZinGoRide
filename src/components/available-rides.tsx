@@ -21,7 +21,7 @@ const rideOptions = [
     eta: '5 min',
     price: '150',
     seats: 1,
-    image: 'https://picsum.photos/seed/bike/200/150',
+    image: 'https://placehold.co/200x150/E2E8F0/E2E8F0',
     imageHint: 'motorcycle side view'
   },
   {
@@ -30,7 +30,7 @@ const rideOptions = [
     eta: '8 min',
     price: '350',
     seats: 4,
-    image: 'https://picsum.photos/seed/car/200/150',
+    image: 'https://placehold.co/200x150/E2E8F0/E2E8F0',
     imageHint: 'white car side view'
   },
   {
@@ -39,7 +39,7 @@ const rideOptions = [
     eta: '6 min',
     price: '200',
     seats: 3,
-    image: 'https://picsum.photos/seed/rickshaw/200/150',
+    image: 'https://placehold.co/200x150/E2E8F0/E2E8F0',
     imageHint: 'auto rickshaw'
   },
 ];

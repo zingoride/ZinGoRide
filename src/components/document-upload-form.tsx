@@ -233,15 +233,15 @@ export function DocumentUploadForm() {
       </CardHeader>
       <CardContent className="grid gap-6">
         
-        {renderUploadSection('cnicFront', t.cnicFront, 'https://picsum.photos/seed/cnic-front-placeholder/400/250', 'id card front')}
+        {renderUploadSection('cnicFront', t.cnicFront, 'https://placehold.co/400x250/E2E8F0/E2E8F0', 'id card front')}
         
         <Separator />
 
-        {renderUploadSection('cnicBack', t.cnicBack, 'https://picsum.photos/seed/cnic-back-placeholder/400/250', 'id card back')}
+        {renderUploadSection('cnicBack', t.cnicBack, 'https://placehold.co/400x250/E2E8F0/E2E8F0', 'id card back')}
 
         <Separator />
 
-        {renderUploadSection('license', t.drivingLicense, 'https://picsum.photos/seed/license-placeholder/400/250', 'driving license')}
+        {renderUploadSection('license', t.drivingLicense, 'https://placehold.co/400x250/E2E8F0/E2E8F0', 'driving license')}
         
       </CardContent>
     </Card>

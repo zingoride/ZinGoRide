@@ -148,7 +148,7 @@ export function VehicleDetails() {
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
-            <Image src={`https://picsum.photos/seed/${licensePlate || 'vehicle'}/300/200`} width={300} height={200} alt="Vehicle Image" className="rounded-md" data-ai-hint="white car" />
+            <Image src={`https://placehold.co/300x200/E2E8F0/E2E8F0`} width={300} height={200} alt="Vehicle Image" className="rounded-md" data-ai-hint="white car" />
         </div>
         <div className="grid gap-4">
             <div className="grid gap-2">

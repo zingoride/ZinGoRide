@@ -217,7 +217,7 @@ export function ProfileForm() {
             <div className="flex items-center gap-4">
                 <div className="relative">
                     <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
-                        <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} data-ai-hint="portrait man" />
+                        <AvatarImage src={user.photoURL || undefined} data-ai-hint="portrait man" />
                         <AvatarFallback>{(user.displayName || 'U').charAt(0)}</AvatarFallback>
                     </Avatar>
                     {uploading && (

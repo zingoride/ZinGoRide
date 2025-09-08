@@ -73,7 +73,7 @@ export function CustomerHeader() {
           >
               <Avatar>
               <AvatarImage
-                  src={user?.photoURL || "https://picsum.photos/100/100?random=2"}
+                  src={user?.photoURL || undefined}
                   alt="Customer Avatar"
                   data-ai-hint="portrait woman"
               />
