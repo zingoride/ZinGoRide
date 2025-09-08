@@ -188,12 +188,8 @@ export function InProgressRide() {
 
 
   return (
-    <div className="flex flex-col gap-4 items-start h-full">
-      <div className="w-full h-48 md:h-64 bg-muted/50 rounded-lg border overflow-hidden">
-         <DynamicMap markers={mapMarkers} />
-      </div>
-
-      <div className="flex flex-col gap-4 w-full">
+    <div className="grid md:grid-cols-2 gap-4 items-start h-full">
+      <div className="md:col-span-1 flex flex-col gap-4 w-full">
         <Card>
           <CardHeader className='pb-3'>
              <div className="flex items-center justify-between">
@@ -293,7 +289,9 @@ export function InProgressRide() {
                 {t.cancelRide}
             </Button>
         </div>
-
+      </div>
+       <div className="relative md:col-span-1 h-64 md:h-[calc(100vh-8rem)] rounded-lg overflow-hidden border">
+         <DynamicMap markers={mapMarkers} />
       </div>
     </div>
   );

@@ -81,10 +81,10 @@ const CustomerPage = () => {
     const renderContent = () => {
         if (!currentRide) {
             return (
-                <>
+                <div className="space-y-4">
                     <RideBookingForm onFindRide={handleFindRide} />
                     <AdBanner targetAudience="Customer" />
-                </>
+                </div>
             );
         }
         
@@ -108,16 +108,16 @@ const CustomerPage = () => {
      }
 
     return (
-       <div className="h-full w-full flex flex-col md:flex-row">
-            <div className="relative flex-1 md:order-2">
-                <DynamicMap />
-            </div>
-            <div className="md:order-1 md:w-[450px] md:border-r md:p-4 md:flex md:items-center">
-                 <Card className="shadow-lg rounded-t-2xl md:rounded-lg w-full">
+       <div className="h-full w-full grid md:grid-cols-2 gap-4 items-start">
+            <div className="md:col-span-1">
+                 <Card className="shadow-lg w-full">
                     <CardContent className="p-4">
                         {renderContent()}
                     </CardContent>
                 </Card>
+            </div>
+            <div className="relative md:col-span-1 h-64 md:h-[calc(100vh-8rem)] rounded-lg overflow-hidden border">
+                <DynamicMap />
             </div>
        </div>
     );
