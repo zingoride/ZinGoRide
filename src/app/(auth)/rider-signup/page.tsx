@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/context/LanguageContext";
 import { useLogo } from "@/context/LogoContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Gift } from "lucide-react";
 
 const translations = {
   ur: {
@@ -31,6 +31,8 @@ const translations = {
     fullNameLabel: "Poora Naam",
     emailLabel: "Email",
     passwordLabel: "Password",
+    referralCodeLabel: "Referral Code (Ikhtiyari)",
+    referralCodePlaceholder: "Dost ka referral code darj karein",
     createAccountButton: "Create an account",
     loginPrompt: "Pehle se account hai?",
     loginLink: "Login",
@@ -46,6 +48,8 @@ const translations = {
     fullNameLabel: "Full Name",
     emailLabel: "Email",
     passwordLabel: "Password",
+    referralCodeLabel: "Referral Code (Optional)",
+    referralCodePlaceholder: "Enter friend's referral code",
     createAccountButton: "Create an account",
     loginPrompt: "Already have an account?",
     loginLink: "Login",
@@ -65,6 +69,7 @@ export default function RiderSignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
 
@@ -85,6 +90,7 @@ export default function RiderSignupPage() {
         approvalStatus: 'Pending',
         createdAt: new Date(),
         walletBalance: 0, // Initial balance
+        referredBy: referralCode || null,
       });
       
       toast({
@@ -141,6 +147,13 @@ export default function RiderSignupPage() {
             <div className="grid gap-2">
                 <Label htmlFor="password">{t.passwordLabel}</Label>
                 <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
+             <div className="grid gap-2">
+                <Label htmlFor="referral-code">{t.referralCodeLabel}</Label>
+                 <div className="relative">
+                    <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="referral-code" placeholder={t.referralCodePlaceholder} value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="pl-8" />
+                </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
