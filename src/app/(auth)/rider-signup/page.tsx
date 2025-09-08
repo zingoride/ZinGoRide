@@ -84,7 +84,7 @@ export default function RiderSignupPage() {
         status: 'Active',
         approvalStatus: 'Pending',
         createdAt: new Date(),
-        walletBalance: 250, // Initial balance
+        walletBalance: 0, // Initial balance
       });
       
       toast({
