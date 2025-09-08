@@ -38,15 +38,14 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
     if ('geolocation' in navigator && locationWatchId.current === null) {
         locationWatchId.current = navigator.geolocation.watchPosition(
             (position) => {
-                setHasPermission(true);
+                if (!hasPermission) setHasPermission(true);
                 setError(null);
                 updateLocationInFirestore(position);
             },
             (err) => {
                 console.error("Geolocation error:", err);
-                setHasPermission(false);
+                if (hasPermission) setHasPermission(false);
                 setError(err);
-                // If permission is denied while watching, stop watching.
                 if (err.code === err.PERMISSION_DENIED) {
                     if (locationWatchId.current !== null) {
                         navigator.geolocation.clearWatch(locationWatchId.current);
@@ -57,7 +56,7 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
     }
-  }, [updateLocationInFirestore]);
+  }, [updateLocationInFirestore, hasPermission]);
 
   const stopWatching = () => {
     if (locationWatchId.current !== null) {
@@ -66,7 +65,7 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
     }
   };
 
-  const requestPermission = async (): Promise<boolean> => {
+  const requestPermission = useCallback(async (): Promise<boolean> => {
     return new Promise((resolve) => {
       if (!('geolocation' in navigator)) {
         setError(new GeolocationPositionError());
@@ -87,30 +86,26 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
         }
       );
     });
-  };
+  }, [updateLocationInFirestore]);
   
-  // Effect to check permission on mount
   useEffect(() => {
     if ('permissions' in navigator) {
         navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-            const isGranted = permissionStatus.state === 'granted';
-            setHasPermission(isGranted);
-
+            setHasPermission(permissionStatus.state === 'granted');
             permissionStatus.onchange = () => {
-                const isNowGranted = permissionStatus.state === 'granted';
-                setHasPermission(isNowGranted);
-                 if(!isNowGranted) {
+                const isGranted = permissionStatus.state === 'granted';
+                setHasPermission(isGranted);
+                 if(!isGranted) {
                     stopWatching();
                 }
             };
         });
     } else {
-        // Fallback for browsers that don't support Permissions API
-        navigator.geolocation.getCurrentPosition(() => setHasPermission(true), () => setHasPermission(false));
+        requestPermission();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Effect to start/stop watching based on online status and permission
   useEffect(() => {
     if (isOnline && hasPermission) {
       startWatching();
@@ -119,7 +114,6 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
     }
     
     return () => stopWatching();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, hasPermission, startWatching]);
 
 

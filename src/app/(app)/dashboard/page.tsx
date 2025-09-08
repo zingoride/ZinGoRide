@@ -6,7 +6,7 @@ import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wifi, WifiOff, DollarSign, Map } from 'lucide-react';
+import { Wifi, WifiOff, DollarSign, Map, Loader2 } from 'lucide-react';
 import { useRide } from '@/context/RideContext';
 import { InProgressRide } from '@/components/in-progress-ride';
 import { RideInvoice } from '@/components/ride-invoice';
@@ -26,6 +26,7 @@ const translations = {
     youAreOnline: "Aap Online Hain",
     goOnlineToReceive: "Nayi ride requests hasil karne ke liye online jayen.",
     goOnline: "Go Online",
+    goingOnline: "Online ja raha hai...",
     goOffline: "Go Offline",
     todaysEarnings: "Aaj Ki Kamai",
     fromYesterday: "+0% pichle din se",
@@ -47,6 +48,7 @@ const translations = {
     youAreOnline: "You are Online",
     goOnlineToReceive: "Go online to receive new ride requests.",
     goOnline: "Go Online",
+    goingOnline: "Going Online...",
     goOffline: "Go Offline",
     todaysEarnings: "Today's Earnings",
     fromYesterday: "+0% from yesterday",
@@ -79,20 +81,31 @@ export default function Dashboard() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
   const { hasPermission, requestPermission } = useLocationPermission();
+  const [isGoingOnline, setIsGoingOnline] = useState(false);
 
   const handleToggleOnline = async () => {
-    if (!hasPermission) {
-       const permissionGranted = await requestPermission();
-       if (!permissionGranted) {
-            toast({
-                variant: "destructive",
-                title: t.locationPermissionError,
-                description: t.locationPermissionDesc,
-            });
-            return;
-       }
+    // If user is currently online, just go offline.
+    if (isOnline) {
+      toggleStatus();
+      return;
     }
-    toggleStatus();
+
+    // If user wants to go online, check for permission first.
+    setIsGoingOnline(true);
+    const permissionGranted = await requestPermission();
+
+    if (permissionGranted) {
+      // If permission is granted, go online.
+      toggleStatus();
+    } else {
+      // If permission is denied, show a toast.
+      toast({
+          variant: "destructive",
+          title: t.locationPermissionError,
+          description: t.locationPermissionDesc,
+      });
+    }
+    setIsGoingOnline(false);
   }
 
 
@@ -173,8 +186,9 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold">{t.youAreOffline}</h1>
                 <p className="text-muted-foreground text-sm">{t.goOnlineToReceive}</p>
             </div>
-             <Button onClick={handleToggleOnline} size="lg" className="w-full max-w-sm mt-4">
-                {t.goOnline}
+             <Button onClick={handleToggleOnline} size="lg" className="w-full max-w-sm mt-4" disabled={isGoingOnline}>
+                {isGoingOnline && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isGoingOnline ? t.goingOnline : t.goOnline}
             </Button>
         </div>
         <div className='w-full max-w-md'>
