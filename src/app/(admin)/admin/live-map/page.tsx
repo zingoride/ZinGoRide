@@ -36,9 +36,15 @@ const translations = {
 export interface User {
   id: string;
   name: string;
+  email: string;
+  phone?: string;
   type: 'Driver' | 'Customer';
   status: 'Active' | 'Inactive';
-  // Assuming location is stored as a Firestore GeoPoint or a similar object
+  vehicle?: {
+      make: string;
+      model: string;
+      licensePlate: string;
+  };
   location?: GeoPoint | { latitude: number; longitude: number }; 
   [key: string]: any;
 }
@@ -106,14 +112,34 @@ export default function LiveMapPage() {
   const mapMarkers = useMemo(() => {
     return filteredUsers.map(user => {
       const loc = user.location;
-      // Handle both GeoPoint and object-based location formats
       const position: [number, number] = loc
-        ? ('latitude' in loc ? [loc.latitude, loc.longitude] : [24.86, 67.01]) // Default to Karachi if format is wrong
-        : [24.86, 67.01]; // Default position if no location
+        ? ('latitude' in loc ? [loc.latitude, loc.longitude] : [24.86, 67.01])
+        : [24.86, 67.01];
+
+      const vehicleInfo = user.type === 'Driver' && user.vehicle
+        ? `<div class="mt-2 pt-2 border-t border-gray-200">
+             <p class="font-semibold text-gray-700">Vehicle:</p>
+             <p class="text-sm">${user.vehicle.make} ${user.vehicle.model}</p>
+             <p class="text-sm font-mono bg-gray-200 px-1.5 py-0.5 rounded-sm inline-block">${user.vehicle.licensePlate}</p>
+           </div>`
+        : '';
+      
+      const popupContent = `
+        <div class="p-1 font-sans">
+          <h3 class="font-bold text-lg mb-1">${user.name}</h3>
+          <p class="text-sm text-gray-500">${user.type}</p>
+          <hr class="my-2" />
+          <div class="space-y-1 text-sm">
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Phone:</strong> ${user.phone || 'N/A'}</p>
+          </div>
+          ${vehicleInfo}
+        </div>
+      `;
 
       return {
         position: position,
-        popupText: `${user.name} - ${user.type}`,
+        popupText: popupContent,
         icon: user.type === 'Driver' ? carIcon : customerIcon,
       };
     });
