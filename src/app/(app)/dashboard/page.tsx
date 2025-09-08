@@ -107,7 +107,8 @@ export default function Dashboard() {
     const q = query(
       ridesRef, 
       where("status", "==", "booked"), 
-      limit(10) // Fetch more to ensure we get recent ones
+      orderBy("createdAt", "desc"),
+      limit(10)
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -128,10 +129,7 @@ export default function Dashboard() {
         }
       });
       
-      // Sort by date on the client-side
-      requests.sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
-      
-      setRideRequests(requests.slice(0,5));
+      setRideRequests(requests);
       
       if (isNewRequest && audioRef.current) {
         audioRef.current.play().catch(e => console.error("Error playing sound:", e));

@@ -50,19 +50,26 @@ export function RideProvider({ children }: { children: ReactNode }) {
   const acceptRide = async (ride: RideDetails) => {
     if (!user) return;
     
+    const rideUpdate = {
+        driverId: user.uid,
+        driverName: user.displayName || 'Driver',
+        driverAvatar: user.photoURL || '',
+        status: 'accepted' as const,
+    };
+    const updatedRide = { ...ride, ...rideUpdate };
+
+    // Optimistically update the state
+    setActiveRide(updatedRide);
+    setCompletedRide(null);
+
+    // Then update the database
     try {
         const rideRef = doc(db, "rides", ride.id);
-        const rideUpdate = {
-            driverId: user.uid,
-            driverName: user.displayName || 'Driver',
-            driverAvatar: user.photoURL || '',
-            status: 'accepted' as const,
-        };
         await updateDoc(rideRef, rideUpdate);
-        setActiveRide({ ...ride, ...rideUpdate });
-        setCompletedRide(null);
     } catch(error) {
         console.error("Error accepting ride: ", error);
+        // If the update fails, revert the state
+        setActiveRide(null); 
     }
   };
 
