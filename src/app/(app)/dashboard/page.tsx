@@ -78,16 +78,19 @@ export default function Dashboard() {
   const t = translations[language];
   const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
-  const { hasPermission, error: locationError } = useLocationPermission();
+  const { hasPermission, requestPermission } = useLocationPermission();
 
-  const handleToggleOnline = () => {
+  const handleToggleOnline = async () => {
     if (!hasPermission) {
-       toast({
-          variant: "destructive",
-          title: t.locationPermissionError,
-          description: t.locationPermissionDesc,
-        });
-        return;
+       const permissionGranted = await requestPermission();
+       if (!permissionGranted) {
+            toast({
+                variant: "destructive",
+                title: t.locationPermissionError,
+                description: t.locationPermissionDesc,
+            });
+            return;
+       }
     }
     toggleStatus();
   }
