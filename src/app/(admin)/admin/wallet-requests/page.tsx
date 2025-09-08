@@ -82,8 +82,8 @@ const translations = {
     cancel: "Cancel",
     manualTopUp: "Manual Wallet Top-Up",
     manualTopUpDesc: "Kisi bhi user ke wallet mein barah-e-raast raqam jama karein.",
-    userId: "User ID",
-    userIdPlaceholder: "User ki ID yahan likhein",
+    userId: "User ID or Email",
+    userIdPlaceholder: "Enter User ID or Email",
     topUpAmount: "Top-Up Raqam (PKR)",
     topUpAmountPlaceholder: "e.g., 500",
     topUpBtn: "Top-Up Karein",
@@ -132,24 +132,24 @@ const translations = {
 async function getUserByEmailOrId(identifier: string): Promise<{ uid: string; name: string } | null> {
     try {
         const usersRef = collection(db, 'users');
-        let userQuery;
 
         if (identifier.includes('@')) {
-            userQuery = query(usersRef, where('email', '==', identifier));
+            // Search by email
+            const q = query(usersRef, where('email', '==', identifier));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+            }
         } else {
+            // Search by ID
             const userDoc = await getDoc(doc(usersRef, identifier));
             if (userDoc.exists()) {
-                 return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
             }
-            return null;
         }
         
-        const querySnapshot = await getDocs(userQuery);
-        if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
-        }
-        return null;
+        return null; // Return null if no user is found by either method
     } catch (error) {
         console.error("Error fetching user by email/id: ", error);
         return null;
@@ -465,5 +465,3 @@ export default function WalletRequestsPage() {
     </div>
   )
 }
-
-    
