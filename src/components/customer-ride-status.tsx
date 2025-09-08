@@ -50,6 +50,7 @@ const translations = {
         acceptedDesc: (eta: string) => `Aapka driver ${eta} mein pohnch raha hai.`,
         enrouteDesc: "Aap apne manzil ke raaste par hain.",
         findingDriver: "Driver dhoonda ja raha hai...",
+        findingNewDriver: "Dosra driver dhoonda ja raha hai...",
         driverInfo: "Driver Ki Maloomat",
         rideDetails: "Safar Ki Tafseelat",
         pickup: "Uthanay ki Jagah",
@@ -69,6 +70,7 @@ const translations = {
         acceptedDesc: (eta: string) => `Your driver is arriving in ${eta}.`,
         enrouteDesc: "You are on the way to your destination.",
         findingDriver: "Finding a driver...",
+        findingNewDriver: "Finding another driver...",
         driverInfo: "Driver Information",
         rideDetails: "Ride Details",
         pickup: "Pickup",
@@ -87,6 +89,7 @@ const translations = {
 export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCancel: () => void }) {
     const [progress, setProgress] = useState(10);
     const [loading, setLoading] = useState(false);
+    const [showExtendedSearch, setShowExtendedSearch] = useState(false);
     const { language } = useLanguage();
     const { toast } = useToast();
     const t = translations[language];
@@ -128,14 +131,26 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
 
     useEffect(() => {
-        if (status === 'booked') {
-            const progressTimer = setInterval(() => {
-                setProgress(prev => (prev < 90 ? prev + 15 : prev));
-            }, 700);
+        let progressTimer: NodeJS.Timeout | null = null;
+        let extendedSearchTimer: NodeJS.Timeout | null = null;
 
-            return () => {
-                clearInterval(progressTimer);
-            }
+        if (status === 'booked') {
+            setShowExtendedSearch(false);
+            setProgress(10);
+            
+            progressTimer = setInterval(() => {
+                setProgress(prev => (prev < 90 ? prev + 5 : prev));
+            }, 500);
+            
+            extendedSearchTimer = setTimeout(() => {
+                setShowExtendedSearch(true);
+            }, 10000); // 10 seconds
+
+        }
+
+        return () => {
+            if (progressTimer) clearInterval(progressTimer);
+            if (extendedSearchTimer) clearTimeout(extendedSearchTimer);
         }
     }, [status]);
     
@@ -170,6 +185,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             await updateDoc(rideRef, {
                 status: 'cancelled_by_customer',
             });
+            // onCancel will be called by the parent component's onSnapshot listener
         } catch (error) {
             console.error("Error cancelling ride: ", error);
         } finally {
@@ -213,8 +229,17 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
             return (
                 <div className="flex flex-col justify-center items-center gap-6 text-center h-full p-8">
                     <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                    <p className='font-semibold text-lg'>{t.findingDriver}</p>
+                    <p className='font-semibold text-lg'>{showExtendedSearch ? t.findingNewDriver : t.findingDriver}</p>
                     <Progress value={progress} className='w-full' />
+                    {showExtendedSearch && (
+                         <Button variant="destructive" className="w-full mt-4" onClick={handleCancelRide} disabled={loading}>
+                            {loading ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.cancelling}</>
+                            ) : (
+                                <><X className="mr-2 h-4 w-4" /> {t.cancelRide}</>
+                            )}
+                        </Button>
+                    )}
                 </div>
             )
         }
