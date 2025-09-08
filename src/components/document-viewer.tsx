@@ -17,7 +17,7 @@ import type { User } from '@/app/(admin)/admin/users/page';
 import { Separator } from './ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Download } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -130,6 +130,11 @@ export function DocumentViewer({ user, isOpen, onOpenChange }: DocumentViewerPro
                           <CardFooter className="flex justify-center gap-2">
                              <Button variant="destructive" size="sm" onClick={() => handleStatusChange(doc.name, 'Rejected')} disabled={updating}>Reject</Button>
                              <Button size="sm" onClick={() => handleStatusChange(doc.name, 'Approved')} disabled={updating}>Approve</Button>
+                             <Button asChild variant="outline" size="sm">
+                                <a href={doc.url} download target="_blank" rel="noopener noreferrer">
+                                    <Download className="mr-2 h-4 w-4" /> Download
+                                </a>
+                             </Button>
                           </CardFooter>
                          </Card>
                       </div>
