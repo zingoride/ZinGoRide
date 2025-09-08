@@ -68,10 +68,11 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
   const requestPermission = useCallback(async (): Promise<boolean> => {
     return new Promise((resolve) => {
       if (!('geolocation' in navigator)) {
-        setError(new GeolocationPositionError());
+        // setError should be handled appropriately if needed
         resolve(false);
         return;
       }
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setHasPermission(true);
@@ -83,13 +84,14 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
           setError(err);
           setHasPermission(false);
           resolve(false);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   }, [updateLocationInFirestore]);
   
   useEffect(() => {
-    if ('permissions' in navigator) {
+    if (typeof window !== 'undefined' && 'permissions' in navigator) {
         navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
             setHasPermission(permissionStatus.state === 'granted');
             permissionStatus.onchange = () => {
@@ -100,8 +102,6 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
                 }
             };
         });
-    } else {
-        requestPermission();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
