@@ -44,6 +44,7 @@ const CustomerPage = () => {
     const { toast } = useToast();
     const { language } = useLanguage();
     const t = translations[language];
+    const [enablingLocation, setEnablingLocation] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
@@ -99,6 +100,12 @@ const CustomerPage = () => {
         setCurrentRide(null);
         setRideId(null);
     };
+    
+    const handleEnableLocation = async () => {
+        setEnablingLocation(true);
+        await requestPermission();
+        setEnablingLocation(false);
+    }
 
     if (!isClient || isCheckingPermission) {
         return <div className="h-full w-full bg-muted flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -116,11 +123,11 @@ const CustomerPage = () => {
                     <CardContent>
                         <Button 
                             className="w-full" 
-                            onClick={requestPermission} 
-                            disabled={isCheckingPermission}
+                            onClick={handleEnableLocation} 
+                            disabled={enablingLocation}
                         >
-                            {isCheckingPermission ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isCheckingPermission ? t.enabling : t.enableLocationBtn}
+                            {enablingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {enablingLocation ? t.enabling : t.enableLocationBtn}
                         </Button>
                     </CardContent>
                 </Card>

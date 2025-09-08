@@ -18,7 +18,7 @@ const LocationPermissionContext = createContext<LocationPermissionContextType | 
 
 export function LocationPermissionProvider({ children }: { children: ReactNode }) {
   const [hasPermission, setHasPermission] = useState(false);
-  const [isCheckingPermission, setIsCheckingPermission] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
   const { user } = useAuth();
   const { isOnline } = useRiderStatus();
@@ -35,9 +35,31 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
       console.error("Error updating location:", error);
     }
   }, [user]);
+  
+  const checkInitialPermission = useCallback(async () => {
+        if (!('geolocation' in navigator) || !('permissions' in navigator)) {
+            setIsCheckingPermission(false);
+            return;
+        }
+        try {
+            const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+            setHasPermission(permissionStatus.state === 'granted');
+            if (permissionStatus.state === 'granted') {
+                navigator.geolocation.getCurrentPosition(updateLocationInFirestore);
+            }
+        } catch (error) {
+            console.error("Error checking initial permission:", error);
+        } finally {
+            setIsCheckingPermission(false);
+        }
+    }, [updateLocationInFirestore]);
+
+    useEffect(() => {
+        checkInitialPermission();
+    }, [checkInitialPermission]);
+
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    setIsCheckingPermission(true);
     return new Promise((resolve) => {
       if (!('geolocation' in navigator)) {
         setError({
@@ -47,7 +69,6 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
             POSITION_UNAVAILABLE: 2,
             TIMEOUT: 3,
         } as GeolocationPositionError);
-        setIsCheckingPermission(false);
         resolve(false);
         return;
       }
@@ -57,13 +78,11 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
           setHasPermission(true);
           setError(null);
           updateLocationInFirestore(position);
-          setIsCheckingPermission(false);
           resolve(true);
         },
         (err) => {
           setError(err);
           setHasPermission(false);
-          setIsCheckingPermission(false);
           resolve(false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
