@@ -254,7 +254,7 @@ const templateOptions = [
     { name: 'Modern Slate', color: 'theme-slate', logo: 'Train', icon: Train, colorClass: 'bg-slate-500' },
 ];
 
-type VehicleType = { name: string; icon: keyof typeof allIcons; active: boolean; baseFare: number; perKmRate: number; perMinRate: number; };
+export type VehicleType = { name: string; icon: keyof typeof allIcons; active: boolean; baseFare: number; perKmRate: number; perMinRate: number; };
 
 type ConfigType = {
     appName?: string;
@@ -263,6 +263,20 @@ type ConfigType = {
     supportEmail?: string;
     privacyPolicyUrl?: string;
     termsOfServiceUrl?: string;
+    commissionRate?: number;
+    serviceFee?: number;
+    rideRequestTimeout?: number;
+    enableAiTips?: boolean;
+    enableCash?: boolean;
+    enableWallet?: boolean;
+    dataRetentionDays?: number;
+    enableReferrals?: boolean;
+    referrerBonus?: number;
+    inviteeBonus?: number;
+    enableSurge?: boolean;
+    surgeMultiplier?: number;
+    surgeThreshold?: number;
+    vehicleTypes?: VehicleType[];
     [key: string]: any;
 };
 
@@ -270,15 +284,24 @@ export default function AdminSettingsPage() {
     const { toast } = useToast();
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
-    const { logo, setLogo, LogoComponent } = useLogo();
+    const { logo, setLogo } = useLogo();
     const { themeColor, setThemeColor } = useThemeColor();
     const [mounted, setMounted] = useState(false);
     const [saving, setSaving] = useState(false);
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
-    const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [newVehicleName, setNewVehicleName] = useState('');
     const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
-    const [config, setConfig] = useState<ConfigType>({});
+    const [config, setConfig] = useState<ConfigType>({
+        appName: 'ZinGo Ride',
+        appCurrency: 'PKR',
+        commissionRate: 15,
+        serviceFee: 50,
+        rideRequestTimeout: 10,
+        enableAiTips: true,
+        enableCash: true,
+        enableWallet: true,
+        vehicleTypes: [],
+    });
     const t = translations[language];
 
     useEffect(() => {
@@ -287,15 +310,26 @@ export default function AdminSettingsPage() {
             const configRef = doc(db, 'configs', 'appConfig');
             const configSnap = await getDoc(configRef);
             if (configSnap.exists()) {
-                setConfig(configSnap.data());
+                setConfig(prevConfig => ({ ...prevConfig, ...configSnap.data() }));
             }
         };
         fetchConfig();
     }, []);
 
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setConfig(prev => ({...prev, [e.target.id]: e.target.value}));
+        const { id, value, type, checked } = e.target;
+        setConfig(prev => ({...prev, [id]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) : value }));
     }
+    
+    const handleSwitchChange = (id: string, checked: boolean) => {
+        setConfig(prev => ({ ...prev, [id]: checked }));
+    }
+
+    const handleVehicleChange = (index: number, field: keyof VehicleType, value: any) => {
+        const updatedVehicles = [...(config.vehicleTypes || [])];
+        (updatedVehicles[index] as any)[field] = value;
+        setConfig(prev => ({...prev, vehicleTypes: updatedVehicles }));
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -330,13 +364,15 @@ export default function AdminSettingsPage() {
 
     const handleAddNewVehicle = () => {
         if (newVehicleName.trim() === '') return;
-        setVehicleTypes(prev => [...prev, { name: newVehicleName, icon: newVehicleIcon, active: true, baseFare: 0, perKmRate: 0, perMinRate: 0 }]);
+        const newVehicle: VehicleType = { name: newVehicleName, icon: newVehicleIcon, active: true, baseFare: 50, perKmRate: 20, perMinRate: 5 };
+        setConfig(prev => ({ ...prev, vehicleTypes: [...(prev.vehicleTypes || []), newVehicle]}));
         setNewVehicleName('');
         setNewVehicleIcon('Car');
     }
     
     const handleRemoveVehicle = (index: number) => {
-        setVehicleTypes(prev => prev.filter((_, i) => i !== index));
+        const updatedVehicles = [...(config.vehicleTypes || [])].filter((_, i) => i !== index);
+        setConfig(prev => ({ ...prev, vehicleTypes: updatedVehicles }));
     }
 
     useEffect(() => {
@@ -352,6 +388,8 @@ export default function AdminSettingsPage() {
     if (!mounted) {
         return null;
     }
+
+    const vehicleTypes = config.vehicleTypes || [];
 
     return (
         <div className="flex flex-col gap-8">
@@ -385,14 +423,14 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="appName">{t.appName}</Label>
                                 <div className="relative">
                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                   <Input id="appName" placeholder={t.appNamePlaceholder} value={config.appName || 'ZinGo Ride'} onChange={handleConfigChange} className="pl-8" />
+                                   <Input id="appName" placeholder={t.appNamePlaceholder} value={config.appName || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="appCurrency">{t.appCurrency}</Label>
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="appCurrency" placeholder={t.appCurrencyPlaceholder} value={config.appCurrency || 'PKR'} onChange={handleConfigChange} className="pl-8" />
+                                    <Input id="appCurrency" placeholder={t.appCurrencyPlaceholder} value={config.appCurrency || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                         </CardContent>
@@ -570,28 +608,28 @@ export default function AdminSettingsPage() {
                                             return <TabsTrigger key={v.name} value={v.name}><Icon className="mr-2 h-4 w-4" /> {v.name}</TabsTrigger>
                                         })}
                                     </TabsList>
-                                    {vehicleTypes.map(v => (
+                                    {vehicleTypes.map((v, index) => (
                                     <TabsContent key={v.name} value={v.name} className="mt-4">
                                         <div className="space-y-4">
                                             <div className="grid gap-2">
                                                 <Label htmlFor={`${v.name}-base-fare`}>{t.baseFare}</Label>
                                                 <div className="relative">
                                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input id={`${v.name}-base-fare`} type="number" placeholder="e.g., 100" defaultValue={v.baseFare} className="pl-8" />
+                                                    <Input id={`${v.name}-base-fare`} type="number" placeholder="e.g., 100" value={v.baseFare} onChange={(e) => handleVehicleChange(index, 'baseFare', parseFloat(e.target.value))} className="pl-8" />
                                                 </div>
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label htmlFor={`${v.name}-km-rate`}>{t.perKmRate}</Label>
                                                 <div className="relative">
                                                     <Milestone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input id={`${v.name}-km-rate`} type="number" placeholder="e.g., 25" defaultValue={v.perKmRate} className="pl-8" />
+                                                    <Input id={`${v.name}-km-rate`} type="number" placeholder="e.g., 25" value={v.perKmRate} onChange={(e) => handleVehicleChange(index, 'perKmRate', parseFloat(e.target.value))} className="pl-8" />
                                                 </div>
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label htmlFor={`${v.name}-min-rate`}>{t.perMinRate}</Label>
                                                 <div className="relative">
                                                     <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input id={`${v.name}-min-rate`} type="number" placeholder="e.g., 5" defaultValue={v.perMinRate} className="pl-8" />
+                                                    <Input id={`${v.name}-min-rate`} type="number" placeholder="e.g., 5" value={v.perMinRate} onChange={(e) => handleVehicleChange(index, 'perMinRate', parseFloat(e.target.value))} className="pl-8" />
                                                 </div>
                                             </div>
                                         </div>
@@ -610,17 +648,17 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="commission-rate">{t.commissionRate}</Label>
+                                <Label htmlFor="commissionRate">{t.commissionRate}</Label>
                                 <div className="relative">
                                     <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="commission-rate" type="number" placeholder="e.g., 15" defaultValue="15" className="pl-8" />
+                                    <Input id="commissionRate" type="number" placeholder="e.g., 15" value={config.commissionRate || 15} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                              <div className="grid gap-2">
-                                <Label htmlFor="service-fee">{t.serviceFee}</Label>
+                                <Label htmlFor="serviceFee">{t.serviceFee}</Label>
                                  <div className="relative">
                                     <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="service-fee" type="number" placeholder="e.g., 50" defaultValue="50" className="pl-8" />
+                                    <Input id="serviceFee" type="number" placeholder="e.g., 50" value={config.serviceFee || 50} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
                         </CardContent>
@@ -632,12 +670,12 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center space-x-2">
-                                <Switch id="cash-payment-switch" defaultChecked />
-                                <Label htmlFor="cash-payment-switch">{t.enableCash}</Label>
+                                <Switch id="enableCash" checked={config.enableCash} onCheckedChange={(c) => handleSwitchChange('enableCash', c)} />
+                                <Label htmlFor="enableCash">{t.enableCash}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Switch id="wallet-payment-switch" defaultChecked />
-                                <Label htmlFor="wallet-payment-switch">{t.enableWallet}</Label>
+                                <Switch id="enableWallet" checked={config.enableWallet} onCheckedChange={(c) => handleSwitchChange('enableWallet', c)} />
+                                <Label htmlFor="enableWallet">{t.enableWallet}</Label>
                             </div>
                         </CardContent>
                     </Card>
@@ -650,16 +688,16 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="ride-request-timeout">{t.rideRequestTimeout}</Label>
+                                <Label htmlFor="rideRequestTimeout">{t.rideRequestTimeout}</Label>
                                  <div className="relative">
                                     <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="ride-request-timeout" type="number" placeholder="e.g., 30" defaultValue="10" className="pl-8" />
+                                    <Input id="rideRequestTimeout" type="number" placeholder="e.g., 30" value={config.rideRequestTimeout || 10} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{t.rideRequestTimeoutDesc}</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Switch id="ai-tips-switch" defaultChecked />
-                                <Label htmlFor="ai-tips-switch" className="flex flex-col space-y-1">
+                                <Switch id="enableAiTips" checked={config.enableAiTips} onCheckedChange={(c) => handleSwitchChange('enableAiTips', c)} />
+                                <Label htmlFor="enableAiTips" className="flex flex-col space-y-1">
                                     <span>{t.enableAiTips}</span>
                                     <span className="font-normal leading-snug text-muted-foreground">{t.enableAiTipsDesc}</span>
                                 </Label>
@@ -673,22 +711,22 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center space-x-2">
-                                <Switch id="referral-switch" />
-                                <Label htmlFor="referral-switch">{t.enableReferrals}</Label>
+                                <Switch id="enableReferrals" checked={config.enableReferrals} onCheckedChange={(c) => handleSwitchChange('enableReferrals', c)} />
+                                <Label htmlFor="enableReferrals">{t.enableReferrals}</Label>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="referrer-bonus">{t.referrerBonus}</Label>
+                                    <Label htmlFor="referrerBonus">{t.referrerBonus}</Label>
                                     <div className="relative">
                                         <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="referrer-bonus" type="number" placeholder="e.g., 100" className="pl-8" />
+                                        <Input id="referrerBonus" type="number" placeholder="e.g., 100" value={config.referrerBonus || 0} onChange={handleConfigChange} className="pl-8" />
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="invitee-bonus">{t.inviteeBonus}</Label>
+                                    <Label htmlFor="inviteeBonus">{t.inviteeBonus}</Label>
                                     <div className="relative">
                                         <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input id="invitee-bonus" type="number" placeholder="e.g., 100" className="pl-8" />
+                                        <Input id="inviteeBonus" type="number" placeholder="e.g., 100" value={config.inviteeBonus || 0} onChange={handleConfigChange} className="pl-8" />
                                     </div>
                                 </div>
                             </div>
@@ -701,18 +739,18 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex items-center space-x-2">
-                                <Switch id="surge-switch" />
-                                <Label htmlFor="surge-switch">{t.enableSurge}</Label>
+                                <Switch id="enableSurge" checked={config.enableSurge} onCheckedChange={(c) => handleSwitchChange('enableSurge', c)} />
+                                <Label htmlFor="enableSurge">{t.enableSurge}</Label>
                             </div>
                             <div className="grid gap-2">
-                                <Label>{t.surgeMultiplier}: 1.5x</Label>
-                                <Slider defaultValue={[1.5]} min={1} max={3} step={0.1} />
+                                <Label>{t.surgeMultiplier}: {config.surgeMultiplier || 1.5}x</Label>
+                                <Slider value={[config.surgeMultiplier || 1.5]} onValueChange={(v) => setConfig(p => ({...p, surgeMultiplier: v[0]}))} min={1} max={3} step={0.1} />
                             </div>
                             <div className="grid gap-2">
                                 <Label>{t.surgeThreshold}</Label>
                                 <div className="relative">
                                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="surge-threshold" type="number" placeholder="e.g. 80" defaultValue="80" className="pl-8" />
+                                    <Input id="surgeThreshold" type="number" placeholder="e.g. 80" value={config.surgeThreshold || 80} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{t.surgeThresholdDesc}</p>
                             </div>
@@ -742,7 +780,7 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="dataRetentionDays">{t.dataRetentionDays}</Label>
                                 <div className="relative">
                                     <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="dataRetentionDays" type="number" placeholder="e.g., 365" className="pl-8" />
+                                    <Input id="dataRetentionDays" type="number" placeholder="e.g., 365" value={config.dataRetentionDays || 365} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{t.dataRetentionDesc}</p>
                             </div>
@@ -761,7 +799,7 @@ export default function AdminSettingsPage() {
                                         <div className="flex items-center gap-3">
                                             <Icon className="h-5 w-5" />
                                             <span className="font-medium">{v.name}</span>
-                                            <Switch checked={v.active} onCheckedChange={(checked) => setVehicleTypes(p => p.map((item, i) => i === index ? {...item, active: checked} : item))} />
+                                            <Switch checked={v.active} onCheckedChange={(checked) => handleVehicleChange(index, 'active', checked)} />
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
@@ -809,3 +847,5 @@ export default function AdminSettingsPage() {
         </div>
     )
 }
+
+    
