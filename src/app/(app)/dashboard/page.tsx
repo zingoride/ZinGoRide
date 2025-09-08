@@ -84,7 +84,7 @@ export default function Dashboard() {
   const t = translations[language];
   const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
-  const { hasPermission, requestPermission } = useLocationPermission();
+  const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
   const [isGoingOnline, setIsGoingOnline] = useState(false);
   
   const [documentsApproved, setDocumentsApproved] = useState(false);
@@ -208,7 +208,7 @@ export default function Dashboard() {
     return <InProgressRide />;
   }
 
-  if (checkingDocs) {
+  if (checkingDocs || isCheckingPermission) {
       return (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />

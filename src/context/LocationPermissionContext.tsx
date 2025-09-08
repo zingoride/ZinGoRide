@@ -9,6 +9,7 @@ import { useRiderStatus } from './RiderStatusContext';
 
 interface LocationPermissionContextType {
   hasPermission: boolean;
+  isCheckingPermission: boolean;
   error: GeolocationPositionError | null;
   requestPermission: () => Promise<boolean>;
 }
@@ -17,6 +18,7 @@ const LocationPermissionContext = createContext<LocationPermissionContextType | 
 
 export function LocationPermissionProvider({ children }: { children: ReactNode }) {
   const [hasPermission, setHasPermission] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
   const { user } = useAuth();
   const { isOnline } = useRiderStatus();
@@ -91,9 +93,11 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
   }, [updateLocationInFirestore]);
   
   useEffect(() => {
+    setIsCheckingPermission(true);
     if (typeof window !== 'undefined' && 'permissions' in navigator) {
         navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
             setHasPermission(permissionStatus.state === 'granted');
+            setIsCheckingPermission(false);
             permissionStatus.onchange = () => {
                 const isGranted = permissionStatus.state === 'granted';
                 setHasPermission(isGranted);
@@ -102,6 +106,8 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
                 }
             };
         });
+    } else {
+        setIsCheckingPermission(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -118,7 +124,7 @@ export function LocationPermissionProvider({ children }: { children: ReactNode }
 
 
   return (
-    <LocationPermissionContext.Provider value={{ hasPermission, error, requestPermission }}>
+    <LocationPermissionContext.Provider value={{ hasPermission, isCheckingPermission, error, requestPermission }}>
       {children}
     </LocationPermissionContext.Provider>
   );
