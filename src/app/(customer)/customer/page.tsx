@@ -14,12 +14,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
     const isMobile = useIsMobile();
+    
+    // Location state lifted up from RideBookingForm
+    const [pickup, setPickup] = useState('');
+    const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
+    const [isGettingLocation, setIsGettingLocation] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
         setIsClient(true);
@@ -27,7 +34,29 @@ const CustomerPage = () => {
         if (savedRideId) {
             setRideId(savedRideId);
         }
-    }, []);
+
+        // Fetch location on initial load
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setPickupCoords({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                    setPickup("My Current Location");
+                    setIsGettingLocation(false);
+                },
+                () => {
+                    toast({ variant: 'destructive', title: "Could not get your location." });
+                    setIsGettingLocation(false);
+                }
+            );
+        } else {
+             toast({ variant: 'destructive', title: "Geolocation is not supported by your browser." });
+             setIsGettingLocation(false);
+        }
+
+    }, [toast]);
 
     useEffect(() => {
         if (!rideId) {
@@ -77,7 +106,12 @@ const CustomerPage = () => {
         if (!currentRide) {
             return (
                 <div className="space-y-4">
-                    <RideBookingForm onFindRide={handleFindRide} />
+                    <RideBookingForm 
+                        onFindRide={handleFindRide} 
+                        initialPickup={pickup}
+                        initialPickupCoords={pickupCoords}
+                        isLocationLoading={isGettingLocation}
+                    />
                     <AdBanner targetAudience="Customer" />
                 </div>
             );

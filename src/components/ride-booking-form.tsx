@@ -40,45 +40,29 @@ const translations = {
   }
 }
 
-export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: RideRequest) => void }) {
+interface RideBookingFormProps {
+    onFindRide: (rideDetails: RideRequest) => void;
+    initialPickup: string;
+    initialPickupCoords: { lat: number; lng: number } | null;
+    isLocationLoading: boolean;
+}
+
+export function RideBookingForm({ onFindRide, initialPickup, initialPickupCoords, isLocationLoading }: RideBookingFormProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
-  const [gettingLocation, setGettingLocation] = useState(false);
-  const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
-
+  
   const t = translations[language];
 
-  const handleGetCurrentLocation = () => {
-    if (navigator.geolocation) {
-        setGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setPickupCoords({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                });
-                setPickup(t.myLocation);
-                setGettingLocation(false);
-                toast({ title: t.locationSuccess });
-            },
-            () => {
-                toast({ variant: 'destructive', title: t.locationError });
-                setGettingLocation(false);
-            }
-        );
-    } else {
-        toast({ variant: 'destructive', title: "Geolocation is not supported by your browser." });
-    }
-  }
-  
   useEffect(() => {
-    handleGetCurrentLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (initialPickup) {
+      setPickup(initialPickup);
+    }
+  }, [initialPickup]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +83,7 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             status: 'pending', // Important: Status is 'pending' to show vehicle selection
-            pickupCoords: pickupCoords ? new GeoPoint(pickupCoords.lat, pickupCoords.lng) : undefined
+            pickupCoords: initialPickupCoords ? new GeoPoint(initialPickupCoords.lat, initialPickupCoords.lng) : undefined
         }
         
         const ridesCollection = collection(db, "rides");
@@ -128,17 +112,15 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
             <Circle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
                 id="pickup"
-                placeholder={t.pickupPlaceholder}
+                placeholder={isLocationLoading ? t.gettingLocation : t.pickupPlaceholder}
                 className="pl-10 h-12 text-base"
                 value={pickup}
                 onChange={(e) => setPickup(e.target.value)}
                 required
+                disabled={isLocationLoading}
             />
         </div>
-        <Button type="button" variant="outline" onClick={handleGetCurrentLocation} disabled={gettingLocation}>
-            {gettingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateFixed className="mr-2 h-4 w-4" />}
-            {gettingLocation ? t.gettingLocation : t.useMyLocation}
-        </Button>
+        
         <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -150,7 +132,7 @@ export function RideBookingForm({ onFindRide }: { onFindRide: (rideDetails: Ride
                 required
             />
         </div>
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading || isLocationLoading}>
         {loading ? (
             <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
