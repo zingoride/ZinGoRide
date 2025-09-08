@@ -29,9 +29,9 @@ const translations = {
         cnicFront: "Shanakhti Card (Front)",
         cnicBack: "Shanakhti Card (Back)",
         drivingLicense: "Driving License",
-        upload: "Upload Karein",
+        chooseFile: "File Chunein",
         uploading: "Uploading...",
-        saveButton: "Dastavezaat Upload Karein",
+        uploadDocument: "Dastavezaat Upload Karein",
         saveSuccess: "Dastavezaat kamyabi se upload ho gaye.",
         saveError: "Dastavezaat upload karne mein masla hua.",
         selectFile: "Pehle file chunein",
@@ -47,9 +47,9 @@ const translations = {
         cnicFront: "CNIC (Front Side)",
         cnicBack: "CNIC (Back Side)",
         drivingLicense: "Driving License",
-        upload: "Upload",
+        chooseFile: "Choose File",
         uploading: "Uploading...",
-        saveButton: "Upload Document",
+        uploadDocument: "Upload Document",
         saveSuccess: "Document uploaded successfully.",
         saveError: "Error uploading document.",
         selectFile: "Please select a file first",
@@ -183,6 +183,8 @@ export function DocumentUploadForm() {
       const docStatus = existingDocs[type]?.approvalStatus;
       const config = docStatus ? statusConfig[docStatus] : null;
       const Icon = config?.icon;
+      const isFileSelected = !!files[type];
+
       return (
         <div className="grid md:grid-cols-2 gap-4 items-center">
             <div>
@@ -193,21 +195,20 @@ export function DocumentUploadForm() {
                         {config.label}
                     </Badge>
                 )}
-                <p className="text-xs text-muted-foreground mt-2">{t.alreadyUploaded}</p>
+                {existingDocs[type] && <p className="text-xs text-muted-foreground mt-2">{t.alreadyUploaded}</p>}
+                
                 <div className="mt-2 flex gap-2">
                     <Button asChild variant="outline">
-                        <label htmlFor={`${type}-upload`} className="cursor-pointer">
+                        <label className="cursor-pointer">
                             <Upload className="mr-2 h-4 w-4" />
-                            {t.upload}
+                            {t.chooseFile}
+                            <input id={`${type}-upload`} type="file" className="hidden" onChange={(e) => handleFileChange(e, type)} accept="image/*" />
                         </label>
                     </Button>
-                    <input id={`${type}-upload`} type="file" className="hidden" onChange={(e) => handleFileChange(e, type)} accept="image/*" />
-                    {files[type] && (
-                       <Button onClick={() => handleUpload(type, label)} disabled={uploading[type]}>
-                          {uploading[type] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                          {uploading[type] ? t.uploading : t.saveButton}
-                      </Button>
-                    )}
+                    <Button onClick={() => handleUpload(type, label)} disabled={!isFileSelected || uploading[type]}>
+                        {uploading[type] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {uploading[type] ? t.uploading : t.uploadDocument}
+                    </Button>
                 </div>
             </div>
             <div className="flex justify-center items-center bg-muted/50 rounded-lg p-2 h-[150px]">
