@@ -1,13 +1,62 @@
 import { ImageResponse } from 'next/og'
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { Package2, Car, Rocket, Bike, Shield, Ship, Bus, Train, Plane, Bot } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import * as React from 'react';
 
-export const runtime = 'edge'
- 
+// Route segment config
+export const runtime = 'nodejs'
+
+// Image metadata
 export const size = {
   width: 512,
   height: 512,
 }
- 
-export default function Icon() {
+export const contentType = 'image/png'
+
+type LogoType = 'Default' | 'Car' | 'Rocket' | 'Bike' | 'Shield' | 'Ship' | 'Bus' | 'Train' | 'Plane' | 'Bot' | 'ZR';
+
+const ZRLogoComponent = ({ className }: { className?: string }) => (
+  <span className={cn("font-bold text-4xl tracking-tighter", className)}>ZR</span>
+);
+
+const iconMap: Record<LogoType, React.ComponentType<{ className?: string, strokeWidth?: number }>> = {
+    Default: Package2,
+    Car: Car,
+    Rocket: Rocket,
+    Bike: Bike,
+    Shield: Shield,
+    Ship: Ship,
+    Bus: Bus,
+    Train: Train,
+    Plane: Plane,
+    Bot: Bot,
+    ZR: ZRLogoComponent as any,
+};
+
+async function getLogoFromConfig(): Promise<LogoType> {
+    try {
+        const { db } = getFirebaseAdmin();
+        const configRef = db.collection('configs').doc('appConfig');
+        const configSnap = await configRef.get();
+        if (configSnap.exists) {
+            const configData = configSnap.data();
+            if (configData && configData.logo && iconMap[configData.logo as LogoType]) {
+                return configData.logo;
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching logo config for icon:", error);
+    }
+    // Return a default logo if anything fails
+    return 'Bike';
+}
+
+// Image generation
+export default async function Icon() {
+  const logoName = await getLogoFromConfig();
+  const IconComponent = iconMap[logoName];
+
   return new ImageResponse(
     (
       <div
@@ -23,23 +72,7 @@ export default function Icon() {
           borderRadius: '96px',
         }}
       >
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="300" 
-            height="300" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-        >
-            <path d="M12 17.5a1.5 1.5 0 0 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
-            <path d="M15 6.5a1.5 1.5 0 0 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
-            <path d="M18.5 14.5 16 12l-3 4 1 3h3.5"/>
-            <path d="m6 15 4-4-2-3-3.5 4"/>
-            <path d="M14 8.5 12 7l-3 4h3l2-1.5Z"/>
-        </svg>
+        <IconComponent strokeWidth={1.5} />
       </div>
     ),
     {
