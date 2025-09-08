@@ -13,7 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, where, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, where, writeBatch, getDocs, Timestamp } from 'firebase/firestore';
 import { uploadToCloudinary } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -120,9 +120,19 @@ export default function AdvertisementsPage() {
   
   useEffect(() => {
     const adsCollection = collection(db, "advertisements");
-    const q = query(adsCollection, orderBy("createdAt", "desc"));
+    // Removed orderBy to prevent Firestore index errors
+    const q = query(adsCollection); 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        const adsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advertisement));
+        const adsList = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                 id: doc.id, 
+                 ...data,
+                 // Ensure createdAt is a Date object for sorting
+                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date()
+            } as Advertisement
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort manually
+        
         setCustomerAds(adsList.filter(ad => ad.targetAudience === 'Customer'));
         setRiderAds(adsList.filter(ad => ad.targetAudience === 'Rider'));
         setLoading(false);
