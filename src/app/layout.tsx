@@ -45,18 +45,18 @@ export default function RootLayout({
           <ThemeColorProvider>
             <LanguageProvider>
               <AuthProvider>
-                <LocationPermissionProvider>
-                  <WalletProvider>
-                      <RiderStatusProvider>
-                          <RideProvider>
-                            <FcmTokenManager />
-                            <LogoProvider>
-                              {children}
-                            </LogoProvider>
-                          </RideProvider>
-                      </RiderStatusProvider>
-                  </WalletProvider>
-                </LocationPermissionProvider>
+                <RiderStatusProvider>
+                  <LocationPermissionProvider>
+                    <WalletProvider>
+                        <RideProvider>
+                          <FcmTokenManager />
+                          <LogoProvider>
+                            {children}
+                          </LogoProvider>
+                        </RideProvider>
+                    </WalletProvider>
+                  </LocationPermissionProvider>
+                </RiderStatusProvider>
               </AuthProvider>
             </LanguageProvider>
           </ThemeColorProvider>
