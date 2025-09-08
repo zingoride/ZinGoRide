@@ -1,5 +1,6 @@
 // This file should only be imported on the server-side
 import admin from 'firebase-admin';
+import serviceAccount from '../../serviceAccountKey.json';
 
 let app: admin.app.App | null = null;
 
@@ -7,30 +8,22 @@ function initializeAdminApp() {
   if (admin.apps.length > 0) {
     return admin.app();
   }
-  
-  // Use individual environment variables instead of the whole JSON file
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const projectId = process.env.FIREBASE_PROJECT_ID;
 
-  // Only initialize if all credentials are provided
-  if (!privateKey || !clientEmail || !projectId) {
-    console.warn('Missing Firebase Admin SDK credentials. Skipping Firebase Admin initialization.');
+  // Ensure all necessary properties exist on the service account object
+  const { project_id, private_key, client_email } = serviceAccount as any;
+  if (!project_id || !private_key || !client_email) {
+    console.error('Firebase Admin SDK service account key is missing required fields.');
     return null;
   }
-
-  const serviceAccount: admin.ServiceAccount = {
-    projectId,
-    clientEmail,
-    privateKey,
-  };
-
+  
   try {
     return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
     });
   } catch (error: any) {
-    console.error("Error initializing Firebase Admin SDK: ", error);
+    console.error("Error initializing Firebase Admin SDK: ", error.message);
+    // Log the error but don't re-throw to avoid crashing the server on startup.
+    // The getFirebaseAdmin function will handle the null app case.
     return null;
   }
 }
@@ -43,10 +36,12 @@ export function getFirebaseAdmin() {
   if (!app) {
     // Return a mock or empty object if initialization failed
     // to prevent crashes in the code that uses these services.
+    // This provides a clear failure point in the code that calls these services.
+    const errorMsg = "Firebase Admin SDK is not initialized. Check server logs for details.";
     return {
-      db: {} as admin.firestore.Firestore,
-      auth: {} as admin.auth.Auth,
-      messaging: {} as admin.messaging.Messaging,
+      db: new Proxy({}, { get() { throw new Error(errorMsg); } }) as admin.firestore.Firestore,
+      auth: new Proxy({}, { get() { throw new Error(errorMsg); } }) as admin.auth.Auth,
+      messaging: new Proxy({}, { get() { throw new Error(errorMsg); } }) as admin.messaging.Messaging,
       app: null,
     };
   }
