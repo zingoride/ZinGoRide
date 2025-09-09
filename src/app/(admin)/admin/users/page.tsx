@@ -185,10 +185,12 @@ export default function UsersPage() {
                         )}
                     </TableCell>
                     <TableCell>
+                       {user.type !== 'Admin' && (
                         <div className="flex items-center gap-2">
                            <NotifIcon className={`h-4 w-4 ${notifConfig.className}`} />
                            <span className={notifConfig.className}>{notifConfig.label}</span>
                         </div>
+                       )}
                     </TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-2">
                         {chatId && user.type !== 'Admin' && (
@@ -258,5 +260,3 @@ export default function UsersPage() {
     </>
   )
 }
-
-    
