@@ -92,6 +92,7 @@ const translations = {
     topUpError: "Raqam shamil karne mein masla hua.",
     topUpLoading: "Shamil kiya ja raha hai...",
     userNotFound: "Is ID ya email ke saath koi user nahi mila.",
+    insufficientAdminFunds: "Aapke admin wallet mein itni raqam nahi hai.",
   },
   en: {
     title: "Wallet Requests",
@@ -127,6 +128,7 @@ const translations = {
     topUpError: "Failed to add funds.",
     topUpLoading: "Topping up...",
     userNotFound: "No user found with this ID or Email.",
+    insufficientAdminFunds: "You have insufficient funds in your admin wallet.",
   }
 };
 
@@ -148,8 +150,8 @@ function ManualTopUpCard() {
         const userIdentifier = formData.get('userId') as string;
         const amount = Number(formData.get('amount'));
 
-        if (!userIdentifier || !amount) {
-            toast({ variant: 'destructive', title: t.topUpError, description: 'All fields are required.' });
+        if (!userIdentifier || !amount || amount <= 0) {
+            toast({ variant: 'destructive', title: t.topUpError, description: 'All fields are required and amount must be positive.' });
             setLoading(false);
             return;
         }
@@ -163,12 +165,15 @@ function ManualTopUpCard() {
             }
 
             const userRef = doc(db, 'users', userToCredit.uid);
+            const adminRef = doc(db, 'users', adminUser.uid);
+
             await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userRef);
-                if (!userDoc.exists()) {
-                    throw new Error("User not found in transaction");
+                const adminDoc = await transaction.get(adminRef);
+                if (!adminDoc.exists() || (adminDoc.data().walletBalance || 0) < amount) {
+                    throw new Error(t.insufficientAdminFunds);
                 }
-                
+
+                transaction.update(adminRef, { walletBalance: increment(-amount) });
                 transaction.update(userRef, { walletBalance: increment(amount) });
                 
                 const transactionRef = doc(collection(db, 'walletTransactions'));

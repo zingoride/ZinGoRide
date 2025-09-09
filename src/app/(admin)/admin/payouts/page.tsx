@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Send, Banknote, Loader2 } from "lucide-react";
+import { DollarSign, Send, Banknote, Loader2, Wallet, PlusCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -21,8 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, runTransaction, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, runTransaction, doc, writeBatch, increment, getDoc, onSnapshot } from "firebase/firestore";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/context/AuthContext";
 
 type PayoutStatus = 'Pending' | 'Completed' | 'Failed';
 type PayoutMethod = 'Easypaisa' | 'Jazzcash' | 'Bank Transfer';
@@ -63,6 +64,11 @@ const translations = {
     payoutSuccessDesc: (amount: number, method: string) => `PKR ${amount} aapke ${method} account mein transfer karne ki request bhej di gayi hai.`,
     loading: "Loading...",
     noHistory: "Abhi tak koi payout history nahi hai.",
+    adminWallet: "Admin Wallet Balance",
+    addFunds: "Funds Shamil Karein",
+    fundsAdded: "Funds kamyabi se shamil kar diye gaye.",
+    fundsError: "Funds shamil karne mein masla hua.",
+    addingFunds: "Funds shamil kiye ja rahe hain...",
   },
   en: {
     title: "Payouts",
@@ -84,6 +90,11 @@ const translations = {
      payoutSuccessDesc: (amount: number, method: string) => `A request to transfer PKR ${amount} to your ${method} account has been sent.`,
      loading: "Loading...",
      noHistory: "No payout history yet.",
+     adminWallet: "Admin Wallet Balance",
+     addFunds: "Add Funds",
+     fundsAdded: "Funds added successfully.",
+     fundsError: "Failed to add funds.",
+     addingFunds: "Adding funds...",
   }
 };
 
@@ -95,10 +106,14 @@ export default function PayoutsPage() {
   const [accountNumber, setAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [adminWalletBalance, setAdminWalletBalance] = useState(0);
+  const [addFundsAmount, setAddFundsAmount] = useState('');
+  const [addingFunds, setAddingFunds] = useState(false);
 
 
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
   const t = translations[language];
 
   useEffect(() => {
@@ -133,7 +148,53 @@ export default function PayoutsPage() {
     };
 
     fetchCommissionAndPayouts();
-  }, []);
+    
+    if (adminUser) {
+        const adminDocRef = doc(db, 'users', adminUser.uid);
+        const unsubscribe = onSnapshot(adminDocRef, (doc) => {
+            if (doc.exists()) {
+                setAdminWalletBalance(doc.data().walletBalance || 0);
+            }
+        });
+        return () => unsubscribe();
+    }
+  }, [adminUser]);
+
+  const handleAddFunds = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminUser || !addFundsAmount) return;
+    const fundsToAdd = parseFloat(addFundsAmount);
+    if (fundsToAdd <= 0) return;
+
+    setAddingFunds(true);
+    try {
+      const adminDocRef = doc(db, 'users', adminUser.uid);
+      const transactionRef = doc(collection(db, 'walletTransactions'));
+
+      const batch = writeBatch(db);
+
+      batch.update(adminDocRef, { walletBalance: increment(fundsToAdd) });
+      batch.set(transactionRef, {
+        type: 'admin_self_topup',
+        userId: adminUser.uid,
+        userName: adminUser.displayName,
+        amount: fundsToAdd,
+        status: 'Completed',
+        createdAt: serverTimestamp(),
+      });
+      
+      await batch.commit();
+
+      toast({ title: t.fundsAdded });
+      setAddFundsAmount('');
+
+    } catch (error) {
+      console.error("Error adding funds to admin wallet: ", error);
+      toast({ variant: 'destructive', title: t.fundsError });
+    } finally {
+      setAddingFunds(false);
+    }
+  }
 
   const handleRequestPayout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,29 +256,55 @@ export default function PayoutsPage() {
 
   return (
     <div className="grid gap-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-green-600" />
-            {t.totalCommission}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingCommission ? (
-             <div className="flex items-center gap-2">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="text-2xl font-bold text-muted-foreground">{t.loading}</span>
-            </div>
-          ) : (
-             <p className="text-4xl font-bold">PKR {totalCommission.toFixed(2)}</p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid md:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              {t.totalCommission}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingCommission ? (
+              <div className="flex items-center gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <span className="text-2xl font-bold text-muted-foreground">{t.loading}</span>
+              </div>
+            ) : (
+              <p className="text-4xl font-bold">PKR {totalCommission.toFixed(2)}</p>
+            )}
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-6 w-6 text-blue-600" />
+              {t.adminWallet}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+             <p className="text-4xl font-bold">PKR {adminWalletBalance.toFixed(2)}</p>
+          </CardContent>
+           <CardFooter>
+            <form onSubmit={handleAddFunds} className="flex w-full gap-2 items-end">
+               <div className="grid gap-2 flex-1">
+                <Label htmlFor="add-funds-amount">{t.addFunds}</Label>
+                <Input id="add-funds-amount" type="number" placeholder="e.g. 10000" required value={addFundsAmount} onChange={(e) => setAddFundsAmount(e.target.value)} />
+              </div>
+              <Button type="submit" disabled={addingFunds}>
+                  {addingFunds ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                  {addingFunds ? t.addingFunds : t.addFunds}
+              </Button>
+            </form>
+          </CardFooter>
+        </Card>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
             <CardTitle>{t.requestPayout}</CardTitle>
+            <CardDescription>{t.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRequestPayout} className="space-y-4">
@@ -292,3 +379,5 @@ export default function PayoutsPage() {
     </div>
   )
 }
+
+    
