@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -35,13 +35,18 @@ interface DocumentViewerProps {
   user: User;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  // onApprovalChange is no longer needed as component handles its own updates
 }
 
 export function DocumentViewer({ user, isOpen, onOpenChange }: DocumentViewerProps) {
   const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>(user.documents || []);
   const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    // This effect ensures that if the user prop changes (e.g., from the parent list),
+    // the documents displayed in the dialog are updated.
+    setDocuments(user.documents || []);
+  }, [user]);
 
   const handleStatusChange = async (docName: string, newStatus: ApprovalStatus) => {
     setUpdating(true);

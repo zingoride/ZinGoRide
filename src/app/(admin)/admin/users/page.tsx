@@ -22,7 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ChatDialog } from "@/components/chat-dialog";
 
 type UserStatus = 'Active' | 'Inactive';
-type UserType = 'Customer' | 'Driver';
+type UserType = 'Customer' | 'Driver' | 'Admin';
 type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Blocked';
 type NotificationStatus = 'granted' | 'denied' | 'default';
 
@@ -140,7 +140,6 @@ export default function UsersPage() {
           user={selectedUserForDocs} 
           isOpen={!!selectedUserForDocs} 
           onOpenChange={(isOpen) => !isOpen && setSelectedUserForDocs(null)}
-          onApprovalChange={handleStatusChange}
         />
       )}
       <Card>
@@ -174,7 +173,7 @@ export default function UsersPage() {
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                        <Badge variant={user.type === 'Driver' ? 'secondary' : 'outline'}>
+                        <Badge variant={user.type === 'Driver' ? 'secondary' : user.type === 'Admin' ? 'default' : 'outline'}>
                         {user.type}
                         </Badge>
                     </TableCell>
@@ -192,7 +191,7 @@ export default function UsersPage() {
                         </div>
                     </TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-2">
-                        {chatId && (
+                        {chatId && user.type !== 'Admin' && (
                            <ChatDialog 
                                 chatId={chatId}
                                 chatPartnerId={user.id}
