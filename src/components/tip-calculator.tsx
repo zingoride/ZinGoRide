@@ -112,7 +112,7 @@ export function TipCalculator() {
     defaultValues: {
       displayedFare: 0,
       riderRating: 5,
-      riderId: user?.uid || "",
+      riderId: "",
       travelConditions: "",
     },
   });
