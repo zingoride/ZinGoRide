@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -343,7 +342,7 @@ export default function WalletRequestsPage() {
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
-        <Card className="col-span-1 md:col-span-2">
+        <Card className="md:col-span-2">
             <CardHeader>
                 <CardTitle>{t.title}</CardTitle>
                 <CardDescription>{t.description}</CardDescription>
@@ -412,7 +411,7 @@ export default function WalletRequestsPage() {
             </CardContent>
         </Card>
 
-        <div className="md:col-start-2">
+        <div className="md:col-start-1 md:col-span-2 lg:col-start-auto lg:col-span-1">
            <ManualTopUpCard />
         </div>
 
@@ -444,5 +443,3 @@ export default function WalletRequestsPage() {
     </div>
   )
 }
-
-    
