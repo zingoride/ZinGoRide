@@ -13,6 +13,7 @@ import { ThemeColorProvider } from "@/context/ThemeColorContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { WalletProvider } from "@/context/WalletContext";
 import { FcmTokenManager } from "@/components/fcm-token-manager";
+import React from "react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 

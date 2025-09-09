@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
@@ -68,20 +68,17 @@ const translations = {
   }
 }
 
-// A simple, short, and royalty-free ping sound encoded in Base64
-const PING_SOUND = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAANAAAR2wAAMPwAAB2sAABTMAAAR2wAAAAAAAAUNCRYBAAAAiuu+//uQZAAAAAANAAAR2wAAMPwAAB2sAABTMAAAR2wAAAAAAAAUNCRYBAAAAiuu+";
 
 const requiredDocs = ["CNIC (Front Side)", "CNIC (Back Side)", "Driving License"];
 
 export default function Dashboard() {
   const [rideRequests, setRideRequests] = useState<RideRequest[]>([]);
   const { isOnline, toggleStatus } = useRiderStatus();
-  const { activeRide, completedRide } = useRide();
+  const { activeRide, completedRide, setRideListener } = useRide();
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const t = translations[language];
-  const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
   
   const [hasPermission, setHasPermission] = useState(false);
@@ -101,7 +98,6 @@ export default function Dashboard() {
       const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
       setHasPermission(permissionStatus.state === 'granted');
     } catch {
-      // Fallback for browsers that might not support query
       setHasPermission(false);
     } finally {
       setIsCheckingPermission(false);
@@ -110,9 +106,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     checkPermission();
-     if (audioRef.current) {
-      audioRef.current.src = PING_SOUND;
-    }
   }, [checkPermission]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -203,55 +196,35 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isOnline || activeRide) {
       setRideRequests([]);
+      setRideListener(null); // Clear listener when offline or in a ride
       return;
     }
     
-    const ridesRef = collection(db, "rides");
-    const q = query(
-      ridesRef, 
-      where("status", "==", "booked"), 
-      limit(10)
-    );
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const onNewRides = (requests: RideRequest[]) => {
       let isNewRequest = false;
-      const requests: RideRequest[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RideRequest));
-      
-      // Sort manually on the client-side
-      requests.sort((a, b) => {
-        const dateA = (a.createdAt as Timestamp)?.toDate() || new Date(0);
-        const dateB = (b.createdAt as Timestamp)?.toDate() || new Date(0);
-        return dateB.getTime() - dateA.getTime();
-      });
-
       requests.forEach((requestData) => {
-        if (!knownRideIds.current.has(requestData.id)) {
-            isNewRequest = true;
-            knownRideIds.current.add(requestData.id);
-            toast({
-                title: t.newRideRequestToast,
-                description: t.newRideRequestToastDesc(requestData.pickup, requestData.dropoff),
-            });
-        }
+          if (!knownRideIds.current.has(requestData.id)) {
+              isNewRequest = true;
+              knownRideIds.current.add(requestData.id);
+              toast({
+                  title: t.newRideRequestToast,
+                  description: t.newRideRequestToastDesc(requestData.pickup, requestData.dropoff),
+              });
+          }
       });
-      
       setRideRequests(requests);
-      
-      if (isNewRequest && audioRef.current) {
-        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+      if (isNewRequest) {
+        // Context will handle playing the sound
       }
+    };
+    
+    setRideListener(() => onNewRides);
+    
+    return () => {
+        setRideListener(null); // Cleanup listener on component unmount
+    };
 
-    }, (error) => {
-        console.error("Error fetching ride requests: ", error);
-        toast({
-            variant: "destructive",
-            title: t.fetchError,
-            description: error.message, // Use the actual error message
-        });
-    });
-
-    return () => unsubscribe();
-  }, [isOnline, activeRide, toast, t]);
+  }, [isOnline, activeRide, toast, t, setRideListener]);
 
   if (completedRide) {
     return <RideInvoice ride={completedRide} />;
@@ -273,7 +246,6 @@ export default function Dashboard() {
   if (!isOnline) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center p-4">
-        <audio ref={audioRef} preload="auto"></audio>
 
         {!hasPermission && (
              <Alert variant="destructive" className="w-full max-w-md">
@@ -315,7 +287,6 @@ export default function Dashboard() {
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
-       <audio ref={audioRef} preload="auto"></audio>
       {rideRequests.length > 0 ? (
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
           <div className="grid gap-4">
@@ -335,4 +306,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
