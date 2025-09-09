@@ -4,11 +4,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Car, DollarSign, Percent, Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 interface Stats {
   totalRevenue: number;
@@ -68,31 +68,54 @@ export default function AdminDashboardPage() {
     async function fetchData() {
         setLoading(true);
         try {
-            // Fetch users
-            const usersSnapshot = await getDocs(collection(db, 'users'));
-            const totalUsers = usersSnapshot.size;
-            const totalDrivers = usersSnapshot.docs.filter(doc => doc.data().type === 'Driver').length;
+            const now = new Date();
+            const startOfThisMonth = startOfMonth(now);
+            const startOfLastMonth = startOfMonth(subMonths(now, 1));
+            const endOfLastMonth = endOfMonth(subMonths(now, 1));
 
-            // Fetch rides
-            const ridesSnapshot = await getDocs(query(collection(db, 'rides'), where('status', '==', 'completed')));
+            // --- User Stats ---
+            const usersCollection = collection(db, 'users');
+            const allUsersSnapshot = await getDocs(usersCollection);
+            const totalUsers = allUsersSnapshot.size;
+            const totalDrivers = allUsersSnapshot.docs.filter(doc => doc.data().type === 'Driver').length;
+
+            const lastMonthUsersQuery = query(usersCollection, where('createdAt', '>=', startOfLastMonth), where('createdAt', '<=', endOfLastMonth));
+            const lastMonthUsersSnapshot = await getDocs(lastMonthUsersQuery);
+            const usersLastMonth = lastMonthUsersSnapshot.size;
+            const driversLastMonth = lastMonthUsersSnapshot.docs.filter(doc => doc.data().type === 'Driver').length;
+
+            // --- Ride Stats ---
+            const ridesCollection = collection(db, 'rides');
+            const completedRidesQuery = query(ridesCollection, where('status', '==', 'completed'));
+            const allRidesSnapshot = await getDocs(completedRidesQuery);
+
             let totalRevenue = 0;
             let totalRides = 0;
+            let revenueLastMonth = 0;
+            let ridesLastMonth = 0;
             const monthlyData: { [key: string]: { revenue: number, rides: number } } = {};
 
-            ridesSnapshot.forEach(doc => {
+            allRidesSnapshot.forEach(doc => {
                 const ride = doc.data();
                 const fare = ride.fare || 0;
+                const rideDate = (ride.createdAt as Timestamp).toDate();
+
+                // Aggregate totals
                 totalRevenue += fare;
                 totalRides++;
-                
-                if (ride.createdAt) {
-                    const date = (ride.createdAt as Timestamp).toDate();
-                    const monthName = format(date, 'MMM');
-                    if (!monthlyData[monthName]) {
-                        monthlyData[monthName] = { revenue: 0, rides: 0 };
-                    }
-                    monthlyData[monthName].revenue += fare;
-                    monthlyData[monthName].rides++;
+
+                // Aggregate by month for chart
+                const monthName = format(rideDate, 'MMM');
+                if (!monthlyData[monthName]) {
+                    monthlyData[monthName] = { revenue: 0, rides: 0 };
+                }
+                monthlyData[monthName].revenue += fare;
+                monthlyData[monthName].rides++;
+
+                // Aggregate for last month's comparison
+                if (rideDate >= startOfLastMonth && rideDate <= endOfLastMonth) {
+                    revenueLastMonth += fare;
+                    ridesLastMonth++;
                 }
             });
             
@@ -102,7 +125,8 @@ export default function AdminDashboardPage() {
                 name,
                 revenue: data.revenue,
                 rides: data.rides
-            }));
+            })).sort((a, b) => new Date(`01-${a.name}-2020`).getMonth() - new Date(`01-${b.name}-2020`).getMonth());
+
 
             setStats({
                 totalRevenue,
@@ -110,10 +134,10 @@ export default function AdminDashboardPage() {
                 totalRides,
                 totalUsers,
                 totalDrivers,
-                revenueLastMonth: 0, 
-                ridesLastMonth: 0,
-                usersLastMonth: 0,
-                driversLastMonth: 0
+                revenueLastMonth,
+                ridesLastMonth,
+                usersLastMonth,
+                driversLastMonth
             });
             setChartData(formattedChartData);
 
@@ -129,7 +153,17 @@ export default function AdminDashboardPage() {
   const getPercentageChange = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 100 : 0;
       return ((current - previous) / previous) * 100;
-  }
+  };
+
+  const renderPercentage = (change: number) => {
+    const roundedChange = change.toFixed(0);
+    if (change > 0) {
+      return <span className="text-green-600">+{roundedChange}%</span>;
+    } else if (change < 0) {
+      return <span className="text-red-600">{roundedChange}%</span>;
+    }
+    return <span>{roundedChange}%</span>;
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -147,7 +181,7 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-lg font-bold">PKR {stats?.totalRevenue.toFixed(2) || 0}</div>
             <p className="text-xs text-muted-foreground">
-                +{getPercentageChange(stats?.totalRevenue || 0, stats?.revenueLastMonth || 0).toFixed(0)}% {t.fromLastMonth}
+                {renderPercentage(getPercentageChange(stats?.totalRevenue || 0, stats?.revenueLastMonth || 0))} {t.fromLastMonth}
             </p>
           </CardContent>
         </Card>
@@ -159,7 +193,7 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-lg font-bold">PKR {stats?.totalCommission.toFixed(2) || 0}</div>
              <p className="text-xs text-muted-foreground">
-                +{getPercentageChange(stats?.totalCommission || 0, stats?.revenueLastMonth * 0.15 || 0).toFixed(0)}% {t.fromLastMonth}
+                {renderPercentage(getPercentageChange(stats?.totalCommission || 0, (stats?.revenueLastMonth || 0) * 0.15))} {t.fromLastMonth}
             </p>
           </CardContent>
         </Card>
@@ -171,7 +205,7 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-lg font-bold">{stats?.totalRides || 0}</div>
              <p className="text-xs text-muted-foreground">
-                +{getPercentageChange(stats?.totalRides || 0, stats?.ridesLastMonth || 0).toFixed(0)}% {t.fromLastMonth}
+                {renderPercentage(getPercentageChange(stats?.totalRides || 0, stats?.ridesLastMonth || 0))} {t.fromLastMonth}
             </p>
           </CardContent>
         </Card>
@@ -183,7 +217,7 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-lg font-bold">{stats?.totalUsers || 0}</div>
             <p className="text-xs text-muted-foreground">
-                +{getPercentageChange(stats?.totalUsers || 0, stats?.usersLastMonth || 0).toFixed(0)}% {t.fromLastMonth}
+                {renderPercentage(getPercentageChange(stats?.totalUsers || 0, stats?.usersLastMonth || 0))} {t.fromLastMonth}
             </p>
           </CardContent>
         </Card>
@@ -195,18 +229,26 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData}>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" fontSize={12} />
-              <YAxis fontSize={12} />
-              <Tooltip />
+              <YAxis yAxisId="left" stroke="hsl(var(--primary))" fontSize={12} tickFormatter={(val) => `PKR ${val/1000}k`} />
+              <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--secondary-foreground))" fontSize={12} />
+              <Tooltip
+                contentStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    borderColor: 'hsl(var(--border))'
+                }}
+              />
               <Legend />
-              <Bar dataKey="rides" fill="hsl(var(--primary))" name={t.totalRides} />
-              <Bar dataKey="revenue" fill="hsl(var(--secondary))" name={t.totalRevenue} />
-            </BarChart>
+              <Line yAxisId="left" type="monotone" dataKey="revenue" name={t.totalRevenue} stroke="hsl(var(--primary))" strokeWidth={2} />
+              <Line yAxisId="right" type="monotone" dataKey="rides" name={t.totalRides} stroke="hsl(var(--secondary-foreground))" strokeWidth={2} />
+            </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
