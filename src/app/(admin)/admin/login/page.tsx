@@ -68,8 +68,8 @@ export default function AdminLoginPage() {
       toast({ title: t.loginSuccess });
       router.push('/admin/dashboard');
     } catch (error: any) {
-      // First-time admin setup logic
-      if ((error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') && email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      // First-time admin setup logic: only create if user does not exist
+      if (error.code === 'auth/user-not-found' && email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
           try {
               toast({ title: t.creatingAdmin });
               const userCredential = await createUserWithEmailAndPassword(auth, email, password);
