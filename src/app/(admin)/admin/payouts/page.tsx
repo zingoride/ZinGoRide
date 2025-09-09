@@ -176,7 +176,7 @@ export default function PayoutsPage() {
       batch.set(transactionRef, {
         type: 'admin_self_topup',
         userId: adminUser.uid,
-        userName: adminUser.displayName,
+        userName: adminUser.displayName || 'Admin',
         amount: fundsToAdd,
         status: 'Completed',
         createdAt: serverTimestamp(),
