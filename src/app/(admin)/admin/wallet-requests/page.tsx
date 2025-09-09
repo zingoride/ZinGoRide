@@ -30,7 +30,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc, runTransaction, where, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc, runTransaction, where, serverTimestamp, increment } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
@@ -53,7 +53,7 @@ interface TopUpRequest {
 const statusConfig = {
   Pending: { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200', label: 'Pending', labelUr: 'Pending' },
   Approved: { variant: 'default', className: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200', label: 'Approved', labelUr: 'Manzoor' },
-  Rejected: { variant: 'destructive', className: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200', label: 'Rejected', labelUr: 'Mustarad' },
+  Rejected: { variant: 'destructive', className: 'bg-red-100 text-red-800 dark:bg-red-900/ ৫০ dark:text-red-200', label: 'Rejected', labelUr: 'Mustarad' },
 };
 
 const translations = {
@@ -194,8 +194,7 @@ function ManualTopUpCard() {
                     throw new Error("User not found in transaction");
                 }
                 
-                const newBalance = (userDoc.data().walletBalance || 0) + amount;
-                transaction.update(userRef, { walletBalance: newBalance });
+                transaction.update(userRef, { walletBalance: increment(amount) });
                 
                 const transactionRef = doc(collection(db, 'walletTransactions'));
                 transaction.set(transactionRef, {
