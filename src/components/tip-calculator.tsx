@@ -89,7 +89,6 @@ const translations = {
 export function TipCalculator() {
   const { toast } = useToast();
   const { language } = useLanguage();
-  const { user } = useAuth();
   const t = translations[language];
 
   const formSchema = z.object({

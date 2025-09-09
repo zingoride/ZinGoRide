@@ -170,7 +170,7 @@ export default function PayoutsPage() {
 
         const docRef = await addDoc(collection(db, "payoutRequests"), newPayoutRequest);
 
-        setPayouts(prev => [{ id: docRef.id, ...newPayoutRequest, date: new Date() }, ...prev]);
+        setPayouts(prev => [{ id: docRef.id, ...newPayoutRequest, date: new Date() } as PayoutRequest, ...prev]);
         setTotalCommission(prev => prev - payoutAmount);
 
         toast({
