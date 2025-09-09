@@ -166,7 +166,7 @@ const translations = {
     appName: "Application Name",
     appNamePlaceholder: "e.g., ZinGo Ride",
     appCurrency: "Application Currency",
-    appCurrencyPlaceholder: "e.g., PKR",
+    appCurrencyPlaceholder: "e.g-., PKR",
     rideSettings: "Ride Settings",
     rideSettingsDesc: "Ride-specific options for riders and customers.",
     rideRequestTimeout: "Ride Request Timeout (seconds)",
@@ -498,7 +498,7 @@ export default function AdminSettingsPage() {
                             <div className="grid gap-4">
                                 <Label htmlFor="theme">{t.theme}</Label>
                                 <RadioGroup 
-                                    value={theme} 
+                                    value={theme || ''} 
                                     onValueChange={setTheme}
                                     className="grid grid-cols-3 gap-4"
                                 >
@@ -847,5 +847,3 @@ export default function AdminSettingsPage() {
         </div>
     )
 }
-
-    

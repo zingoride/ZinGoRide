@@ -81,7 +81,7 @@ export default function SettingsPage() {
                     <div className="grid gap-4">
                         <Label htmlFor="theme">{t.theme}</Label>
                         <RadioGroup 
-                            value={theme} 
+                            value={theme || ''} 
                             onValueChange={setTheme}
                             className="grid grid-cols-3 gap-4"
                         >
