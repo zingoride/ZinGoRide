@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RideRequest as RideRequestComponent } from '@/components/ride-request';
 import { useRiderStatus } from '@/context/RiderStatusContext';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,11 @@ import { RideInvoice } from '@/components/ride-invoice';
 import { useLanguage } from '@/context/LanguageContext';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { AdBanner } from '@/components/ad-banner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useLocationPermission } from '@/context/LocationPermissionContext';
 import Link from 'next/link';
 
 interface UserDocument {
@@ -84,11 +83,62 @@ export default function Dashboard() {
   const t = translations[language];
   const audioRef = useRef<HTMLAudioElement>(null);
   const knownRideIds = useRef(new Set<string>());
-  const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
+  
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
+
   const [isGoingOnline, setIsGoingOnline] = useState(false);
   
   const [documentsApproved, setDocumentsApproved] = useState(false);
   const [checkingDocs, setCheckingDocs] = useState(true);
+
+  const checkPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || !navigator.permissions) {
+      setIsCheckingPermission(false);
+      return;
+    }
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+      setHasPermission(permissionStatus.state === 'granted');
+    } catch {
+      // Fallback for browsers that might not support query
+      setHasPermission(false);
+    } finally {
+      setIsCheckingPermission(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkPermission();
+  }, [checkPermission]);
+
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !navigator.geolocation) {
+        resolve(false);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          setHasPermission(true);
+          if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, { notificationStatus: 'granted' });
+          }
+          resolve(true);
+        },
+        async (error) => {
+          if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, { notificationStatus: 'denied' });
+          }
+          setHasPermission(false);
+          resolve(false);
+        },
+        { enableHighAccuracy: true }
+      );
+    });
+  }, [user]);
 
   useEffect(() => {
     async function checkDocuments() {

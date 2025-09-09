@@ -2,7 +2,6 @@
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Header } from "@/components/header";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LocationPermissionProvider } from "@/context/LocationPermissionContext";
 
 export default function AppLayout({
     children,
@@ -10,7 +9,7 @@ export default function AppLayout({
     children: React.ReactNode
 }) {
     return (
-        <LocationPermissionProvider>
+        
             <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
                 <div className="hidden border-r bg-sidebar md:block">
                 <SidebarNav />
@@ -29,6 +28,6 @@ export default function AppLayout({
                     </main>
                 </div>
             </div>
-        </LocationPermissionProvider>
+        
     )
 }
