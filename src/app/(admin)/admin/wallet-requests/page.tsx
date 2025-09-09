@@ -34,6 +34,7 @@ import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { getUserByEmailOrId } from '@/app/actions';
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -129,32 +130,6 @@ const translations = {
   }
 };
 
-async function getUserByEmailOrId(identifier: string): Promise<{ uid: string; name: string } | null> {
-    try {
-        const usersRef = collection(db, 'users');
-
-        if (identifier.includes('@')) {
-            // Search by email
-            const q = query(usersRef, where('email', '==', identifier));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
-                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
-            }
-        } else {
-            // Search by ID
-            const userDoc = await getDoc(doc(usersRef, identifier));
-            if (userDoc.exists()) {
-                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
-            }
-        }
-        
-        return null; // Return null if no user is found by either method
-    } catch (error) {
-        console.error("Error fetching user by email/id: ", error);
-        return null;
-    }
-}
 
 function ManualTopUpCard() {
     const { user: adminUser } = useAuth();
@@ -464,3 +439,5 @@ export default function WalletRequestsPage() {
     </div>
   )
 }
+
+    

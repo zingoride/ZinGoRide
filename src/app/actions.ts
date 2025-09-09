@@ -126,4 +126,30 @@ export async function sendBroadcastNotification(formData: FormData): Promise<{ s
     }
 }
 
+export async function getUserByEmailOrId(identifier: string): Promise<{ uid: string; name: string } | null> {
+    const { db } = getFirebaseAdmin();
+    const usersRef = db.collection('users');
+
+    try {
+        if (identifier.includes('@')) {
+            const q = usersRef.where('email', '==', identifier);
+            const querySnapshot = await q.get();
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+            }
+        } else {
+            const userDoc = await usersRef.doc(identifier).get();
+            if (userDoc.exists) {
+                return { uid: userDoc.id, name: userDoc.data()?.name || 'User' };
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user by email/id: ", error);
+        return null;
+    }
+}
+    
+
     
