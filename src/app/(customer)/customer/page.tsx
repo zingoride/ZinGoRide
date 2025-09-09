@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RideBookingForm } from "@/components/ride-booking-form";
 import { AvailableRides } from "@/components/available-rides";
 import { CustomerRideStatus } from "@/components/customer-ride-status";
@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, MapPin } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
 import { useToast } from '@/hooks/use-toast';
-import { useLocationPermission } from '@/context/LocationPermissionContext';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -24,6 +23,7 @@ const translations = {
     enableLocationBtn: "Location Enable Karein",
     enabling: "Enabling...",
     rideRequestError: "Ride request karne mein masla hua.",
+    permissionDenied: "Aapne location ki ijazat nahi di. Baraye meharbani browser settings se isay enable karein.",
   },
   en: {
     enableLocationTitle: "Location Permission Required",
@@ -31,28 +31,47 @@ const translations = {
     enableLocationBtn: "Enable Location",
     enabling: "Enabling...",
     rideRequestError: "Error requesting ride.",
+    permissionDenied: "You have denied location permission. Please enable it in your browser settings.",
   }
 }
-
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
     const [rideId, setRideId] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
     
-    const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
+    const [hasPermission, setHasPermission] = useState(false);
+    const [isCheckingPermission, setIsCheckingPermission] = useState(true);
+    const [isEnablingLocation, setIsEnablingLocation] = useState(false);
+
     const { toast } = useToast();
     const { language } = useLanguage();
     const t = translations[language];
-    const [enablingLocation, setEnablingLocation] = useState(false);
+
+    const checkPermission = useCallback(async () => {
+        if (!navigator.permissions) {
+            setIsCheckingPermission(false);
+            return;
+        }
+        try {
+            const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+            if (permissionStatus.state === 'granted') {
+                setHasPermission(true);
+            }
+            setIsCheckingPermission(false);
+        } catch {
+            setIsCheckingPermission(false);
+        }
+    }, []);
 
     useEffect(() => {
         setIsClient(true);
+        checkPermission();
         const savedRideId = localStorage.getItem('activeRideId');
         if (savedRideId) {
             setRideId(savedRideId);
         }
-    }, []);
+    }, [checkPermission]);
 
     useEffect(() => {
         if (!rideId) {
@@ -101,10 +120,21 @@ const CustomerPage = () => {
         setRideId(null);
     };
     
-    const handleEnableLocation = async () => {
-        setEnablingLocation(true);
-        await requestPermission();
-        setEnablingLocation(false);
+    const handleEnableLocation = () => {
+        if (!navigator.geolocation) return;
+        setIsEnablingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            () => {
+                setHasPermission(true);
+                setIsEnablingLocation(false);
+            },
+            (error) => {
+                if (error.code === error.PERMISSION_DENIED) {
+                    toast({ variant: 'destructive', title: t.permissionDenied });
+                }
+                setIsEnablingLocation(false);
+            }
+        );
     }
 
     if (!isClient || isCheckingPermission) {
@@ -124,10 +154,10 @@ const CustomerPage = () => {
                         <Button 
                             className="w-full" 
                             onClick={handleEnableLocation} 
-                            disabled={enablingLocation}
+                            disabled={isEnablingLocation}
                         >
-                            {enablingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {enablingLocation ? t.enabling : t.enableLocationBtn}
+                            {isEnablingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {isEnablingLocation ? t.enabling : t.enableLocationBtn}
                         </Button>
                     </CardContent>
                 </Card>
@@ -154,11 +184,9 @@ const CustomerPage = () => {
             );
         }
 
-        // For accepted, in_progress, booked
         return <CustomerRideStatus ride={currentRide} onCancel={handleReset} />;
     }
 
-    // Default view: Ride booking form
     return (
        <div className="h-full w-full flex items-start justify-center">
             <div className="w-full max-w-md">

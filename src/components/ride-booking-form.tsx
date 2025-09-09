@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp, GeoPoint } from 'firebase/firestore';
-import { useLocationPermission } from '@/context/LocationPermissionContext';
 
 
 const translations = {
@@ -57,26 +56,19 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
   const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
-  const [manualLocationLoading, setManualLocationLoading] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   
-  const { hasPermission, requestPermission, isCheckingPermission } = useLocationPermission();
   const t = translations[language];
 
   const handleUseMyLocation = async () => {
-    setManualLocationLoading(true);
-    const permissionGranted = await requestPermission();
-    if (!permissionGranted) {
-        toast({ variant: 'destructive', title: t.locationError });
-        setManualLocationLoading(false);
-        return;
-    }
+    if (!navigator.geolocation) return;
+    setIsGettingLocation(true);
     
     navigator.geolocation.getCurrentPosition(
         async (position) => {
             const { latitude, longitude } = position.coords;
             setPickupCoords({ lat: latitude, lng: longitude });
 
-            // Reverse geocode using OpenStreetMap
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                 const data = await response.json();
@@ -84,7 +76,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
                     setPickup(data.display_name);
                     toast({ title: t.locationSuccess });
                 } else {
-                    setPickup(t.myLocation);
+                    setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                     toast({ variant: 'destructive', title: t.noAddressFound });
                 }
             } catch (error) {
@@ -92,12 +84,12 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
                 setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                 toast({ variant: 'destructive', title: t.locationError });
             } finally {
-                setManualLocationLoading(false);
+                setIsGettingLocation(false);
             }
         },
         () => {
             toast({ variant: 'destructive', title: t.locationError });
-            setManualLocationLoading(false);
+            setIsGettingLocation(false);
         }
     );
   }
@@ -116,7 +108,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     setLoading(true);
 
     try {
-        const rideDetails: Omit<RideRequest, 'id' | 'createdAt'> = {
+        const rideDetails: Omit<RideRequest, 'id' | 'createdAt' | 'pickupCoords'> & { pickupCoords?: GeoPoint } = {
             pickup,
             dropoff,
             customerId: user.uid,
@@ -139,7 +131,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             ...rideDetails, 
             id: docRef.id, 
             createdAt: new Date(),
-        });
+        } as RideRequest);
 
     } catch (error) {
         console.error("Error creating ride request:", error);
@@ -161,19 +153,19 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
                 size="icon" 
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={handleUseMyLocation}
-                disabled={manualLocationLoading || isCheckingPermission}
+                disabled={isGettingLocation}
                 aria-label={t.useMyLocation}
             >
-                {manualLocationLoading || isCheckingPermission ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+                {isGettingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
             </Button>
             <Input
                 id="pickup"
-                placeholder={isCheckingPermission ? t.gettingLocation : t.pickupPlaceholder}
+                placeholder={isGettingLocation ? t.gettingLocation : t.pickupPlaceholder}
                 className="pl-10 h-12 text-base pr-10"
                 value={pickup}
                 onChange={(e) => setPickup(e.target.value)}
                 required
-                disabled={isCheckingPermission || manualLocationLoading}
+                disabled={isGettingLocation}
             />
         </div>
         
@@ -188,7 +180,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
                 required
             />
         </div>
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading || isCheckingPermission}>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
         {loading ? (
             <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
