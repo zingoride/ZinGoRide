@@ -49,7 +49,7 @@ async function getLogoFromConfig(): Promise<LogoType> {
         console.error("Error fetching logo config for icon:", error);
     }
     // Return a default logo if anything fails
-    return 'Bike';
+    return 'ZR';
 }
 
 // Image generation
@@ -62,7 +62,7 @@ export default async function Icon() {
       <div
         style={{
           fontSize: 256,
-          background: 'hsl(var(--primary))',
+          background: '#10B981', // Careem Green
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -80,3 +80,5 @@ export default async function Icon() {
     }
   )
 }
+
+    

@@ -33,8 +33,8 @@ const logoMap: Record<LogoType, ComponentType<{ className?: string }>> = {
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
-  const [logo, setLogo] = useState<LogoType>('Bike');
-  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => Bike);
+  const [logo, setLogo] = useState<LogoType>('ZR');
+  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => ZRLogoComponent);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -86,3 +86,5 @@ export function useLogo() {
   }
   return context;
 }
+
+    
