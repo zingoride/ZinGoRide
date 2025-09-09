@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, ComponentType } from 'react';
@@ -86,5 +87,3 @@ export function useLogo() {
   }
   return context;
 }
-
-    

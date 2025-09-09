@@ -1,3 +1,4 @@
+
 import { ImageResponse } from 'next/og'
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { Package2, Car, Rocket, Bike, Shield, Ship, Bus, Train, Plane, Bot } from 'lucide-react';
@@ -80,5 +81,3 @@ export default async function Icon() {
     }
   )
 }
-
-    
