@@ -110,6 +110,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     checkPermission();
+     if (audioRef.current) {
+      audioRef.current.src = PING_SOUND;
+    }
   }, [checkPermission]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -270,7 +273,7 @@ export default function Dashboard() {
   if (!isOnline) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center p-4">
-        <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
+        <audio ref={audioRef} preload="auto"></audio>
 
         {!hasPermission && (
              <Alert variant="destructive" className="w-full max-w-md">
@@ -312,7 +315,7 @@ export default function Dashboard() {
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
-       <audio ref={audioRef} src={PING_SOUND} preload="auto"></audio>
+       <audio ref={audioRef} preload="auto"></audio>
       {rideRequests.length > 0 ? (
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
           <div className="grid gap-4">
@@ -332,3 +335,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
