@@ -29,7 +29,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc, runTransaction, where, serverTimestamp, increment } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc, runTransaction, where, serverTimestamp, increment, onSnapshot } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
@@ -244,33 +244,33 @@ export default function WalletRequestsPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const fetchRequests = async () => {
-        setLoading(true);
-        try {
-            const requestsCollection = collection(db, "walletRequests");
-            const q = query(requestsCollection, orderBy("createdAt", "desc"));
-            const requestSnapshot = await getDocs(q);
-            const requestList = requestSnapshot.docs.map(doc => {
-                const data = doc.data();
-                const timestamp = data.createdAt;
-                return {
-                    id: doc.id,
-                    ...data,
-                    date: timestamp ? timestamp.toDate() : new Date(),
-                } as TopUpRequest;
-            })
-            setRequests(requestList);
-        } catch (error: any) {
-            console.error("Error fetching wallet requests: ", error);
-            toast({
-                variant: "destructive",
-                title: "Error fetching requests",
-                description: error.message || "Could not retrieve wallet requests.",
-            });
-        }
+    setLoading(true);
+    const requestsCollection = collection(db, "walletRequests");
+    const q = query(requestsCollection, orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const requestList = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const timestamp = data.createdAt;
+            return {
+                id: doc.id,
+                ...data,
+                date: timestamp ? timestamp.toDate() : new Date(),
+            } as TopUpRequest;
+        })
+        setRequests(requestList);
         setLoading(false);
-    }
-    fetchRequests();
+    }, (error: any) => {
+        console.error("Error fetching wallet requests: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error fetching requests",
+            description: error.message || "Could not retrieve wallet requests.",
+        });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [toast]);
 
   const handleOpenApprovalDialog = (request: TopUpRequest) => {
