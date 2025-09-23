@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
                   status: 'Active',
                   approvalStatus: 'Approved',
                   createdAt: new Date(),
-                  walletBalance: 0,
+                  walletBalance: 5000,
               });
               if (typeof window !== 'undefined') {
                 localStorage.setItem('admin_logged_in', 'true');
