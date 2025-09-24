@@ -3,6 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -10,66 +11,78 @@ service cloud.firestore {
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
+    
+    // Admin has god-mode access
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
+      // Replace with your actual Admin User ID
+      return request.auth.uid == '9xLq5tLz9oYy6zDm1iIOnV5S9373';
     }
 
-    // Rules for users collection
+    // Default catch-all: Deny all reads/writes unless explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Users can be read by anyone signed in, but only updated by the owner or an admin
     match /users/{userId} {
-      // Any signed-in user can read user profiles (for maps, ride details, etc.)
       allow read: if isSignedIn();
-      // Only the user themselves or an admin can update their profile
       allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
     }
 
-    // Rules for rides collection
-    match /rides/{rideId} {
-      allow read: if isSignedIn() && (isOwner(request.resource.data.customerId) || isOwner(request.resource.data.driverId) || isAdmin());
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(request.resource.data.customerId) || isOwner(request.resource.data.driverId) || isAdmin());
-    }
-    
-    match /rides/{rideId}/messages/{messageId} {
-      allow read, write: if isSignedIn();
-    }
-    
-    match /chats/{chatId}/messages/{messageId} {
-      allow read, write: if isSignedIn();
-    }
-
-    // Rules for app configuration
+    // Configs can be read by anyone, but only written by an admin
     match /configs/{configId} {
-      allow read: if true; // Everyone can read config
-      allow write: if isAdmin(); // Only admins can change config
+      allow read: if true;
+      allow write: if isSignedIn() && isAdmin();
     }
-
-    // Rules for advertisements
-    match /advertisements/{adId} {
-      allow read: if true; // Everyone can read ads
-      allow create, update, delete: if isAdmin(); // Only admin can manage ads
-    }
-
-    // Rules for wallet top-up requests
-    match /walletRequests/{reqId} {
-      allow read: if isSignedIn();
+    
+    // Rides can be created by any signed-in user.
+    // They can be read by any signed-in user.
+    // They can only be updated/deleted by the customer, driver, or an admin.
+    match /rides/{rideId} {
       allow create: if isSignedIn();
-      allow update: if isAdmin(); // Only admin can approve/reject
+      allow read: if isSignedIn();
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.customerId) || isOwner(resource.data.driverId) || isAdmin());
+      
+      // Messages subcollection within a ride
+      match /messages/{messageId} {
+        allow read, create: if isSignedIn() && (isOwner(resource.data.senderId) || isOwner(request.resource.data.senderId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.customerId) || isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId) || isAdmin());
+      }
+    }
+    
+    // Chats can be read/written by participants or an admin
+    match /chats/{chatId} {
+       allow read, write: if isSignedIn() && (request.auth.uid in resource.data.participants || isAdmin());
+       
+       // Messages subcollection within a chat
+       match /messages/{messageId} {
+         allow read, create: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants || isAdmin());
+       }
     }
 
-    // Payouts can only be managed by admin
-    match /payoutRequests/{payoutId} {
-        allow read, write, create, delete: if isAdmin();
+    // Advertisements can be read by anyone, but only written by an admin
+    match /advertisements/{adId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isAdmin();
     }
-
-    // Admin can manage notifications
+    
+    // Wallet Requests can be created by the owner, and read/written by an admin
+    match /walletRequests/{reqId} {
+        allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+        allow read, write: if isSignedIn() && isAdmin();
+    }
+    
+    // Payout Requests can be created and read by an admin only
+    match /payoutRequests/{reqId} {
+      allow read, write: if isSignedIn() && isAdmin();
+    }
+    
+    // Notifications and transactions can only be written by an admin (server)
     match /notifications/{notifId} {
-        allow read, write, create, delete: if isAdmin();
+       allow read, write: if isSignedIn() && isAdmin();
     }
-
-    // Admin can manage wallet transactions
+    
     match /walletTransactions/{transId} {
-        allow read, write, create, delete: if isAdmin();
+       allow read, write: if isSignedIn() && isAdmin();
     }
   }
 }
