@@ -1,123 +1,39 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =========== Helper Functions ===========
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    // Default deny all reads and writes
+    // allow read, write: if false;
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    function getRole() {
-        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type;
-    }
-
-    function isAdmin() {
-        return isSignedIn() && getRole() == 'Admin';
-    }
-
-    function isDriver() {
-        return isSignedIn() && getRole() == 'Driver';
-    }
-    
-    function isCustomer() {
-        return isSignedIn() && getRole() == 'Customer';
-    }
-
-    // =========== Admin God Mode ===========
-    // Admin can read and write everything. This rule is checked first.
+    // Admins can read and write all documents
     match /{document=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
     }
 
-    // =========== Users Collection ===========
+    // Allow users to read/write their own data, but not other users' data.
     match /users/{userId} {
-      // Anyone can create their own user doc (signup)
-      allow create: if isSignedIn();
-      
-      // Users can get their own data. Admin can get any.
-      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
-      
-      // Only admins can list all users.
-      allow list: if isAdmin();
-
-      // Users can update their own data. Admin can update any.
-      // We restrict which fields can be updated by a user.
-      allow update: if (isSignedIn() && isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'vehicle', 'documents', 'fcmToken', 'location', 'status', 'photoURL', 'notificationStatus']))
-                    || isAdmin();
+      allow read, update, write: if request.auth.uid == userId;
     }
-    
-    // =========== Rides Collection ===========
+
+    // Any authenticated user can create a ride
     match /rides/{rideId} {
-       // Customer can create a ride request.
-       allow create: if isCustomer();
-       
-       // Involved parties (customer, driver) and admin can read.
-       allow get: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.driverId == request.auth.uid || isAdmin());
-       
-       // Only admin can list all rides for history.
-       allow list: if isAdmin();
-       
-       // Allow updates by involved parties or admin based on status transitions.
-       allow update: if (isCustomer() && resource.data.customerId == request.auth.uid) 
-                    || (isDriver() && resource.data.driverId == request.auth.uid) 
-                    || (isDriver() && resource.data.driverId == null) // Driver accepting
-                    || isAdmin();
-       
-       // Chat messages within a ride
-       match /messages/{messageId} {
-         allow read, create: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.driverId == request.auth.uid || isAdmin());
-       }
-    }
-    
-    // =========== Chats Collection (for admin-user direct chat) ===========
-    match /chats/{chatId} {
-        // Only participants of the chat can read messages
-        allow read, write: if isSignedIn() && request.auth.uid in chatId.split('_');
-
-        match /messages/{messageId} {
-            allow read, create: if isSignedIn() && request.auth.uid in chatId.split('_');
-        }
+      allow create: if request.auth != null;
+      
+      // Involved parties (customer, driver) can read/update their ride
+      allow read, update: if request.auth != null && 
+                           (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
     }
 
-    // =========== Wallet Requests ===========
+    // Wallet requests can be created by any authenticated user
     match /walletRequests/{requestId} {
-        // Users can create their own requests.
-        allow create: if isSignedIn();
-        // Admins can read and update (approve/reject). Users can read their own.
-        allow read, update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-        allow list: if isAdmin();
+      allow create: if request.auth != null;
     }
     
-    // =========== Payout Requests ===========
-    match /payoutRequests/{payoutId} {
-       // Only admin can create, read or update payout requests.
-       allow read, create, update, list: if isAdmin();
-    }
-
-    // =========== Notifications ===========
-    match /notifications/{notificationId} {
-       // Only admin can create broadcast notifications. All users can read for history.
-       allow create: if isAdmin();
-       allow read: if isSignedIn();
-    }
-
-    // =========== Advertisements ===========
-    match /advertisements/{adId} {
-        // Admin can manage ads.
-        allow read, write, create, delete: if isAdmin();
-    }
-    
-    // =========== App Config ===========
-    match /configs/appConfig {
-       // Anyone can read the app config (for logos, theme, etc.)
-       allow get: if true;
-       // Only admin can update it.
-       allow update: if isAdmin();
+    // Chat messages can be read/written by the customer or driver of the ride
+     match /rides/{rideId}/messages/{messageId} {
+        allow read, create: if request.auth != null && 
+                               (request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId ||
+                                request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId);
     }
   }
 }
