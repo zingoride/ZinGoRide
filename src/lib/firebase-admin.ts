@@ -1,4 +1,3 @@
-
 // This file should only be imported on the server-side
 import admin from 'firebase-admin';
 
