@@ -2,52 +2,61 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Check if a user ID matches the authenticated user's ID
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
     }
-
-    // Check if the authenticated user is an Admin
+    
+    // Function to check if the user is an admin
     function isAdmin() {
-      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
     }
 
     // Admins have full read/write access to the entire database.
-    // This rule must come first to grant them universal access.
+    // This rule is checked first. If a user is an admin, they get access,
+    // and evaluation of other more specific rules stops for them.
     match /{document=**} {
       allow read, write: if isAdmin();
     }
-    
-    // Users Collection
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // Any authenticated user can create their own user document (on signup)
+      // Any authenticated user can read their own document.
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Any authenticated user can update their own document.
+      allow update: if request.auth != null && request.auth.uid == userId;
+      // Allow user creation
       allow create: if request.auth != null;
-      // Users can only read or update their own document.
-      allow read, update: if isOwner(userId);
     }
 
-    // Rides Collection
+    // Rules for the 'rides' collection
     match /rides/{rideId} {
-      // A customer can create a new ride request for themselves.
-      allow create: if request.auth != null && request.resource.data.customerId == request.auth.uid;
-      // The assigned customer or driver can read the ride details.
-      allow read: if request.auth != null && (request.resource.data.customerId == request.auth.uid || request.resource.data.driverId == request.auth.uid);
-      // The driver can accept the ride (update), and both can update it during its lifecycle (e.g., status changes).
-      allow update: if request.auth != null && (request.resource.data.customerId == request.auth.uid || request.resource.data.driverId == request.auth.uid);
+        // A user can create a ride request
+        allow create: if request.auth != null;
+        // The assigned customer or driver can read the ride details
+        allow read: if request.auth != null && (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
+        // The assigned driver or customer (for cancellation) can update the ride
+        allow update: if request.auth != null && (request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
     }
-
-    // Wallet Requests Collection
+    
+    // Rules for wallet requests
     match /walletRequests/{requestId} {
-      // A user can create a wallet request for themselves.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Only the user who made the request can view it.
-      allow read: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        // A user can create their own wallet request
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+     // Rules for configs
+    match /configs/{configId} {
+      // Allow any authenticated user to read configuration
+      allow read: if request.auth != null;
     }
 
-    // Configs, Advertisements, Notifications, etc. are Admin-only
-    // The first global admin rule already covers this, so no more specific rules are needed.
-    // Any other collection not specified above will fall back to the default deny, except for Admins.
+    // Rules for advertisements
+    match /advertisements/{adId} {
+      // Allow any authenticated user to read advertisements
+      allow read: if request.auth != null;
+    }
   }
 }
