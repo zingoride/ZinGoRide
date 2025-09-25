@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +33,9 @@ const translations = {
     loginError: "Ghalat email ya password.",
     creatingAdmin: "Admin account banaya ja raha hai...",
     adminCreated: "Pehla admin account kamyabi se ban gaya!",
+    adminUpdated: "User ko admin bana diya gaya hai!",
+    notAdmin: "Aap admin nahi hain.",
+    userNotFound: "Is email se koi user nahi mila.",
   },
   en: {
     title: "Admin Login",
@@ -44,6 +47,9 @@ const translations = {
     loginError: "Incorrect email or password.",
     creatingAdmin: "Creating admin account...",
     adminCreated: "First-time admin account created successfully!",
+    adminUpdated: "User has been promoted to Admin!",
+    notAdmin: "You are not an admin.",
+    userNotFound: "No user found with this email.",
   },
 };
 
@@ -55,40 +61,56 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
+  
+  const ensureAdminUser = async (user: any) => {
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.type !== 'Admin') {
+              await updateDoc(userDocRef, { type: 'Admin', approvalStatus: 'Approved' });
+              toast({ title: t.adminUpdated });
+          }
+      } else {
+           await setDoc(userDocRef, {
+              name: "Admin",
+              email: email,
+              type: 'Admin',
+              status: 'Active',
+              approvalStatus: 'Approved',
+              createdAt: new Date(),
+              walletBalance: 5000,
+          });
+          toast({ title: t.adminCreated });
+      }
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin_logged_in', 'true');
+      }
+      toast({ title: t.loginSuccess });
+      router.push('/admin/dashboard');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('admin_logged_in', 'true');
-      }
-      toast({ title: t.loginSuccess });
-      router.push('/admin/dashboard');
+      // Step 1: Always try to sign in first.
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // If sign-in is successful, ensure the user is an admin in Firestore.
+      await ensureAdminUser(userCredential.user);
+
     } catch (error: any) {
-      // First-time admin setup logic: only create if user does not exist
+      // Step 2: Handle errors.
       if (error.code === 'auth/user-not-found' && email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+          // Case: The admin user does not exist at all in Firebase Auth. Create it.
           try {
               toast({ title: t.creatingAdmin });
-              const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-              const user = userCredential.user;
-              await setDoc(doc(db, "users", user.uid), {
-                  name: "Admin",
-                  email: email,
-                  type: 'Admin',
-                  status: 'Active',
-                  approvalStatus: 'Approved',
-                  createdAt: new Date(),
-                  walletBalance: 5000,
-              });
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('admin_logged_in', 'true');
-              }
-              toast({ title: t.adminCreated });
-              router.push('/admin/dashboard');
-
+              const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+              // Now that the auth user is created, create their Firestore document.
+              await ensureAdminUser(newUserCredential.user);
           } catch (creationError: any) {
              console.error("Admin creation error:", creationError);
              toast({
@@ -97,12 +119,21 @@ export default function AdminLoginPage() {
                 description: creationError.message,
               });
           }
-      } else {
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            // Case: The user exists, but the password is wrong.
+            toast({
+                variant: "destructive",
+                title: t.loginError,
+                description: "Please check your credentials.",
+            });
+      }
+      else {
+        // Case: Other errors (network, etc.)
         console.error("Login error:", error);
         toast({
           variant: "destructive",
-          title: t.loginError,
-          description: "Please check your credentials.",
+          title: "An unexpected error occurred",
+          description: error.message,
         });
       }
     } finally {
