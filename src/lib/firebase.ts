@@ -7,13 +7,13 @@ import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration is loaded from environment variables
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBL4loYZrYlMSoToxOAd8uSY9NCssqxByI",
+  authDomain: "zingo-ride-48221.firebaseapp.com",
+  databaseURL: "https://zingo-ride-48221-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "zingo-ride-48221",
+  storageBucket: "zingo-ride-48221.appspot.com",
+  messagingSenderId: "500373438211",
+  appId: "1:500373438211:web:0a9487df34a2400c827336"
 };
 
 // Initialize Firebase as a singleton

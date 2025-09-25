@@ -14,13 +14,16 @@ function initializeAdminApp() {
   
   try {
      const serviceAccount = {
-        projectId: process.env.FIREBASE_PROJECT_ID,
+        projectId: "zingo-ride-48221",
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     }
     
     if (!serviceAccount.projectId || !serviceAccount.privateKey || !serviceAccount.clientEmail) {
-        throw new Error("Missing Firebase Admin SDK credentials in environment variables.");
+        // Fallback for when full creds are not available, use application default credentials
+        // This is useful for environments like Google Cloud Run
+        console.warn("Firebase Admin SDK credentials not found in environment variables. Falling back to Application Default Credentials.");
+        return admin.initializeApp();
     }
 
     return admin.initializeApp({
