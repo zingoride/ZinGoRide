@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_ADMIN_EMAIL || '');
+  const [email, setEmail] = useState('info@zingoride.vercel.app');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
@@ -104,7 +104,7 @@ export default function AdminLoginPage() {
 
     } catch (error: any) {
       // Step 2: Handle errors.
-      if (error.code === 'auth/user-not-found' && email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      if (error.code === 'auth/user-not-found' && email === 'info@zingoride.vercel.app') {
           // Case: The admin user does not exist at all in Firebase Auth. Create it.
           try {
               toast({ title: t.creatingAdmin });

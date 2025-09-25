@@ -1,3 +1,4 @@
+
 // This file should only be imported on the server-side
 import admin from 'firebase-admin';
 
@@ -10,21 +11,13 @@ function initializeAdminApp() {
       return existingApp;
     }
   }
-
-  // Directly use environment variables
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!process.env.FIREBASE_PROJECT_ID || !privateKey || !process.env.FIREBASE_CLIENT_EMAIL) {
-    console.error('Firebase Admin SDK environment variables are missing or invalid.');
-    return null;
-  }
   
   try {
     return admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        privateKey: privateKey,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        projectId: "YOUR_PROJECT_ID",
+        privateKey: "YOUR_PRIVATE_KEY",
+        clientEmail: "YOUR_CLIENT_EMAIL",
       }),
     });
   } catch (error: any) {
