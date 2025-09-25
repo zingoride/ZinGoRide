@@ -18,6 +18,7 @@ import { uploadToCloudinary } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/context/AuthContext';
 
 
 type TargetAudience = 'Customer' | 'Rider';
@@ -103,6 +104,7 @@ const translations = {
 export default function AdvertisementsPage() {
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const t = translations[language];
 
   const [customerAds, setCustomerAds] = useState<Advertisement[]>([]);
@@ -119,6 +121,8 @@ export default function AdvertisementsPage() {
   const [targetAudience, setTargetAudience] = useState<TargetAudience>('Customer');
   
   useEffect(() => {
+    if (authLoading || !user) return;
+    
     const adsCollection = collection(db, "advertisements");
     const q = query(adsCollection); 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -141,7 +145,7 @@ export default function AdvertisementsPage() {
         setLoading(false);
     });
     return () => unsubscribe();
-  }, [toast, t.errorTitle]);
+  }, [toast, t.errorTitle, authLoading, user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -283,6 +287,10 @@ export default function AdvertisementsPage() {
       </div>
     )
   );
+  
+  if (authLoading) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <div className="grid gap-8 md:grid-cols-3 items-start">
@@ -391,3 +399,5 @@ export default function AdvertisementsPage() {
     </div>
   );
 }
+
+    
