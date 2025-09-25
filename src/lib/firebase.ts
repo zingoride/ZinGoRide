@@ -16,37 +16,29 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if it hasn't been initialized yet and all keys are present
+// Initialize Firebase as a singleton
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 let storage: FirebaseStorage;
 let analytics: Analytics | null = null;
 
-if (firebaseConfig.apiKey && getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
+if (getApps().length) {
+  app = getApp();
 } else {
-  app = getApps().length > 0 ? getApp() : ({} as FirebaseApp);
+  app = initializeApp(firebaseConfig);
 }
 
-// Ensure services are initialized only if the app was successfully initialized.
-if (app.name) {
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    
-    if (typeof window !== "undefined") {
-        isSupported().then((yes) => {
-            if (yes) {
-                analytics = getAnalytics(app);
-            }
-        });
+auth = getAuth(app);
+db = getFirestore(app);
+storage = getStorage(app);
+
+if (typeof window !== "undefined") {
+  isSupported().then((yes) => {
+    if (yes) {
+      analytics = getAnalytics(app);
     }
-} else {
-    // Provide dummy objects if app is not initialized to avoid crashes
-    auth = {} as Auth;
-    db = {} as Firestore;
-    storage = {} as FirebaseStorage;
+  });
 }
 
 export { app, auth, db, storage, analytics };
