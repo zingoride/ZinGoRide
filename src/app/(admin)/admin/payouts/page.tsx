@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -112,10 +113,12 @@ export default function PayoutsPage() {
 
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { user: adminUser } = useAuth();
+  const { user: adminUser, loading: authLoading } = useAuth();
   const t = translations[language];
 
   useEffect(() => {
+    if (authLoading || !adminUser) return;
+    
     const fetchCommissionAndPayouts = async () => {
       setLoadingCommission(true);
       
@@ -148,16 +151,15 @@ export default function PayoutsPage() {
 
     fetchCommissionAndPayouts();
     
-    if (adminUser) {
-        const adminDocRef = doc(db, 'users', adminUser.uid);
-        const unsubscribe = onSnapshot(adminDocRef, (doc) => {
-            if (doc.exists()) {
-                setAdminWalletBalance(doc.data().walletBalance || 0);
-            }
-        });
-        return () => unsubscribe();
-    }
-  }, [adminUser]);
+    const adminDocRef = doc(db, 'users', adminUser.uid);
+    const unsubscribe = onSnapshot(adminDocRef, (doc) => {
+        if (doc.exists()) {
+            setAdminWalletBalance(doc.data().walletBalance || 0);
+        }
+    });
+    return () => unsubscribe();
+    
+  }, [adminUser, authLoading]);
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,6 +254,10 @@ export default function PayoutsPage() {
         setLoading(false);
     }
   };
+
+  if (authLoading || loadingCommission) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
 
   return (
     <div className="grid gap-8">
