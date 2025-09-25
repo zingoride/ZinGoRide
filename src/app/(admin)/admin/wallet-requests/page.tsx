@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -241,9 +242,11 @@ export default function WalletRequestsPage() {
   const [approvalAmount, setApprovalAmount] = useState<number>(0);
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const t = translations[language];
 
   useEffect(() => {
+    if (authLoading || !user) return;
     setLoading(true);
     const requestsCollection = collection(db, "walletRequests");
     const q = query(requestsCollection, orderBy("createdAt", "desc"));
@@ -271,7 +274,7 @@ export default function WalletRequestsPage() {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, authLoading, user]);
 
   const handleOpenApprovalDialog = (request: TopUpRequest) => {
     setSelectedRequest(request);
@@ -336,8 +339,8 @@ export default function WalletRequestsPage() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center text-muted-foreground py-16">Loading requests...</div>;
+  if (loading || authLoading) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
