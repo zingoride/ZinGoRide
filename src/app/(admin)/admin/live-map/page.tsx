@@ -10,6 +10,7 @@ import { collection, query, where, onSnapshot, GeoPoint } from 'firebase/firesto
 import { Loader2 } from 'lucide-react';
 import L from 'leaflet';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 
 const translations = {
   ur: {
@@ -80,8 +81,12 @@ export default function LiveMapPage() {
   const [filter, setFilter] = useState('all');
   const { language } = useLanguage();
   const t = translations[language];
+  const { user, loading: authLoading } = useAuth();
+
 
   useEffect(() => {
+    if (authLoading || !user) return;
+
     // Query to get all active users
     const usersCollection = collection(db, "users");
     const q = query(usersCollection, where("status", "==", "Active"));
@@ -101,7 +106,7 @@ export default function LiveMapPage() {
 
     // Cleanup listener on component unmount
     return () => unsubscribe();
-  }, []);
+  }, [authLoading, user]);
 
   const filteredUsers = useMemo(() => {
     if (filter === 'all') return users;
@@ -144,6 +149,10 @@ export default function LiveMapPage() {
       };
     });
   }, [filteredUsers]);
+  
+  if (loading || authLoading) {
+      return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>
+  }
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -169,15 +178,9 @@ export default function LiveMapPage() {
       </Card>
       <Card className="flex-1 h-[calc(100vh-20rem)]">
         <CardContent className="h-full p-0">
-          {loading ? (
-            <div className="h-full w-full bg-muted flex items-center justify-center">
-              <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="w-full h-full rounded-b-lg overflow-hidden">
-              <DynamicMap markers={mapMarkers} />
-            </div>
-          )}
+          <div className="w-full h-full rounded-b-lg overflow-hidden">
+            <DynamicMap markers={mapMarkers} />
+          </div>
         </CardContent>
       </Card>
     </div>

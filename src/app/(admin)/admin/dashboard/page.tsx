@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { format, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { useAuth } from "@/context/AuthContext";
 
 interface Stats {
   totalRevenue: number;
@@ -60,12 +61,14 @@ const translations = {
 export default function AdminDashboardPage() {
   const { language } = useLanguage();
   const t = translations[language];
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+        if (authLoading || !user) return;
         setLoading(true);
         try {
             const now = new Date();
@@ -148,7 +151,7 @@ export default function AdminDashboardPage() {
         }
     }
     fetchData();
-  }, []);
+  }, [authLoading, user]);
   
   const getPercentageChange = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 100 : 0;
@@ -165,7 +168,7 @@ export default function AdminDashboardPage() {
     return <span>{roundedChange}%</span>;
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
@@ -250,5 +253,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

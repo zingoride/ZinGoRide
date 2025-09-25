@@ -3,11 +3,68 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write for any authenticated user.
-    // This is a temporary, permissive rule to unblock development.
-    // We will build more secure rules incrementally from here.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    
+    // Helper Functions
+    function isAdmin() {
+      return request.auth.uid == '9xLq5tLz9oYy6zDm1iIOnV5S9373';
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Collection: users
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner(userId);
+    }
+    
+    // Collection: rides
+    match /rides/{rideId} {
+      allow read: if isAdmin() || (isSignedIn() && (isOwner(resource.data.customerId) || isOwner(resource.data.driverId)));
+      allow create: if isSignedIn() && isOwner(request.resource.data.customerId);
+      allow update: if isAdmin() || (isSignedIn() && (isOwner(resource.data.driverId) || isOwner(resource.data.customerId)));
+      allow delete: if false; // Rides should be cancelled, not deleted
+    }
+    
+    // Collection: walletRequests
+    match /walletRequests/{requestId} {
+      allow read: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId));
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Collection: walletTransactions
+    match /walletTransactions/{transactionId} {
+        allow read: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId));
+        allow write: if isAdmin();
+    }
+    
+    // Collection: payoutRequests
+    match /payoutRequests/{payoutId} {
+        allow read, write: if isAdmin();
+    }
+    
+    // Collection: configs
+    match /configs/{configId} {
+      allow read: if true; // Configs like theme should be world-readable
+      allow write: if isAdmin();
+    }
+    
+    // Collection: notifications
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Collection: advertisements
+    match /advertisements/{adId} {
+      allow read: if true; // Ads should be world-readable
+      allow write: if isAdmin();
     }
   }
 }
