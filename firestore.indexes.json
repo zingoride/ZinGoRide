@@ -66,16 +66,6 @@
       ]
     },
     {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "email",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "advertisements",
       "queryScope": "COLLECTION",
       "fields": [
