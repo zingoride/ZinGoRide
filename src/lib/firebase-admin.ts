@@ -13,12 +13,18 @@ function initializeAdminApp() {
   }
   
   try {
+     const serviceAccount = {
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }
+    
+    if (!serviceAccount.projectId || !serviceAccount.privateKey || !serviceAccount.clientEmail) {
+        throw new Error("Missing Firebase Admin SDK credentials in environment variables.");
+    }
+
     return admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: "YOUR_PROJECT_ID",
-        privateKey: "YOUR_PRIVATE_KEY",
-        clientEmail: "YOUR_CLIENT_EMAIL",
-      }),
+      credential: admin.credential.cert(serviceAccount),
     });
   } catch (error: any) {
     console.error("Fatal: Error initializing Firebase Admin SDK from environment variables:", error.message);
