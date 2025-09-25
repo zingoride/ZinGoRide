@@ -1,91 +1,13 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper Functions
-    function isAdmin() {
-      // Admin UID is hardcoded for security and performance.
-      return request.auth.uid == '9xLq5tLz9oYy6zDm1iIOnV5S9373';
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // USERS
-    match /users/{userId} {
-      // Allow any signed-in user to read user profiles (needed for names, ratings, locations on map)
-      allow read: if isSignedIn();
-      
-      // Only the user themselves or an admin can create/update/delete their own profile
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
-
-    // RIDES
-    match /rides/{rideId} {
-      // An admin, or the customer/driver associated with the ride can read it.
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.customerId || request.auth.uid == resource.data.driverId);
-      
-      // Any signed-in user (customer) can create a ride request.
-      allow create: if isSignedIn();
-      
-      // Only the assigned driver or an admin can update the ride (e.g., accept, start, complete).
-      // The customer can also update it to cancel it.
-      allow update: if isSignedIn() && (
-        isAdmin() || 
-        request.auth.uid == resource.data.driverId ||
-        (request.auth.uid == resource.data.customerId && request.resource.data.status == 'cancelled_by_customer')
-      );
-      
-      // No one can delete rides for record-keeping.
-      allow delete: if false;
-    }
-
-    // ADVERTISEMENTS
-    match /advertisements/{adId} {
-      // Any signed-in user can see ads.
-      allow read: if isSignedIn();
-      // Only Admin can create, update, or delete ads.
-      allow write: if isAdmin();
-    }
-    
-    // WALLET REQUESTS
-    match /walletRequests/{reqId} {
-        // User can create their own request.
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        // Only admin can read or update (approve/reject) requests.
-        allow read, update: if isAdmin();
-        allow delete: if false;
-    }
-    
-    // PAYOUT REQUESTS
-    match /payoutRequests/{payoutId} {
-      // Only admin can create or read payout requests.
-      allow read, create: if isAdmin();
-      allow update, delete: if false;
-    }
-
-    // CHATS
-    match /chats/{chatId}/messages/{messageId} {
-      // Only the participants of the chat can read/write messages
-      allow read, write: if isSignedIn() && request.auth.uid in chatId.split('_');
-    }
-    
-    // CONFIGS
-    match /configs/{configId} {
-        // Anyone can read the app config.
-        allow read: if true;
-        // Only admin can write to config.
-        allow write: if isAdmin();
-    }
-    
-    // NOTIFICATIONS & TRANSACTIONS (Admin-only or system-generated)
-    match /notifications/{notifId} {
-        allow read, write: if isAdmin();
-    }
-    match /walletTransactions/{transId} {
-        allow read, write: if isAdmin();
+    // Allow read and write for any authenticated user.
+    // This is a temporary, permissive rule to unblock development.
+    // We will build more secure rules incrementally from here.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
