@@ -80,16 +80,6 @@
       ]
     },
     {
-      "collectionGroup": "payoutRequests",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "walletRequests",
       "queryScope": "COLLECTION",
       "fields": [
