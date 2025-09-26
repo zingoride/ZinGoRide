@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -13,14 +12,13 @@ export default function AdminRootPage() {
   useEffect(() => {
     if (loading) return; // Wait until auth state is loaded
 
-    // In a real app, you would check for a valid session and admin role.
-    // For this prototype, we'll use auth state as a simple check.
-    const isAdminLoggedIn = !!user;
+    // Check a local storage flag to see if the last login was for an admin
+    const isAdminLoggedIn = typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
 
-    if (isAdminLoggedIn) {
+    if (user && isAdminLoggedIn) {
       router.replace('/admin/dashboard');
     } else {
-      router.replace('/admin/login');
+      router.replace('/admin-login');
     }
   }, [user, loading, router]);
 

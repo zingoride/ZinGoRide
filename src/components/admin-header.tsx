@@ -43,7 +43,7 @@ export function AdminHeader() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin_logged_in');
     }
-    router.push('/admin/login');
+    router.push('/admin-login');
   };
 
   return (
