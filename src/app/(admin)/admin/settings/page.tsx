@@ -23,6 +23,8 @@ import { ProfileForm } from "@/components/profile-form";
 import { Slider } from "@/components/ui/slider";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { usePinVerification } from "@/context/PinVerificationContext";
+
 
 const translations = {
   ur: {
@@ -114,6 +116,10 @@ const translations = {
     addNewVehicle: "Add New Vehicle",
     vehicleIcon: "Vehicle Icon",
     saving: "Saving...",
+    adminPinManagement: "Admin PIN Management",
+    adminPinManagementDesc: "Set or update the 4-digit PIN for critical admin actions.",
+    adminPin: "Admin PIN",
+    adminPinPlaceholder: "4-digit PIN",
   },
   en: {
     settings: "Settings",
@@ -204,6 +210,10 @@ const translations = {
     addNewVehicle: "Add New Vehicle",
     vehicleIcon: "Vehicle Icon",
     saving: "Saving...",
+    adminPinManagement: "Admin PIN Management",
+    adminPinManagementDesc: "Set or update the 4-digit PIN for critical admin actions.",
+    adminPin: "Admin PIN",
+    adminPinPlaceholder: "4-digit PIN",
   },
 };
 
@@ -277,6 +287,7 @@ type ConfigType = {
     surgeMultiplier?: number;
     surgeThreshold?: number;
     vehicleTypes?: VehicleType[];
+    adminPin?: string;
     [key: string]: any;
 };
 
@@ -291,6 +302,7 @@ export default function AdminSettingsPage() {
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
     const [newVehicleName, setNewVehicleName] = useState('');
     const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
+    const { withPinVerification } = usePinVerification();
     const [config, setConfig] = useState<ConfigType>({
         appName: 'ZinGo Ride',
         appCurrency: 'PKR',
@@ -318,7 +330,17 @@ export default function AdminSettingsPage() {
 
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value, type, checked } = e.target;
-        setConfig(prev => ({...prev, [id]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) : value }));
+        let finalValue: string | number | boolean = value;
+        
+        if (type === 'checkbox') {
+            finalValue = checked;
+        } else if (type === 'number') {
+            finalValue = parseFloat(value);
+        } else if (id === 'adminPin') {
+            finalValue = value.replace(/[^0-9]/g, '').slice(0, 4);
+        }
+        
+        setConfig(prev => ({...prev, [id]: finalValue }));
     }
     
     const handleSwitchChange = (id: string, checked: boolean) => {
@@ -331,7 +353,7 @@ export default function AdminSettingsPage() {
         setConfig(prev => ({...prev, vehicleTypes: updatedVehicles }));
     };
 
-    const handleSave = async () => {
+    const handleSave = withPinVerification(async () => {
         setSaving(true);
         try {
             const configRef = doc(db, 'configs', 'appConfig');
@@ -351,7 +373,7 @@ export default function AdminSettingsPage() {
         } finally {
             setSaving(false);
         }
-    };
+    });
     
     const handleTemplateChange = (templateName: string) => {
         const selected = templateOptions.find(t => t.name === templateName);
@@ -776,13 +798,36 @@ export default function AdminSettingsPage() {
                                     <Input id="termsOfServiceUrl" type="url" placeholder="https://zingo.com/terms" value={config.termsOfServiceUrl || ''} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                             </div>
-                            <div className="grid gap-2">
+                             <div className="grid gap-2">
                                 <Label htmlFor="dataRetentionDays">{t.dataRetentionDays}</Label>
                                 <div className="relative">
                                     <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input id="dataRetentionDays" type="number" placeholder="e.g., 365" value={config.dataRetentionDays || 365} onChange={handleConfigChange} className="pl-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">{t.dataRetentionDesc}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.adminPinManagement}</CardTitle>
+                            <CardDescription>{t.adminPinManagementDesc}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-2">
+                                <Label htmlFor="adminPin">{t.adminPin}</Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                        id="adminPin" 
+                                        type="password" 
+                                        maxLength={4} 
+                                        placeholder={t.adminPinPlaceholder} 
+                                        value={config.adminPin || ''} 
+                                        onChange={handleConfigChange} 
+                                        className="pl-8" 
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

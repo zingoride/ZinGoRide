@@ -14,6 +14,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { WalletProvider } from "@/context/WalletContext";
 import { FcmTokenManager } from "@/components/fcm-token-manager";
 import React from "react";
+import { PinVerificationProvider } from "@/context/PinVerificationContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -45,6 +46,7 @@ export default function RootLayout({
           <ThemeColorProvider>
             <LanguageProvider>
                 <AuthProvider>
+                  <PinVerificationProvider>
                     <WalletProvider>
                         <RiderStatusProvider>
                             <LogoProvider>
@@ -55,6 +57,7 @@ export default function RootLayout({
                             </LogoProvider>
                         </RiderStatusProvider>
                     </WalletProvider>
+                  </PinVerificationProvider>
                 </AuthProvider>
             </LanguageProvider>
           </ThemeColorProvider>
