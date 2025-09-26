@@ -26,7 +26,7 @@ const translations = {
   ur: {
     title: "Admin Login",
     description: "Login karne ke liye apna email aur password darj karein.",
-    emailLabel: "Email",
+    emailLabel: "Email ya Username",
     passwordLabel: "Password",
     loginButton: "Login",
     loginSuccess: "Admin kamyabi se login ho gaya!",
@@ -39,8 +39,8 @@ const translations = {
   },
   en: {
     title: "Admin Login",
-    description: "Enter your email and password to login.",
-    emailLabel: "Email",
+    description: "Enter your email or username and password to login.",
+    emailLabel: "Email or Username",
     passwordLabel: "Password",
     loginButton: "Login",
     loginSuccess: "Admin logged in successfully!",
@@ -54,13 +54,14 @@ const translations = {
 };
 
 const ADMIN_EMAIL = 'info@zingoride.vercel.app';
+const ADMIN_USERNAME = 'ZR001';
 const ADMIN_UID = 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [email, setEmail] = useState('info@zingoride.vercel.app');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const t = translations[language];
@@ -84,7 +85,7 @@ export default function AdminLoginPage() {
       } else {
            await setDoc(userDocRef, {
               name: "Admin",
-              email: email,
+              email: ADMIN_EMAIL,
               type: 'Admin',
               status: 'Active',
               approvalStatus: 'Approved',
@@ -105,8 +106,11 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     
+    const isUsername = emailOrUsername === ADMIN_USERNAME;
+    const authEmail = isUsername ? ADMIN_EMAIL : emailOrUsername;
+
     // Security check: Only allow the specified email to even attempt login
-    if (email !== ADMIN_EMAIL) {
+    if (authEmail !== ADMIN_EMAIL) {
         toast({
             variant: "destructive",
             title: t.loginError,
@@ -118,17 +122,17 @@ export default function AdminLoginPage() {
 
     try {
       // Step 1: Always try to sign in first.
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, authEmail, password);
       // If sign-in is successful, ensure the user is the correct admin.
       await ensureAdminUser(userCredential.user);
 
     } catch (error: any) {
       // Step 2: Handle errors.
-      if (error.code === 'auth/user-not-found' && email === ADMIN_EMAIL) {
+      if (error.code === 'auth/user-not-found' && authEmail === ADMIN_EMAIL) {
           // Case: The admin user does not exist at all in Firebase Auth. Create it.
           try {
               toast({ title: t.creatingAdmin });
-              const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+              const newUserCredential = await createUserWithEmailAndPassword(auth, authEmail, password);
               // Now that the auth user is created, ensure it's the correct admin.
               await ensureAdminUser(newUserCredential.user);
           } catch (creationError: any) {
@@ -175,7 +179,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input id="email" type="email" placeholder="admin@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
+              <Input id="email" type="text" placeholder="admin@example.com or ZR001" required value={emailOrUsername} onChange={e => setEmailOrUsername(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t.passwordLabel}</Label>
