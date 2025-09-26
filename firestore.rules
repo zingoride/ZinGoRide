@@ -1,66 +1,11 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if the user is an Admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';
-    }
-    
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
 
-    match /users/{userId} {
-      // Admins can read/write any user document
-      // Users can only read/write their own document
-      allow read, write: if isAdmin() || isOwner(userId);
-    }
-
-    match /rides/{rideId} {
-      // Logged-in users can create rides
-      // Customer can read/update their own ride
-      // Driver assigned to the ride can read/update it
-      // Admins can read/write any ride
-      allow read, write: if request.auth != null && (isAdmin() || (request.resource.data.customerId == request.auth.uid || request.resource.data.driverId == request.auth.uid));
-      allow create: if request.auth != null;
-    }
-
-    match /walletRequests/{requestId} {
-      // Admins can read/write any request
-      // Users can create and read their own requests
-      allow read, create: if request.auth != null;
-      allow write: if isAdmin();
-    }
-    
-    match /payoutRequests/{requestId} {
-      // Only admins can create/read/write payout requests
-      allow read, write: if isAdmin();
-    }
-
-    match /notifications/{notificationId} {
-        // Only admins can manage notifications
-        allow read, write: if isAdmin();
-    }
-
-    match /advertisements/{adId} {
-        // Everyone can read, only admins can write
-        allow read: if true;
-        allow write: if isAdmin();
-    }
-
-    match /configs/appConfig {
-        // Everyone can read, only admins can write
-        allow read: if true;
-        allow write: if isAdmin();
-    }
-    
-    match /chats/{chatId}/messages/{messageId} {
-        // Users who are part of the chat can read/write messages
-        allow read, write: if request.auth != null && (request.auth.uid in chatId.split('_'));
+    // Allow logged-in users to read and write to the database
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
