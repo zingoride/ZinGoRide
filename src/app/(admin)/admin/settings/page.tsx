@@ -302,7 +302,7 @@ export default function AdminSettingsPage() {
     const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
     const [newVehicleName, setNewVehicleName] = useState('');
     const [newVehicleIcon, setNewVehicleIcon] = useState<keyof typeof allIcons>('Car');
-    const { withPinVerification } = usePinVerification();
+    const { isPinSet, isSessionActive, requestPinVerification } = usePinVerification();
     const [config, setConfig] = useState<ConfigType>({
         appName: 'ZinGo Ride',
         appCurrency: 'PKR',
@@ -353,7 +353,7 @@ export default function AdminSettingsPage() {
         setConfig(prev => ({...prev, vehicleTypes: updatedVehicles }));
     };
 
-    const handleSave = withPinVerification(async () => {
+    const performSave = async () => {
         setSaving(true);
         try {
             const configRef = doc(db, 'configs', 'appConfig');
@@ -373,8 +373,16 @@ export default function AdminSettingsPage() {
         } finally {
             setSaving(false);
         }
-    });
+    };
     
+    const handleSave = () => {
+        if (!isPinSet() || isSessionActive()) {
+            performSave();
+        } else {
+            requestPinVerification(performSave);
+        }
+    };
+
     const handleTemplateChange = (templateName: string) => {
         const selected = templateOptions.find(t => t.name === templateName);
         if (selected) {

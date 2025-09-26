@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
@@ -45,9 +44,9 @@ const translations = {
 };
 
 interface PinVerificationContextType {
-  withPinVerification: <T extends (...args: any[]) => Promise<any>>(
-    func: T
-  ) => (...args: Parameters<T>) => Promise<ReturnType<T> | void>;
+  isPinSet: () => boolean;
+  isSessionActive: () => boolean;
+  requestPinVerification: (action: () => void) => void;
 }
 
 const PinVerificationContext = createContext<PinVerificationContextType | undefined>(undefined);
@@ -58,7 +57,7 @@ export function PinVerificationProvider({ children }: { children: ReactNode }) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPin, setCurrentPin] = useState('');
-  const [actionToExecute, setActionToExecute] = useState<{ func: Function, args: any[] } | null>(null);
+  const [actionToExecute, setActionToExecute] = useState<(() => void) | null>(null);
   const [adminPin, setAdminPin] = useState<string | null>(null);
   
   const { toast } = useToast();
@@ -69,31 +68,23 @@ export function PinVerificationProvider({ children }: { children: ReactNode }) {
     const fetchPin = async () => {
       const configRef = doc(db, 'configs', 'appConfig');
       const docSnap = await getDoc(configRef);
-      if (docSnap.exists() && docSnap.data().adminPin) {
-        setAdminPin(docSnap.data().adminPin);
-      } else {
-        setAdminPin(null);
-      }
+      const pin = docSnap.exists() ? docSnap.data().adminPin : null;
+      setAdminPin(pin || null);
     };
     fetchPin();
   }, []);
 
-  const withPinVerification = useCallback(<T extends (...args: any[]) => Promise<any>>(func: T) => {
-    return async (...args: Parameters<T>): Promise<ReturnType<T> | void> => {
-        if (!adminPin) {
-            toast({ variant: 'destructive', title: t.pinNotSet });
-            return;
-        }
+  const isPinSet = () => adminPin !== null && adminPin !== '';
 
-        const now = Date.now();
-        if (isPinVerified && lastVerificationTime && (now - lastVerificationTime < SESSION_TIMEOUT)) {
-            return await func(...args);
-        }
-
-        setActionToExecute({ func, args });
-        setIsDialogOpen(true);
-    };
-  }, [adminPin, isPinVerified, lastVerificationTime, t.pinNotSet, toast]);
+  const isSessionActive = () => {
+    const now = Date.now();
+    return isPinVerified && lastVerificationTime !== null && (now - lastVerificationTime < SESSION_TIMEOUT);
+  };
+  
+  const requestPinVerification = (action: () => void) => {
+    setActionToExecute(() => action);
+    setIsDialogOpen(true);
+  };
   
   const handleVerify = async () => {
     setIsVerifying(true);
@@ -106,7 +97,7 @@ export function PinVerificationProvider({ children }: { children: ReactNode }) {
         setCurrentPin('');
         
         if (actionToExecute) {
-            await actionToExecute.func(...actionToExecute.args);
+            actionToExecute();
             setActionToExecute(null);
         }
     } else {
@@ -122,7 +113,7 @@ export function PinVerificationProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <PinVerificationContext.Provider value={{ withPinVerification }}>
+    <PinVerificationContext.Provider value={{ isPinSet, isSessionActive, requestPinVerification }}>
       {children}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
