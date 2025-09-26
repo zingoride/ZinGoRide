@@ -33,7 +33,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // This is required to allow the Next.js dev server to be hosted on a separate domain.
-    allowedNextBundlerReactClientCalls: true,
   },
   async headers() {
     return [
