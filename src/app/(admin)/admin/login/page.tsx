@@ -53,6 +53,9 @@ const translations = {
   },
 };
 
+const ADMIN_EMAIL = 'info@zingoride.vercel.app';
+const ADMIN_UID = 'xMGCQ5b3oic287oK9yTzKSgyTkj2';
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -63,6 +66,12 @@ export default function AdminLoginPage() {
   const t = translations[language];
   
   const ensureAdminUser = async (user: any) => {
+      // Security Check: Only allow the specific admin user
+      if (user.email !== ADMIN_EMAIL || user.uid !== ADMIN_UID) {
+          await auth.signOut(); // Sign out the unauthorized user immediately
+          throw new Error(t.notAdmin);
+      }
+
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -96,20 +105,31 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     
+    // Security check: Only allow the specified email to even attempt login
+    if (email !== ADMIN_EMAIL) {
+        toast({
+            variant: "destructive",
+            title: t.loginError,
+            description: t.notAdmin,
+        });
+        setLoading(false);
+        return;
+    }
+
     try {
       // Step 1: Always try to sign in first.
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // If sign-in is successful, ensure the user is an admin in Firestore.
+      // If sign-in is successful, ensure the user is the correct admin.
       await ensureAdminUser(userCredential.user);
 
     } catch (error: any) {
       // Step 2: Handle errors.
-      if (error.code === 'auth/user-not-found' && email === 'info@zingoride.vercel.app') {
+      if (error.code === 'auth/user-not-found' && email === ADMIN_EMAIL) {
           // Case: The admin user does not exist at all in Firebase Auth. Create it.
           try {
               toast({ title: t.creatingAdmin });
               const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
-              // Now that the auth user is created, create their Firestore document.
+              // Now that the auth user is created, ensure it's the correct admin.
               await ensureAdminUser(newUserCredential.user);
           } catch (creationError: any) {
              console.error("Admin creation error:", creationError);
@@ -126,9 +146,8 @@ export default function AdminLoginPage() {
                 title: t.loginError,
                 description: "Please check your credentials.",
             });
-      }
-      else {
-        // Case: Other errors (network, etc.)
+      } else {
+        // Case: Other errors (network, custom error from ensureAdminUser, etc.)
         console.error("Login error:", error);
         toast({
           variant: "destructive",
