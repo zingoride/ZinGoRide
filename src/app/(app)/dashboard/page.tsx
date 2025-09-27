@@ -213,9 +213,6 @@ export default function Dashboard() {
           }
       });
       setRideRequests(requests);
-      if (isNewRequest) {
-        // Context will handle playing the sound
-      }
     };
     
     setRideListener(() => onNewRides);
