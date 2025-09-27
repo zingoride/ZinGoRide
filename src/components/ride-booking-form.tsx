@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, GeoPoint } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, GeoPoint, Timestamp } from 'firebase/firestore';
 
 
 const translations = {
@@ -108,29 +108,27 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     setLoading(true);
 
     try {
-        const rideDetails: Omit<RideRequest, 'id' | 'createdAt' | 'pickupCoords'> & { pickupCoords?: GeoPoint } = {
+        const rideData: Omit<RideRequest, 'id' | 'createdAt' | 'pickupCoords'> & { pickupCoords?: GeoPoint; createdAt: any; } = {
             pickup,
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             customerAvatar: user.photoURL || undefined,
             status: 'booked',
+            createdAt: serverTimestamp(),
         };
 
         if (pickupCoords) {
-            rideDetails.pickupCoords = new GeoPoint(pickupCoords.lat, pickupCoords.lng);
+            rideData.pickupCoords = new GeoPoint(pickupCoords.lat, pickupCoords.lng);
         }
         
         const ridesCollection = collection(db, "rides");
-        const docRef = await addDoc(ridesCollection, {
-            ...rideDetails,
-            createdAt: serverTimestamp(),
-        });
+        const docRef = await addDoc(ridesCollection, rideData);
         
         onFindRide({ 
-            ...rideDetails, 
+            ...rideData, 
             id: docRef.id, 
-            createdAt: new Date(),
+            createdAt: new Date(), // Use client-side timestamp for immediate UI update
         } as RideRequest);
 
     } catch (error) {

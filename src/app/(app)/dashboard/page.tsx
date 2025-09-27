@@ -41,8 +41,10 @@ const translations = {
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `${pickup} se ${dropoff} tak.`,
     fetchError: "Error",
     fetchErrorDesc: "Could not fetch new ride requests. Please ensure you have created the necessary Firestore index.",
-    documentsPendingTitle: "Dastavezaat Adhooray Hain",
+    documentsPendingTitle: "Dastavezaat Manzoor Nahi Hoye",
     documentsPendingDesc: "Ride requests hasil karne se pehle, aapko apne tamam zaroori dastavezaat (CNIC Front/Back, License) upload karne aur unhein admin se manzoor karwana hoga.",
+    documentsIncompleteTitle: "Dastavezaat Adhooray Hain",
+    documentsIncompleteDesc: "Ride requests hasil karne se pehle, aapko apne tamam zaroori dastavezaat (CNIC Front/Back, License) upload karne honge.",
     goToProfile: "Profile Par Jayein",
     checkingStatus: "Aapka status check kiya ja raha hai...",
   },
@@ -61,8 +63,10 @@ const translations = {
     newRideRequestToastDesc: (pickup: string, dropoff: string) => `From ${pickup} to ${dropoff}.`,
     fetchError: "Error",
     fetchErrorDesc: "Could not fetch new ride requests. Please ensure you have created the necessary Firestore index.",
-    documentsPendingTitle: "Documents Incomplete",
+    documentsPendingTitle: "Documents Not Approved",
     documentsPendingDesc: "Before you can receive ride requests, you must upload all required documents (CNIC Front/Back, License) and have them approved by an admin.",
+    documentsIncompleteTitle: "Documents Incomplete",
+    documentsIncompleteDesc: "Before you can receive ride requests, you must upload all required documents (CNIC Front/Back, License).",
     goToProfile: "Go to Profile",
     checkingStatus: "Checking your status...",
   }
@@ -86,7 +90,7 @@ export default function Dashboard() {
 
   const [isGoingOnline, setIsGoingOnline] = useState(false);
   
-  const [documentsApproved, setDocumentsApproved] = useState(false);
+  const [docStatus, setDocStatus] = useState<'APPROVED' | 'PENDING_APPROVAL' | 'INCOMPLETE'>('INCOMPLETE');
   const [checkingDocs, setCheckingDocs] = useState(true);
 
   const checkPermission = useCallback(async () => {
@@ -145,17 +149,33 @@ export default function Dashboard() {
 
       if (docSnap.exists()) {
         const userData = docSnap.data();
+        
+        // If driver is admin-approved and has an empty documents array, they are good to go.
+        if (userData.approvalStatus === 'Approved' && (!userData.documents || userData.documents.length === 0)) {
+            setDocStatus('APPROVED');
+            setCheckingDocs(false);
+            return;
+        }
+        
         const userDocs: UserDocument[] = userData.documents || [];
-        
-        const approvedDocs = userDocs
-          .filter(d => d.approvalStatus === 'Approved')
-          .map(d => d.name);
-        
-        const allRequiredApproved = requiredDocs.every(reqDoc => approvedDocs.includes(reqDoc));
-        
-        setDocumentsApproved(allRequiredApproved);
+        const uploadedDocNames = userDocs.map(d => d.name);
+        const allRequiredUploaded = requiredDocs.every(reqDoc => uploadedDocNames.includes(reqDoc));
+
+        if (!allRequiredUploaded) {
+            setDocStatus('INCOMPLETE');
+        } else {
+            const allRequiredApproved = userDocs
+                .filter(d => requiredDocs.includes(d.name))
+                .every(d => d.approvalStatus === 'Approved');
+            
+            if (allRequiredApproved) {
+                setDocStatus('APPROVED');
+            } else {
+                setDocStatus('PENDING_APPROVAL');
+            }
+        }
       } else {
-        setDocumentsApproved(false);
+        setDocStatus('INCOMPLETE');
       }
       setCheckingDocs(false);
     }
@@ -168,11 +188,11 @@ export default function Dashboard() {
       return;
     }
     
-    if (!documentsApproved) {
+    if (docStatus !== 'APPROVED') {
         toast({
             variant: "destructive",
-            title: t.documentsPendingTitle,
-            description: t.documentsPendingDesc,
+            title: docStatus === 'INCOMPLETE' ? t.documentsIncompleteTitle : t.documentsPendingTitle,
+            description: docStatus === 'INCOMPLETE' ? t.documentsIncompleteDesc : t.documentsPendingDesc,
         });
         return;
     }
@@ -196,15 +216,13 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isOnline || activeRide) {
       setRideRequests([]);
-      setRideListener(null); // Clear listener when offline or in a ride
+      if (setRideListener) setRideListener(null); 
       return;
     }
     
     const onNewRides = (requests: RideRequest[]) => {
-      let isNewRequest = false;
       requests.forEach((requestData) => {
           if (!knownRideIds.current.has(requestData.id)) {
-              isNewRequest = true;
               knownRideIds.current.add(requestData.id);
               toast({
                   title: t.newRideRequestToast,
@@ -215,10 +233,12 @@ export default function Dashboard() {
       setRideRequests(requests);
     };
     
-    setRideListener(() => onNewRides);
+    if (setRideListener) {
+        setRideListener(() => onNewRides);
+    }
     
     return () => {
-        setRideListener(null); // Cleanup listener on component unmount
+        if (setRideListener) setRideListener(null); 
     };
 
   }, [isOnline, activeRide, toast, t, setRideListener]);
@@ -251,12 +271,12 @@ export default function Dashboard() {
             </Alert>
         )}
         
-        {!documentsApproved && (
+        {docStatus !== 'APPROVED' && (
             <Alert variant="destructive" className="w-full max-w-md">
                 <FileWarning className="h-4 w-4" />
-                <AlertTitle>{t.documentsPendingTitle}</AlertTitle>
+                <AlertTitle>{docStatus === 'INCOMPLETE' ? t.documentsIncompleteTitle : t.documentsPendingTitle}</AlertTitle>
                 <AlertDescription>
-                    {t.documentsPendingDesc}
+                    {docStatus === 'INCOMPLETE' ? t.documentsIncompleteDesc : t.documentsPendingDesc}
                     <Button asChild variant="link" className="p-0 h-auto mt-2">
                         <Link href="/profile">{t.goToProfile}</Link>
                     </Button>
@@ -270,7 +290,7 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold">{t.youAreOffline}</h1>
                 <p className="text-muted-foreground text-sm">{t.goOnlineToReceive}</p>
             </div>
-             <Button onClick={handleToggleOnline} size="lg" className="w-full max-w-sm mt-4" disabled={isGoingOnline || !documentsApproved}>
+             <Button onClick={handleToggleOnline} size="lg" className="w-full max-w-sm mt-4" disabled={isGoingOnline || docStatus !== 'APPROVED'}>
                 {isGoingOnline && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isGoingOnline ? t.goingOnline : t.goOnline}
             </Button>

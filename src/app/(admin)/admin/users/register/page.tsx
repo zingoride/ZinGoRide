@@ -14,7 +14,7 @@ import { Loader2, UserPlus, User, ShieldCheck, Shield } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 
 const translations = {
@@ -84,19 +84,32 @@ export default function RegisterUserPage() {
         await updateProfile(newAuthUser, { displayName: fullName });
         
         let approvalStatus = 'Pending';
+        let documents = undefined;
         if (userType === 'Customer' || userType === 'Admin') {
             approvalStatus = 'Approved';
         }
+        
+        // If an admin is creating a driver, we assume they are approved and don't need to upload docs.
+        if (userType === 'Driver') {
+            approvalStatus = 'Approved';
+            documents = []; // Set an empty array to signify no docs are needed.
+        }
 
-        await setDoc(doc(db, "users", newAuthUser.uid), {
+        const userData: any = {
             name: fullName,
             email: email,
             type: userType,
             status: 'Active',
             approvalStatus: approvalStatus,
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
             walletBalance: 0,
-        });
+        };
+
+        if (documents !== undefined) {
+            userData.documents = documents;
+        }
+
+        await setDoc(doc(db, "users", newAuthUser.uid), userData);
 
         toast({
             title: t.successTitle,
