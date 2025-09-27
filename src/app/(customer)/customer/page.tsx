@@ -8,7 +8,7 @@ import { CustomerRideStatus } from "@/components/customer-ride-status";
 import type { RideRequest } from '@/lib/types';
 import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MapPin } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
@@ -103,7 +103,21 @@ const CustomerPage = () => {
             toast({ variant: 'destructive', title: "Database Error", description: "Could not fetch ride updates." });
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            // Cleanup function: if the component unmounts, check if the ride should be cancelled.
+            const cancelRideOnUnmount = async () => {
+                const rideDoc = await getDoc(rideRef);
+                if (rideDoc.exists()) {
+                    const rideData = rideDoc.data();
+                    if (rideData.status === 'booked' || rideData.status === 'searching') {
+                         await updateDoc(rideRef, { status: 'cancelled_by_customer' });
+                         console.log(`Ride ${rideId} cancelled due to component unmount.`);
+                    }
+                }
+            }
+            cancelRideOnUnmount();
+        };
     }, [rideId, toast]);
     
 
