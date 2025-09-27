@@ -8,7 +8,7 @@ export interface RideRequest {
     customerAvatar?: string;
     pickup: string;
     dropoff: string;
-    status: 'pending' | 'booked' | 'accepted' | 'in_progress' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_driver';
+    status: 'booked' | 'searching' | 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_driver';
     createdAt: FieldValue | Date;
     vehicleType?: 'Car' | 'Bike' | 'Rickshaw';
     fare?: number;

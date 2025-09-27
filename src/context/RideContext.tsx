@@ -61,7 +61,7 @@ export function RideProvider({ children }: { children: ReactNode }) {
     if (rideListenerCallback) {
       const q = query(
         collection(db, "rides"),
-        where("status", "==", "pending"),
+        where("status", "==", "booked"),
         orderBy("createdAt", "desc"),
         limit(10)
       );

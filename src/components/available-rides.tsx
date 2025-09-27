@@ -87,7 +87,7 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         const selectedRideDetails = rideOptions.find(r => r.type === selectedRide);
         
         const updateData = {
-            status: 'pending' as const,
+            status: 'searching' as const,
             vehicleType: selectedRide as any,
             fare: selectedRideDetails ? parseFloat(selectedRideDetails.price) : 0,
         };
