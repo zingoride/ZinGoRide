@@ -45,6 +45,7 @@ const defaultPositions = {
 
 interface DriverDetails {
     rating: number;
+    phone?: string;
     vehicle?: {
         make: string;
         model: string;
@@ -134,8 +135,9 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
                     setDriverPosition([data.location.latitude, data.location.longitude]);
                 }
                 setDriverDetails({
-                    rating: data.rating || 5.0, // Default rating
-                    vehicle: data.vehicle || { make: 'Toyota', model: 'Corolla', licensePlate: 'ABC-123' }
+                    rating: data.rating || 5.0,
+                    vehicle: data.vehicle,
+                    phone: data.phone,
                 });
             }
         });
@@ -148,7 +150,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         let progressTimer: NodeJS.Timeout | null = null;
         let extendedSearchTimer: NodeJS.Timeout | null = null;
 
-        if (status === 'pending') {
+        if (status === 'searching') {
             setShowExtendedSearch(false);
             setProgress(10);
             
@@ -189,7 +191,14 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
 
 
     const handleCall = () => {
-        window.location.href = `tel:+923001234567`;
+        if (driverDetails?.phone) {
+            window.location.href = `tel:${driverDetails.phone}`;
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Phone number not available",
+            });
+        }
     };
     
     const handleCancelRide = async () => {
@@ -210,7 +219,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const getStatusInfo = () => {
         const eta = "5 minutes";
         switch(status) {
-            case 'pending':
+            case 'searching':
                  return { title: t.rideStatus, description: t.findingDesc };
             case 'accepted':
                  return { title: t.rideStatus, description: t.acceptedDesc(eta) };

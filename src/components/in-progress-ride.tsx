@@ -52,6 +52,7 @@ export const customerIcon = new L.Icon({
 
 interface CustomerDetails {
   rating: number;
+  phone?: string;
 }
 
 const translations = {
@@ -119,7 +120,8 @@ export function InProgressRide() {
                     setCustomerPosition([data.location.latitude, data.location.longitude]);
                 }
                 setCustomerDetails({
-                    rating: data.rating || 5.0, // Default rating
+                    rating: data.rating || 5.0,
+                    phone: data.phone,
                 });
             }
         });
@@ -146,7 +148,14 @@ export function InProgressRide() {
   const { id, pickup, dropoff, customerId, customerName, customerAvatar } = activeRide;
   
   const handleCall = () => {
-    window.location.href = `tel:+923001234567`;
+    if (customerDetails?.phone) {
+        window.location.href = `tel:${customerDetails.phone}`;
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Phone number not available",
+        });
+    }
   };
   
   const handleNavigate = () => {

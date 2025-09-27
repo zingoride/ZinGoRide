@@ -10,13 +10,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
-import { startOfToday, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { startOfToday, startOfWeek, endOfWeek, isWithinInterval, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface EarningsStats {
     today: number;
     thisWeek: number;
-    fromYesterday: number;
-    fromLastWeek: number;
+    yesterday: number;
+    lastWeek: number;
 }
 
 const WEEKLY_GOAL = 30000;
@@ -68,31 +68,42 @@ export default function EarningsPage() {
         
         const querySnapshot = await getDocs(q);
 
-        const today = startOfToday();
+        const today = new Date();
+        const yesterday = subDays(today, 1);
         const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
         const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 });
+        const startOfLastWeek = startOfWeek(yesterday, { weekStartsOn: 1 });
+        const endOfLastWeek = endOfWeek(yesterday, { weekStartsOn: 1 });
         
         let todaysEarnings = 0;
+        let yesterdaysEarnings = 0;
         let thisWeekEarnings = 0;
+        let lastWeekEarnings = 0;
 
         querySnapshot.forEach(doc => {
           const ride = doc.data();
           const rideDate = (ride.createdAt as Timestamp).toDate();
           const netEarning = (ride.fare || 0) * 0.85; // fare - 15% commission
 
-          if (isWithinInterval(rideDate, { start: today, end: new Date() })) {
+          if (isWithinInterval(rideDate, { start: startOfDay(today), end: endOfDay(today) })) {
             todaysEarnings += netEarning;
+          }
+          if (isWithinInterval(rideDate, { start: startOfDay(yesterday), end: endOfDay(yesterday) })) {
+            yesterdaysEarnings += netEarning;
           }
           if (isWithinInterval(rideDate, { start: startOfThisWeek, end: endOfThisWeek })) {
             thisWeekEarnings += netEarning;
+          }
+          if (isWithinInterval(rideDate, { start: startOfLastWeek, end: endOfLastWeek })) {
+            lastWeekEarnings += netEarning;
           }
         });
 
         setStats({
           today: todaysEarnings,
           thisWeek: thisWeekEarnings,
-          fromYesterday: 0, // Placeholder
-          fromLastWeek: 0, // Placeholder
+          yesterday: yesterdaysEarnings,
+          lastWeek: lastWeekEarnings,
         });
 
       } catch (error) {
@@ -108,6 +119,16 @@ export default function EarningsPage() {
   const getPercentageChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
+  };
+
+  const renderPercentage = (change: number) => {
+    const roundedChange = change.toFixed(0);
+    if (change > 0) {
+      return <span className="text-green-600">+{roundedChange}%</span>;
+    } else if (change < 0) {
+      return <span className="text-red-600">{roundedChange}%</span>;
+    }
+    return <span>{roundedChange}%</span>;
   };
   
   const weeklyGoalProgress = stats ? (stats.thisWeek / WEEKLY_GOAL) * 100 : 0;
@@ -127,7 +148,7 @@ export default function EarningsPage() {
           <CardContent>
             <div className="text-2xl font-bold">PKR {stats?.today.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
-              +{getPercentageChange(stats?.today || 0, stats?.fromYesterday || 0).toFixed(0)}% {t.fromYesterday}
+              {renderPercentage(getPercentageChange(stats?.today || 0, stats?.yesterday || 0))} {t.fromYesterday}
             </p>
           </CardContent>
         </Card>
@@ -139,7 +160,7 @@ export default function EarningsPage() {
           <CardContent>
             <div className="text-2xl font-bold">PKR {stats?.thisWeek.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
-              +{getPercentageChange(stats?.thisWeek || 0, stats?.fromLastWeek || 0).toFixed(0)}% {t.fromLastWeek}
+              {renderPercentage(getPercentageChange(stats?.thisWeek || 0, stats?.lastWeek || 0))} {t.fromLastWeek}
             </p>
           </CardContent>
         </Card>

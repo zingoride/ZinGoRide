@@ -261,7 +261,6 @@ export default function WalletRequestsPage() {
         batch.update(userRef, { walletBalance: currentBalance + approvalAmount });
 
         await batch.commit();
-        setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'Approved' } : r));
         toast({
             title: "Success",
             description: t.fundsAdded(approvalAmount, selectedRequest.userName),
@@ -284,7 +283,6 @@ export default function WalletRequestsPage() {
     const requestRef = doc(db, "walletRequests", requestId);
     try {
         await updateDoc(requestRef, { status: 'Rejected' });
-        setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Rejected' } : r));
         toast({
             title: "Success",
             description: t.requestRejected,

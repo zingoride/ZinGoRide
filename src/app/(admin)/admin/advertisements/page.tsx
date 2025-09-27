@@ -124,7 +124,7 @@ export default function AdvertisementsPage() {
     if (authLoading || !user) return;
     
     const adsCollection = collection(db, "advertisements");
-    const q = query(adsCollection); 
+    const q = query(adsCollection, orderBy("createdAt", "desc")); 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const adsList = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -134,7 +134,7 @@ export default function AdvertisementsPage() {
                  ...data,
                  createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : new Date()
             } as Advertisement
-        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort manually
+        });
         
         setCustomerAds(adsList.filter(ad => ad.targetAudience === 'Customer'));
         setRiderAds(adsList.filter(ad => ad.targetAudience === 'Rider'));
@@ -399,5 +399,3 @@ export default function AdvertisementsPage() {
     </div>
   );
 }
-
-    

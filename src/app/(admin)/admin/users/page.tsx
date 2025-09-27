@@ -17,7 +17,7 @@ import { MoreHorizontal, FileText, CheckCircle, XCircle, Ban, MessageSquare, Bel
 import { DocumentViewer } from "@/components/document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, query, orderBy, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, query, orderBy, setDoc, deleteDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { ChatDialog } from "@/components/chat-dialog";
 import { usePinVerification } from "@/context/PinVerificationContext";
