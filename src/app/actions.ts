@@ -150,6 +150,55 @@ export async function getUserByEmailOrId(identifier: string): Promise<{ uid: str
         return null;
     }
 }
+
+export async function performManualTopUp(formData: FormData): Promise<{ success: boolean; message: string; }> {
+    const { db } = getFirebaseAdmin();
+    const userIdentifier = formData.get('userId') as string;
+    const amount = Number(formData.get('amount'));
+    const adminId = formData.get('adminId') as string;
+    const adminName = formData.get('adminName') as string;
+    
+    if (!userIdentifier || !amount || amount <= 0 || !adminId) {
+        return { success: false, message: 'All fields are required and amount must be positive.' };
+    }
+    
+    try {
+        const userToCredit = await getUserByEmailOrId(userIdentifier);
+        if (!userToCredit) {
+            return { success: false, message: 'User not found.' };
+        }
+
+        const userRef = db.collection('users').doc(userToCredit.uid);
+        const adminRef = db.collection('users').doc(adminId);
+
+        await db.runTransaction(async (transaction) => {
+            const adminDoc = await transaction.get(adminRef);
+            if (!adminDoc.exists() || (adminDoc.data()?.walletBalance || 0) < amount) {
+                throw new Error('Insufficient admin funds.');
+            }
+
+            transaction.update(adminRef, { walletBalance: FieldValue.increment(-amount) });
+            transaction.update(userRef, { walletBalance: FieldValue.increment(amount) });
+            
+            const transactionRef = db.collection('walletTransactions').doc();
+            transaction.set(transactionRef, {
+                type: 'admin_topup',
+                userId: userToCredit.uid,
+                userName: userToCredit.name,
+                amount: amount,
+                status: 'Completed',
+                adminId: adminId,
+                adminName: adminName,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+        });
+
+        return { success: true, message: `PKR ${amount} has been added to ${userToCredit.name}'s wallet.` };
+    } catch (error: any) {
+        console.error("Error in manual top-up: ", error);
+        return { success: false, message: error.message };
+    }
+}
     
 
     

@@ -34,7 +34,7 @@ import { collection, query, orderBy, getDocs, doc, writeBatch, getDoc, updateDoc
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
-import { getUserByEmailOrId } from '@/app/actions';
+import { performManualTopUp } from '@/app/actions';
 
 
 type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -147,56 +147,18 @@ function ManualTopUpCard() {
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
-        const userIdentifier = formData.get('userId') as string;
-        const amount = Number(formData.get('amount'));
+        formData.append('adminId', adminUser.uid);
+        formData.append('adminName', adminUser.displayName || 'Admin');
+        
+        const result = await performManualTopUp(formData);
 
-        if (!userIdentifier || !amount || amount <= 0) {
-            toast({ variant: 'destructive', title: t.topUpError, description: 'All fields are required and amount must be positive.' });
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const userToCredit = await getUserByEmailOrId(userIdentifier);
-            if (!userToCredit) {
-                toast({ variant: 'destructive', title: t.userNotFound });
-                setLoading(false);
-                return;
-            }
-
-            const userRef = doc(db, 'users', userToCredit.uid);
-            const adminRef = doc(db, 'users', adminUser.uid);
-
-            await runTransaction(db, async (transaction) => {
-                const adminDoc = await transaction.get(adminRef);
-                if (!adminDoc.exists() || (adminDoc.data().walletBalance || 0) < amount) {
-                    throw new Error(t.insufficientAdminFunds);
-                }
-
-                transaction.update(adminRef, { walletBalance: increment(-amount) });
-                transaction.update(userRef, { walletBalance: increment(amount) });
-                
-                const transactionRef = doc(collection(db, 'walletTransactions'));
-                transaction.set(transactionRef, {
-                    type: 'admin_topup',
-                    userId: userToCredit.uid,
-                    userName: userToCredit.name,
-                    amount: amount,
-                    status: 'Completed',
-                    adminId: adminUser.uid,
-                    adminName: adminUser.displayName || 'Admin',
-                    createdAt: serverTimestamp(),
-                });
-            });
-
-            toast({ title: t.topUpSuccess, description: `${t.fundsAdded(amount, userToCredit.name)}` });
+        if (result.success) {
+            toast({ title: t.topUpSuccess, description: result.message });
             formRef.current?.reset();
-        } catch (error: any) {
-            console.error("Error in manual top-up: ", error);
-            toast({ variant: 'destructive', title: t.topUpError, description: error.message });
-        } finally {
-            setLoading(false);
+        } else {
+            toast({ variant: 'destructive', title: t.topUpError, description: result.message });
         }
+        setLoading(false);
     }
     
     return (
