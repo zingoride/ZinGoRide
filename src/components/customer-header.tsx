@@ -46,6 +46,9 @@ export function CustomerHeader() {
 
   const handleLogout = async () => {
     await auth.signOut();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('activeRideId');
+    }
     router.push('/login');
   };
 

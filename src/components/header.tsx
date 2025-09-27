@@ -19,6 +19,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
 import { Input } from './ui/input';
+import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 const translations = {
   ur: {
@@ -49,7 +52,17 @@ const translations = {
 export function Header() {
   const { isOnline, toggleStatus } = useRiderStatus();
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const router = useRouter();
   const t = translations[language];
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('activeRideId');
+    }
+    router.push('/rider-login');
+  };
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
@@ -91,25 +104,25 @@ export function Header() {
           <Button variant="secondary" size="icon" className="rounded-full">
             <Avatar>
               <AvatarImage
-                src={undefined}
+                src={user?.photoURL || undefined}
                 alt="Rider Avatar"
                 data-ai-hint="portrait man"
               />
-              <AvatarFallback>ZR</AvatarFallback>
+              <AvatarFallback>{user?.displayName?.charAt(0) || 'R'}</AvatarFallback>
             </Avatar>
             <span className="sr-only">Toggle user menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t.myAccount}</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.displayName || t.myAccount}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/settings">{t.settings}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>{t.support}</DropdownMenuItem>
           <DropdownMenuSeparator />
-           <DropdownMenuItem asChild>
-             <Link href="/rider-login">{t.logout}</Link>
+           <DropdownMenuItem onClick={handleLogout}>
+             {t.logout}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -42,6 +42,7 @@ export function AdminHeader() {
     await auth.signOut();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin_logged_in');
+      localStorage.removeItem('activeRideId');
     }
     router.push('/admin-login');
   };
