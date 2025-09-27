@@ -3,33 +3,18 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { useLanguage } from "@/context/LanguageContext";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { Loader2 } from "lucide-react";
 
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-
-const chartDataUr = [
-  { day: "Som", earnings: 0 },
-  { day: "Mangal", earnings: 0 },
-  { day: "Budh", earnings: 0 },
-  { day: "Jumma", earnings: 0 },
-  { day: "Hafta", earnings: 0 },
-  { day: "Itwar", earnings: 0 },
-  { day: "Aaj", earnings: 0 },
-]
-
-const chartDataEn = [
-  { day: "Mon", earnings: 0 },
-  { day: "Tue", earnings: 0 },
-  { day: "Wed", earnings: 0 },
-  { day: "Fri", earnings: 0 },
-  { day: "Sat", earnings: 0 },
-  { day: "Sun", earnings: 0 },
-  { day: "Today", earnings: 0 },
-]
-
 
 const chartConfigUr = {
   earnings: {
@@ -47,11 +32,62 @@ const chartConfigEn = {
 
 export function EarningsChart() {
   const { language } = useLanguage();
-  const chartData = language === 'ur' ? chartDataUr : chartDataEn;
-  const chartConfig = language === 'ur' ? chartConfigUr : chartConfigEn;
+  const { user } = useAuth();
+  const [chartData, setChartData] = useState<{ day: string; earnings: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const t = language === 'ur' ? chartConfigUr : chartConfigEn;
+
+  useEffect(() => {
+    const fetchLast7DaysEarnings = async () => {
+      if (!user) return;
+      setLoading(true);
+
+      const data: { day: string; earnings: number }[] = [];
+      const today = new Date();
+
+      for (let i = 6; i >= 0; i--) {
+        const date = subDays(today, i);
+        const start = startOfDay(date);
+        const end = endOfDay(date);
+        
+        const ridesRef = collection(db, "rides");
+        const q = query(
+          ridesRef,
+          where("driverId", "==", user.uid),
+          where("status", "==", "completed"),
+          where("createdAt", ">=", Timestamp.fromDate(start)),
+          where("createdAt", "<=", Timestamp.fromDate(end))
+        );
+        
+        const querySnapshot = await getDocs(q);
+        let dailyEarnings = 0;
+        querySnapshot.forEach(doc => {
+          dailyEarnings += (doc.data().fare || 0) * 0.85; // Net earnings
+        });
+        
+        data.push({
+          day: i === 0 ? (language === 'ur' ? "Aaj" : "Today") : format(date, 'E'),
+          earnings: dailyEarnings
+        });
+      }
+      
+      setChartData(data);
+      setLoading(false);
+    };
+
+    fetchLast7DaysEarnings();
+  }, [user, language]);
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-[300px] w-full">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full h-[300px]">
+    <ChartContainer config={t} className="min-h-[200px] w-full h-[300px]">
       <BarChart 
         accessibilityLayer 
         data={chartData}
@@ -68,10 +104,9 @@ export function EarningsChart() {
           tickLine={false}
           tickMargin={10}
           axisLine={false}
-          tickFormatter={(value) => value.slice(0, 3)}
         />
         <YAxis
-          tickFormatter={(value) => `PKR ${value / 1000}k`}
+          tickFormatter={(value) => `PKR ${value > 1000 ? `${value/1000}k` : value}`}
         />
         <ChartTooltip
           cursor={false}
