@@ -37,13 +37,23 @@ export function ThemeColorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.body.classList.remove(...ALL_THEME_CLASSES);
-    document.body.classList.add(themeColor);
+    // Ensure this runs only client-side
+    if (typeof window !== 'undefined') {
+        document.body.classList.remove(...ALL_THEME_CLASSES);
+        document.body.classList.add(themeColor);
+    }
   }, [themeColor]);
 
   const handleSetThemeColor = async (theme: ThemeColor) => {
     if (ALL_THEME_CLASSES.includes(theme)) {
+      // Optimistically update UI
       setThemeColor(theme);
+      if (typeof window !== 'undefined') {
+        document.body.classList.remove(...ALL_THEME_CLASSES);
+        document.body.classList.add(theme);
+      }
+      
+      // Save to Firestore
       const configRef = doc(db, 'configs', 'appConfig');
       try {
         await setDoc(configRef, { themeColor: theme }, { merge: true });

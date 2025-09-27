@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { setDoc, doc, getDoc } from "firebase/firestore";
+import { setDoc, doc, getDoc, onSnapshot } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -105,14 +105,13 @@ export default function RiderSignupPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const fetchConfig = async () => {
-        const configRef = doc(db, 'configs', 'appConfig');
-        const configSnap = await getDoc(configRef);
-        if (configSnap.exists()) {
-            setConfig(configSnap.data());
+    const configRef = doc(db, 'configs', 'appConfig');
+    const unsubscribe = onSnapshot(configRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setConfig(docSnap.data());
         }
-    };
-    fetchConfig();
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {

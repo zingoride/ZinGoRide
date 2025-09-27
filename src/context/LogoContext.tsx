@@ -37,8 +37,7 @@ const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export function LogoProvider({ children }: { children: ReactNode }) {
   const [logo, setLogo] = useState<LogoType>('ZR');
-  const [LogoComponent, setLogoComponent] = useState<ComponentType<{ className?: string }>>(() => ZRLogoComponent);
-
+  
   useEffect(() => {
     const configRef = doc(db, 'configs', 'appConfig');
     
@@ -54,16 +53,13 @@ export function LogoProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (logoMap[logo]) {
-        setLogoComponent(() => logoMap[logo]);
-    }
-  }, [logo]);
   
   const handleSetLogo = async (newLogo: LogoType) => {
     if (logoMap[newLogo]) {
+        // Optimistically update UI
         setLogo(newLogo);
+        
+        // Save to Firestore
         const configRef = doc(db, 'configs', 'appConfig');
         try {
             await setDoc(configRef, { logo: newLogo }, { merge: true });
@@ -72,6 +68,8 @@ export function LogoProvider({ children }: { children: ReactNode }) {
         }
     }
   };
+
+  const LogoComponent = logoMap[logo] || ZRLogoComponent;
 
   return (
     <LogoContext.Provider value={{ logo, setLogo: handleSetLogo, LogoComponent }}>
