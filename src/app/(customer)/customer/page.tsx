@@ -170,7 +170,7 @@ const CustomerPage = () => {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />;
         }
         
-        if (currentRide.status === 'pending') {
+        if (currentRide.status === 'booked') {
              return (
                  <div className="h-full w-full flex items-start justify-center">
                      <div className="w-full max-w-md">

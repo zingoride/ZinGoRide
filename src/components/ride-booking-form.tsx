@@ -114,7 +114,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             customerAvatar: user.photoURL || undefined,
-            status: 'pending',
+            status: 'booked',
         };
 
         if (pickupCoords) {

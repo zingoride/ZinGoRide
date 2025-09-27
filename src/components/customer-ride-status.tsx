@@ -148,7 +148,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
         let progressTimer: NodeJS.Timeout | null = null;
         let extendedSearchTimer: NodeJS.Timeout | null = null;
 
-        if (status === 'booked') {
+        if (status === 'pending') {
             setShowExtendedSearch(false);
             setProgress(10);
             
@@ -210,7 +210,7 @@ export function CustomerRideStatus({ ride, onCancel }: { ride: RideRequest, onCa
     const getStatusInfo = () => {
         const eta = "5 minutes";
         switch(status) {
-            case 'booked':
+            case 'pending':
                  return { title: t.rideStatus, description: t.findingDesc };
             case 'accepted':
                  return { title: t.rideStatus, description: t.acceptedDesc(eta) };

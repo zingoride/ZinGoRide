@@ -5,7 +5,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import type { RideRequest } from '@/lib/types';
 import { useAuth } from './AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, collection, query, where, limit, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, collection, query, where, limit, Timestamp, Unsubscribe, orderBy } from 'firebase/firestore';
 
 export type RideDetails = RideRequest;
 
@@ -61,17 +61,13 @@ export function RideProvider({ children }: { children: ReactNode }) {
     if (rideListenerCallback) {
       const q = query(
         collection(db, "rides"),
-        where("status", "==", "booked"),
+        where("status", "==", "pending"),
+        orderBy("createdAt", "desc"),
         limit(10)
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const requests: RideDetails[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RideDetails));
-        requests.sort((a, b) => {
-            const dateA = (a.createdAt as Timestamp)?.toDate() || new Date(0);
-            const dateB = (b.createdAt as Timestamp)?.toDate() || new Date(0);
-            return dateB.getTime() - dateA.getTime();
-        });
         
         if (snapshot.docChanges().some(change => change.type === 'added')) {
              if (audioRef.current) {
