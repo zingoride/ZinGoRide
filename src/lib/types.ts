@@ -1,5 +1,6 @@
 
-import { FieldValue, GeoPoint } from "firebase/firestore";
+
+import { Timestamp, GeoPoint } from "firebase/firestore";
 
 export interface RideRequest {
     id: string;
@@ -9,7 +10,7 @@ export interface RideRequest {
     pickup: string;
     dropoff: string;
     status: 'booked' | 'searching' | 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_driver';
-    createdAt: FieldValue | Date;
+    createdAt: Timestamp | Date;
     vehicleType?: 'Car' | 'Bike' | 'Rickshaw';
     fare?: number;
     driverId?: string;

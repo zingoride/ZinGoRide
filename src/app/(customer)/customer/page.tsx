@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -37,7 +38,6 @@ const translations = {
 
 const CustomerPage = () => {
     const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
-    const [rideId, setRideId] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
     
     const [hasPermission, setHasPermission] = useState(false);
@@ -69,40 +69,33 @@ const CustomerPage = () => {
         checkPermission();
         const savedRideId = localStorage.getItem('activeRideId');
         if (savedRideId) {
-            setRideId(savedRideId);
+            // Immediately start listening to this ride
+            handleFindRide(savedRideId);
         }
     }, [checkPermission]);
 
     useEffect(() => {
-        if (!rideId) {
-            setCurrentRide(null);
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('activeRideId');
-            }
-            return;
-        }
+        if (!currentRide?.id) return;
         
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('activeRideId', rideId);
-        }
-
-        const rideRef = doc(db, "rides", rideId);
-        const unsubscribe = onSnapshot(rideRef, (doc) => {
-            if (doc.exists()) {
-                const rideData = { id: doc.id, ...doc.data() } as RideRequest;
-                if (rideData.status === 'cancelled_by_customer') {
+        const rideRef = doc(db, "rides", currentRide.id);
+        const unsubscribe = onSnapshot(rideRef, async (docSnap) => {
+             if (docSnap.exists()) {
+                const rideData = { id: docSnap.id, ...docSnap.data() } as RideRequest;
+                 if (rideData.status === 'cancelled_by_customer' || rideData.status === 'completed' || rideData.status === 'cancelled_by_driver') {
                     handleReset();
                 } else {
                     setCurrentRide(rideData);
                 }
-            } else {
+             } else {
                 handleReset();
-            }
+             }
         }, (error) => {
             console.error("Error listening to ride document:", error);
             toast({ variant: 'destructive', title: "Database Error", description: "Could not fetch ride updates." });
+            handleReset();
         });
 
+        // Cleanup listener and ride on unmount/route change
         return () => {
             unsubscribe();
             const cancelRideOnUnmount = async () => {
@@ -112,7 +105,7 @@ const CustomerPage = () => {
                         const rideData = rideDoc.data();
                         if (rideData.status === 'booked' || rideData.status === 'searching') {
                              await updateDoc(rideRef, { status: 'cancelled_by_customer' });
-                             console.log(`Ride ${rideId} cancelled due to component unmount.`);
+                             console.log(`Ride ${currentRide.id} cancelled due to component unmount.`);
                         }
                     }
                 } catch (e) {
@@ -121,26 +114,20 @@ const CustomerPage = () => {
             }
             cancelRideOnUnmount();
         };
-    }, [rideId, toast]);
+    }, [currentRide?.id, toast]);
     
 
-    const handleFindRide = (ride: RideRequest) => {
-        setRideId(ride.id);
-        setCurrentRide(ride);
+    const handleFindRide = (rideId: string) => {
+        localStorage.setItem('activeRideId', rideId);
+        // Set a minimal ride object to trigger the useEffect listener
+        setCurrentRide({ id: rideId } as RideRequest);
     };
-
-    const handleRideConfirmed = (confirmedRide: RideRequest) => {
-      // The status is now 'booked', so we update the local state to show the status screen.
-      // The onSnapshot listener will handle further updates from the database.
-      setCurrentRide(confirmedRide);
-    }
     
     const handleReset = () => {
         if (typeof window !== 'undefined') {
             localStorage.removeItem('activeRideId');
         }
         setCurrentRide(null);
-        setRideId(null);
     };
     
     const handleEnableLocation = () => {
@@ -199,7 +186,7 @@ const CustomerPage = () => {
                      <div className="w-full max-w-md">
                         <Card className="shadow-lg w-full">
                             <CardContent className="p-4">
-                                <AvailableRides ride={currentRide} onConfirm={handleRideConfirmed} />
+                                <AvailableRides ride={currentRide} />
                             </CardContent>
                         </Card>
                      </div>

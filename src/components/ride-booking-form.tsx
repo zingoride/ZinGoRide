@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,7 +46,7 @@ const translations = {
 }
 
 interface RideBookingFormProps {
-    onFindRide: (rideDetails: RideRequest) => void;
+    onFindRide: (rideId: string) => void;
 }
 
 export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
@@ -144,11 +145,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
         const ridesCollection = collection(db, "rides");
         const docRef = await addDoc(ridesCollection, rideData);
         
-        onFindRide({ 
-            ...rideData, 
-            id: docRef.id, 
-            createdAt: new Date(),
-        } as RideRequest);
+        onFindRide(docRef.id);
 
     } catch (error) {
         console.error("Error creating ride request:", error);
@@ -210,5 +207,3 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     </form>
   );
 }
-
-    

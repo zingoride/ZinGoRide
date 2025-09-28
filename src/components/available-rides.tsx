@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -48,7 +49,6 @@ const translations = {
 
 interface AvailableRidesProps {
     ride: RideRequest;
-    onConfirm: (confirmedRide: RideRequest) => void;
 }
 
 interface VehicleOption extends VehicleType {
@@ -69,7 +69,7 @@ const getDistance = (from: GeoPoint, to: GeoPoint) => {
     return R * c; // Distance in km
 };
 
-export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
+export function AvailableRides({ ride }: AvailableRidesProps) {
   const [selectedVehicleName, setSelectedVehicleName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
@@ -151,9 +151,6 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
             title: t.rideConfirmedTitle,
             description: t.rideConfirmedDesc,
         });
-
-        // Pass the updated ride details to the parent
-        onConfirm({ ...ride, ...updateData });
 
     } catch (error) {
         console.error("Error confirming ride: ", error);
