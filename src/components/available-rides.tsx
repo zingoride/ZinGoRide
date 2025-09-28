@@ -142,6 +142,7 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         const updateData = {
             vehicleType: selectedVehicleName,
             fare: selectedVehicleDetails?.calculatedFare || 0,
+            status: 'booked',
         };
 
         await updateDoc(rideRef, updateData);
@@ -152,7 +153,7 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         });
 
         // Pass the updated ride details to the parent
-        onConfirm({ ...ride, ...updateData, status: 'searching' });
+        onConfirm({ ...ride, ...updateData });
 
     } catch (error) {
         console.error("Error confirming ride: ", error);

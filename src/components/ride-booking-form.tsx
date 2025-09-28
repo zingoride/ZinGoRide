@@ -136,7 +136,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             customerAvatar: user.photoURL || undefined,
-            status: 'booked',
+            status: 'searching',
             createdAt: serverTimestamp(),
             pickupCoords: new GeoPoint(finalPickupCoords.lat, finalPickupCoords.lng),
         };

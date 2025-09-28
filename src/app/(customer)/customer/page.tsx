@@ -130,7 +130,7 @@ const CustomerPage = () => {
     };
 
     const handleRideConfirmed = (confirmedRide: RideRequest) => {
-      // The status is now 'searching', so we update the local state to show the status screen.
+      // The status is now 'booked', so we update the local state to show the status screen.
       // The onSnapshot listener will handle further updates from the database.
       setCurrentRide(confirmedRide);
     }
@@ -193,7 +193,7 @@ const CustomerPage = () => {
             return <CustomerInvoice ride={currentRide} onDone={handleReset} />;
         }
         
-        if (currentRide.status === 'booked') {
+        if (currentRide.status === 'searching') {
              return (
                  <div className="h-full w-full flex items-start justify-center">
                      <div className="w-full max-w-md">
