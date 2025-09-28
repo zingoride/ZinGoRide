@@ -11,7 +11,7 @@
         },
         {
           "fieldPath": "status",
-          "arrayConfig": "CONTAINS"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
@@ -29,7 +29,7 @@
         },
         {
           "fieldPath": "status",
-          "arrayConfig": "CONTAINS"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
@@ -43,7 +43,7 @@
       "fields": [
         {
           "fieldPath": "status",
-          "arrayConfig": "CONTAINS"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
