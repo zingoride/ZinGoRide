@@ -26,5 +26,5 @@ export interface RideRequest {
         avatarUrl: string;
     };
     pickupCoords: GeoPoint;
-    dropoffCoords: GeoPoint;
+    dropoffCoords?: GeoPoint;
 }
