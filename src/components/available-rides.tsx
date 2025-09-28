@@ -140,7 +140,6 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
         const selectedVehicleDetails = vehicleOptions.find(v => v.name === selectedVehicleName);
         
         const updateData = {
-            status: 'searching' as const,
             vehicleType: selectedVehicleName,
             fare: selectedVehicleDetails?.calculatedFare || 0,
         };
@@ -152,9 +151,13 @@ export function AvailableRides({ ride, onConfirm }: AvailableRidesProps) {
             description: t.rideConfirmedDesc,
         });
 
+        // Pass the updated ride details to the parent
+        onConfirm({ ...ride, ...updateData, status: 'searching' });
+
     } catch (error) {
         console.error("Error confirming ride: ", error);
         toast({ variant: "destructive", title: t.rideUpdateError });
+    } finally {
         setLoading(false);
     } 
   };

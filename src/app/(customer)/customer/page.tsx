@@ -8,7 +8,7 @@ import { CustomerRideStatus } from "@/components/customer-ride-status";
 import type { RideRequest } from '@/lib/types';
 import { CustomerInvoice } from '@/components/customer-invoice';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, GeoPoint } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MapPin } from 'lucide-react';
 import { AdBanner } from '@/components/ad-banner';
@@ -105,15 +105,18 @@ const CustomerPage = () => {
 
         return () => {
             unsubscribe();
-            // Cleanup function: if the component unmounts, check if the ride should be cancelled.
             const cancelRideOnUnmount = async () => {
-                const rideDoc = await getDoc(rideRef);
-                if (rideDoc.exists()) {
-                    const rideData = rideDoc.data();
-                    if (rideData.status === 'booked' || rideData.status === 'searching') {
-                         await updateDoc(rideRef, { status: 'cancelled_by_customer' });
-                         console.log(`Ride ${rideId} cancelled due to component unmount.`);
+                try {
+                    const rideDoc = await getDoc(rideRef);
+                    if (rideDoc.exists()) {
+                        const rideData = rideDoc.data();
+                        if (rideData.status === 'booked' || rideData.status === 'searching') {
+                             await updateDoc(rideRef, { status: 'cancelled_by_customer' });
+                             console.log(`Ride ${rideId} cancelled due to component unmount.`);
+                        }
                     }
+                } catch (e) {
+                    console.error("Error cancelling ride on unmount", e);
                 }
             }
             cancelRideOnUnmount();
@@ -125,6 +128,12 @@ const CustomerPage = () => {
         setRideId(ride.id);
         setCurrentRide(ride);
     };
+
+    const handleRideConfirmed = (confirmedRide: RideRequest) => {
+      // The status is now 'searching', so we update the local state to show the status screen.
+      // The onSnapshot listener will handle further updates from the database.
+      setCurrentRide(confirmedRide);
+    }
     
     const handleReset = () => {
         if (typeof window !== 'undefined') {
@@ -190,7 +199,7 @@ const CustomerPage = () => {
                      <div className="w-full max-w-md">
                         <Card className="shadow-lg w-full">
                             <CardContent className="p-4">
-                                <AvailableRides ride={currentRide} onConfirm={(confirmedRide) => setCurrentRide(confirmedRide)} />
+                                <AvailableRides ride={currentRide} onConfirm={handleRideConfirmed} />
                             </CardContent>
                         </Card>
                      </div>
