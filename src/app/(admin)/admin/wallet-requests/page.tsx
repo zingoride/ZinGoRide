@@ -133,69 +133,6 @@ const translations = {
 };
 
 
-function ManualTopUpCard() {
-    const { user: adminUser } = useAuth();
-    const { toast } = useToast();
-    const { language } = useLanguage();
-    const t = translations[language];
-    const [loading, setLoading] = useState(false);
-    const formRef = React.useRef<HTMLFormElement>(null);
-
-    const handleManualTopUp = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!adminUser) return;
-        setLoading(true);
-
-        const formData = new FormData(e.currentTarget);
-        formData.append('adminId', adminUser.uid);
-        formData.append('adminName', adminUser.displayName || 'Admin');
-        
-        const result = await performManualTopUp(formData);
-
-        if (result.success) {
-            toast({ title: t.topUpSuccess, description: result.message });
-            formRef.current?.reset();
-        } else {
-            toast({ variant: 'destructive', title: t.topUpError, description: result.message });
-        }
-        setLoading(false);
-    }
-    
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{t.manualTopUp}</CardTitle>
-                <CardDescription>{t.manualTopUpDesc}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form ref={formRef} onSubmit={handleManualTopUp} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="userId">{t.userId}</Label>
-                        <Input id="userId" name="userId" placeholder={t.userIdPlaceholder} required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="amount">{t.topUpAmount}</Label>
-                        <Input id="amount" name="amount" type="number" placeholder={t.topUpAmountPlaceholder} required />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t.topUpLoading}
-                            </>
-                        ) : (
-                             <>
-                                <Send className="mr-2 h-4 w-4" />
-                                {t.topUpBtn}
-                            </>
-                        )}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
-    )
-}
-
 export default function WalletRequestsPage() {
   const [requests, setRequests] = useState<TopUpRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,8 +241,8 @@ export default function WalletRequestsPage() {
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-8 items-start">
-        <Card className="md:col-span-2">
+    <div className="grid gap-8 items-start">
+        <Card>
             <CardHeader>
                 <CardTitle>{t.title}</CardTitle>
                 <CardDescription>{t.description}</CardDescription>
@@ -373,10 +310,6 @@ export default function WalletRequestsPage() {
                 )}
             </CardContent>
         </Card>
-
-        <div className="md:col-start-1 md:col-span-2 lg:col-start-auto lg:col-span-1">
-           <ManualTopUpCard />
-        </div>
 
         {selectedRequest && (
         <AlertDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>

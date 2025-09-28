@@ -199,6 +199,26 @@ export async function performManualTopUp(formData: FormData): Promise<{ success:
         return { success: false, message: error.message };
     }
 }
+
+export async function createPaymentIntent(
+  amount: number
+): Promise<{ clientSecret: string } | { error: string }> {
+  // This is a placeholder. In a real application, you would use the Stripe Node.js library
+  // to create a PaymentIntent and return its client secret.
+  // Example:
+  // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  // const paymentIntent = await stripe.paymentIntents.create({
+  //   amount: amount * 100, // Amount in cents
+  //   currency: 'pkr',
+  // });
+  // return { clientSecret: paymentIntent.client_secret! };
+
+  if (amount > 0) {
+    // Return a dummy client secret for UI testing purposes
+    return { clientSecret: `pi_${amount}_secret_${Date.now()}` };
+  }
+  return { error: 'Invalid amount' };
+}
     
 
     
