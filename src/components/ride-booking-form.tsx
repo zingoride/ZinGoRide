@@ -60,6 +60,20 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   
   const t = translations[language];
 
+  const reverseGeocode = async (lat: number, lng: number) => {
+     try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+        if (data && data.display_name) {
+            return data.display_name;
+        }
+        return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    } catch (error) {
+        console.error("Reverse geocoding error:", error);
+        return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  }
+
   const handleUseMyLocation = async () => {
     if (!navigator.geolocation) return;
     setIsGettingLocation(true);
@@ -68,30 +82,28 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
         async (position) => {
             const { latitude, longitude } = position.coords;
             setPickupCoords({ lat: latitude, lng: longitude });
-
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                const data = await response.json();
-                if (data && data.display_name) {
-                    setPickup(data.display_name);
-                    toast({ title: t.locationSuccess });
-                } else {
-                    setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-                    toast({ variant: 'destructive', title: t.noAddressFound });
-                }
-            } catch (error) {
-                console.error("Reverse geocoding error:", error);
-                setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-                toast({ variant: 'destructive', title: t.locationError });
-            } finally {
-                setIsGettingLocation(false);
-            }
+            const address = await reverseGeocode(latitude, longitude);
+            setPickup(address);
+            toast({ title: t.locationSuccess });
+            setIsGettingLocation(false);
         },
         () => {
             toast({ variant: 'destructive', title: t.locationError });
             setIsGettingLocation(false);
         }
     );
+  }
+
+  const getCurrentLocation = (): Promise<{latitude: number, longitude: number}> => {
+      return new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+              return reject(new Error("Geolocation not supported"));
+          }
+          navigator.geolocation.getCurrentPosition(
+              (position) => resolve(position.coords),
+              (error) => reject(error)
+          );
+      });
   }
 
 
@@ -108,19 +120,26 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     setLoading(true);
 
     try {
-        const rideData: Omit<RideRequest, 'id' | 'createdAt' | 'pickupCoords'> & { pickupCoords?: GeoPoint; createdAt: any; } = {
-            pickup,
+        let finalPickupCoords = pickupCoords;
+        if (!finalPickupCoords) {
+            const coords = await getCurrentLocation();
+            finalPickupCoords = { lat: coords.latitude, lng: coords.longitude };
+            if (!pickup) { // If pickup address is empty, geocode it
+                const address = await reverseGeocode(coords.latitude, coords.longitude);
+                setPickup(address);
+            }
+        }
+        
+        const rideData: Omit<RideRequest, 'id' | 'createdAt'> & { createdAt: any; } = {
+            pickup: pickup || "Current Location",
             dropoff,
             customerId: user.uid,
             customerName: user.displayName || "Unknown",
             customerAvatar: user.photoURL || undefined,
             status: 'booked',
             createdAt: serverTimestamp(),
+            pickupCoords: new GeoPoint(finalPickupCoords.lat, finalPickupCoords.lng),
         };
-
-        if (pickupCoords) {
-            rideData.pickupCoords = new GeoPoint(pickupCoords.lat, pickupCoords.lng);
-        }
         
         const ridesCollection = collection(db, "rides");
         const docRef = await addDoc(ridesCollection, rideData);
@@ -128,7 +147,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
         onFindRide({ 
             ...rideData, 
             id: docRef.id, 
-            createdAt: new Date(), // Use client-side timestamp for immediate UI update
+            createdAt: new Date(),
         } as RideRequest);
 
     } catch (error) {
@@ -191,3 +210,5 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
     </form>
   );
 }
+
+    
