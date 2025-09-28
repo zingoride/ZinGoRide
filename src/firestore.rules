@@ -1,0 +1,75 @@
+{
+  "rules": {
+    // Helper functions
+    "function isAuth()": "return request.auth != null;",
+    "function isAdmin()": "return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Admin';",
+
+    // Collections
+    "rules": {
+      "users": {
+        "$uid": {
+          ".read": "isAuth() && ($uid == request.auth.uid || isAdmin())",
+          ".write": "isAuth() && ($uid == request.auth.uid || isAdmin())"
+        },
+        ".read": "isAdmin()",
+        ".write": "isAdmin()"
+      },
+      "rides": {
+        // Any authenticated user can query/read the rides collection.
+        // The security is enforced by the application's queries (e.g., drivers only query for 'booked' rides)
+        // and the more specific write/update rules below. This fixes the "permission-denied" on list queries.
+        ".read": "isAuth()",
+        "$rideId": {
+           // A user can create a ride if they are the customer.
+           // A driver can update a ride if they are assigned.
+           // An admin can do anything.
+          ".write": "(isAuth() && request.resource.data.customerId == request.auth.uid) || (isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver' && resource.data.driverId == request.auth.uid) || isAdmin()"
+        }
+      },
+      "configs": {
+        "appConfig": {
+          ".read": "isAuth()",
+          ".write": "isAdmin()"
+        }
+      },
+      "advertisements": {
+        ".read": "isAuth()",
+        "$adId": {
+          ".write": "isAdmin()"
+        }
+      },
+      "walletRequests": {
+        ".read": "isAdmin()",
+        "$reqId": {
+          ".write": "isAuth()" // Allow users to create requests
+        }
+      },
+       "payoutRequests": {
+        ".read": "isAdmin()",
+        "$reqId": {
+          ".write": "isAdmin()" 
+        }
+      },
+       "notifications": {
+          ".read": "isAdmin()",
+          ".write": "isAdmin()"
+      },
+      "chats": {
+        "$chatId": {
+          "messages": {
+            ".read": "isAuth() && request.auth.uid in $chatId.split('_')",
+            "$messageId": {
+              ".write": "isAuth() && request.auth.uid in $chatId.split('_')"
+            }
+          }
+        }
+      },
+      "walletTransactions": {
+        ".read": "isAdmin()",
+        "$transactionId": {
+            ".write": "isAdmin()"
+        }
+      }
+    }
+  }
+}
