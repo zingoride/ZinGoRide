@@ -2,16 +2,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, MapPin, Circle, LocateFixed } from 'lucide-react';
+import { Loader2, MapPin, Circle, LocateFixed, Search } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { RideRequest } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, GeoPoint, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, GeoPoint, serverTimestamp, Timestamp } from 'firebase/firestore';
 
 
 const translations = {
@@ -28,6 +28,8 @@ const translations = {
     gettingLocation: "Location haasil ki ja rahi hai...",
     enableLocation: "Location ki Ijazat Dein",
     noAddressFound: "Is location par koi address nahi mila.",
+    searchingForPlace: "Jagah dhoondi ja rahi hai...",
+    noResultsFound: "Koi nataij nahi milay."
   },
   en: {
     pickupPlaceholder: "Where from?",
@@ -42,11 +44,20 @@ const translations = {
     gettingLocation: "Getting location...",
     enableLocation: "Enable Location",
     noAddressFound: "No address found for this location.",
+    searchingForPlace: "Searching for place...",
+    noResultsFound: "No results found."
   }
 }
 
 interface RideBookingFormProps {
     onFindRide: (rideId: string) => void;
+}
+
+interface Suggestion {
+    place_id: number;
+    display_name: string;
+    lat: string;
+    lon: string;
 }
 
 export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
@@ -58,8 +69,37 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   const [dropoff, setDropoff] = useState('');
   const [loading, setLoading] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   const t = translations[language];
+
+  // Debounce search
+  useEffect(() => {
+    if (dropoff.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      const searchPlaces = async () => {
+        setIsSearching(true);
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${dropoff}&countrycodes=pk&limit=5`);
+          const data = await response.json();
+          setSuggestions(data);
+        } catch (error) {
+          console.error("Failed to fetch suggestions", error);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+      searchPlaces();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(handler);
+  }, [dropoff]);
 
   const reverseGeocode = async (lat: number, lng: number) => {
      try {
@@ -125,13 +165,13 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
         if (!finalPickupCoords) {
             const coords = await getCurrentLocation();
             finalPickupCoords = { lat: coords.latitude, lng: coords.longitude };
-            if (!pickup) { // If pickup address is empty, geocode it
+            if (!pickup) {
                 const address = await reverseGeocode(coords.latitude, coords.longitude);
                 setPickup(address);
             }
         }
         
-        const rideData: Omit<RideRequest, 'id' | 'createdAt'> & { createdAt: any; } = {
+        const rideData: Omit<RideRequest, 'id' | 'createdAt'> & { createdAt: any } = {
             pickup: pickup || "Current Location",
             dropoff,
             customerId: user.uid,
@@ -156,6 +196,11 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
         setLoading(false);
     }
   };
+
+  const handleSuggestionClick = (suggestion: Suggestion) => {
+    setDropoff(suggestion.display_name);
+    setSuggestions([]);
+  }
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-3">
@@ -192,7 +237,24 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
                 value={dropoff}
                 onChange={(e) => setDropoff(e.target.value)}
                 required
+                autoComplete="off"
             />
+             { (isSearching || suggestions.length > 0) && (
+                <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg">
+                    {isSearching && <div className="p-3 text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/> {t.searchingForPlace}</div>}
+                    {!isSearching && suggestions.length === 0 && dropoff.length >= 3 && <div className="p-3 text-sm text-muted-foreground">{t.noResultsFound}</div>}
+                    {!isSearching && suggestions.map(suggestion => (
+                        <div 
+                            key={suggestion.place_id}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="p-3 text-sm cursor-pointer hover:bg-accent flex items-start gap-2"
+                        >
+                            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span>{suggestion.display_name}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
         <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
         {loading ? (
