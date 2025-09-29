@@ -19,25 +19,32 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import { StripeCheckoutForm } from './stripe-checkout-form';
 
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 const translations = {
     ur: {
-        title: "Wallet Mein Raqam Shamil Karein",
-        description: "Credit/Debit card istemal kar ke foran raqam shamil karein.",
+        title: "Wallet Top-Up Request",
+        description: "Raqam aur transaction ID darj karein. Admin approval ke baad raqam shamil kar di jayegi.",
+        amount: "Raqam (PKR)",
+        amountPlaceholder: "e.g., 500",
+        transactionId: "Easypaisa/Jazzcash Transaction ID",
+        transactionIdPlaceholder: "e.g., 1234567890",
+        sendRequest: "Request Bhejein",
+        sending: "Bheja ja raha hai...",
         requestSent: "Aapki request bhej di gayi hai.",
         requestSentDesc: "Admin approval ke baad raqam aapke wallet mein shamil kar di jayegi.",
         error: "Ghalti",
         errorDesc: "Request bhejne mein masla hua.",
     },
     en: {
-        title: "Add Funds to Wallet",
-        description: "Instantly add funds using a credit/debit card.",
+        title: "Wallet Top-Up Request",
+        description: "Enter the amount and transaction ID. Funds will be added after admin approval.",
+        amount: "Amount (PKR)",
+        amountPlaceholder: "e.g., 500",
+        transactionId: "Easypaisa/Jazzcash Transaction ID",
+        transactionIdPlaceholder: "e.g., 1234567890",
+        sendRequest: "Send Request",
+        sending: "Sending...",
         requestSent: "Request Sent Successfully",
         requestSentDesc: "Funds will be added to your wallet after admin approval.",
         error: "Error",
@@ -50,18 +57,48 @@ export function WalletTopUpDialog({ trigger, userType }: { trigger: React.ReactN
     const { toast } = useToast();
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
-    const [amount, setAmount] = useState(500); // Default amount
-    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [amount, setAmount] = useState('');
+    const [transactionId, setTransactionId] = useState('');
     const [loading, setLoading] = useState(false);
     const t = translations[language];
 
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !amount || !transactionId) return;
 
-    const handlePaymentSuccess = () => {
-        setOpen(false);
-        toast({
-            title: "Payment Successful",
-            description: `PKR ${amount} has been added to your wallet.`
-        })
+        setLoading(true);
+
+        try {
+            const requestsCollection = collection(db, "walletRequests");
+            await addDoc(requestsCollection, {
+                userId: user.uid,
+                userName: user.displayName || "N/A",
+                userType: userType || 'Customer',
+                amount: parseFloat(amount),
+                transactionId: transactionId,
+                status: 'Pending',
+                createdAt: serverTimestamp(),
+            });
+
+            toast({
+                title: t.requestSent,
+                description: t.requestSentDesc,
+            });
+
+            setAmount('');
+            setTransactionId('');
+            setOpen(false);
+
+        } catch (error) {
+            console.error("Error sending top-up request:", error);
+            toast({
+                variant: 'destructive',
+                title: t.error,
+                description: t.errorDesc
+            })
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -72,13 +109,33 @@ export function WalletTopUpDialog({ trigger, userType }: { trigger: React.ReactN
                     <DialogTitle>{t.title}</DialogTitle>
                     <DialogDescription>{t.description}</DialogDescription>
                 </DialogHeader>
-                 <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
-                    <StripeCheckoutForm 
-                      amount={amount} 
-                      onSuccess={handlePaymentSuccess} 
-                      setClientSecret={setClientSecret} 
-                    />
-                </Elements>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <Label htmlFor="amount">{t.amount}</Label>
+                        <Input 
+                            id="amount" 
+                            type="number"
+                            placeholder={t.amountPlaceholder}
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="transactionId">{t.transactionId}</Label>
+                        <Input 
+                            id="transactionId" 
+                            placeholder={t.transactionIdPlaceholder}
+                            value={transactionId}
+                            onChange={(e) => setTransactionId(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? t.sending : t.sendRequest}
+                    </Button>
+                </form>
             </DialogContent>
         </Dialog>
     );
