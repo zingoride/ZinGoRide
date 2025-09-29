@@ -1,77 +1,69 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
     function isAuth() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function isAdmin(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.type == 'Admin';
+    }
+
+    // Users can only read/write their own data. Admin can read/write any user.
+    match /users/{userId} {
+      allow read, update, delete: if isAuth() && (request.auth.uid == userId || isAdmin(request.auth.uid));
+      allow create: if isAuth();
     }
     
-    function isAdmin() {
-      // Check if the user is an admin by looking at their custom claims
-      // This is more secure and efficient than a get() call.
-      // Make sure to set this claim using the Firebase Admin SDK.
-      return request.auth.token.admin == true;
-    }
-
-    // Collection: users
-    match /users/{userId} {
-      // Users can read/write their own document, Admins can read any.
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId);
-      // Deny list/query access to non-admins
-      allow list: if isAdmin();
-    }
-
-    // Collection: rides
     match /rides/{rideId} {
-      // READ: Any authenticated user can read.
-      // The app's queries will filter what data is actually shown to whom
-      // e.g., driver app queries for status == 'booked', customer app queries for their own rides.
-      // This is secure because sensitive data is protected by write/update rules.
+      // ANY authenticated user can read the rides collection. 
+      // The app's query will filter what they actually see (e.g., drivers only see 'booked' rides).
       allow read: if isAuth();
 
-      // CREATE: Only the customer who owns the ride can create it.
+      // Only the customer can create their own ride.
       allow create: if isAuth() && request.resource.data.customerId == request.auth.uid;
       
-      // UPDATE: Allow updates under specific conditions
+      // The assigned driver, the customer, or an admin can update the ride.
       allow update: if isAuth() && (
-        // The assigned driver can update the ride (e.g., accept, start, complete)
-        (get(path(request.resource.path)).data.driverId == request.auth.uid) ||
-        // The customer who created the ride can update it (e.g., to cancel)
-        (get(path(request.resource.path)).data.customerId == request.auth.uid) ||
-        // Admin can update anything
-        isAdmin()
+        (resource.data.driverId == request.auth.uid) ||
+        (resource.data.customerId == request.auth.uid) ||
+        isAdmin(request.auth.uid)
       );
 
-      // DELETE: No one can delete rides for data integrity. They should be cancelled instead.
-      allow delete: if false;
-
-      // Allow admins to list all rides.
-      allow list: if isAdmin();
-      
-      // Messages subcollection
-      match /messages/{messageId} {
-        // Only the customer or driver of the ride can read/write messages
-        allow read, write: if isAuth() && (request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.customerId || request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.driverId);
-      }
+      // Admin can delete rides.
+      allow delete: if isAuth() && isAdmin(request.auth.uid);
     }
     
-    // Generic Admin-Only Collections
-    match /{coll}/{docId} {
-      // Applies to walletRequests, payoutRequests, notifications, advertisements, configs
-      allow read, write, create, list: if isAdmin();
+    // All other collections are admin-only
+    match /advertisements/{adId} {
+      allow read, write: if isAuth() && isAdmin(request.auth.uid);
     }
     
-    // Chats collection for admin-user communication
-    match /chats/{chatId}/messages/{messageId} {
-      // Only members of the chat can read/write
-      allow read, write: if isAuth() && request.auth.uid in chatId.split('_');
+    match /configs/{configId} {
+       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    }
+    
+    match /notifications/{notifId} {
+       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    }
+    
+    match /payoutRequests/{payoutId} {
+       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    }
+    
+    match /walletRequests/{reqId} {
+       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    }
+    
+    match /walletTransactions/{transId} {
+       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    }
+    
+    match /chats/{chatId}/{message=**} {
+      allow read, write: if isAuth();
     }
   }
 }
