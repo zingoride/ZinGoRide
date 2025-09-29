@@ -1,69 +1,92 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
+    // Helper Functions
     function isAuth() {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+    
     function isAdmin(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.type == 'Admin';
+      return isAuth() && exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.type == 'Admin';
     }
 
-    // Users can only read/write their own data. Admin can read/write any user.
+    // ========== COLLECTIONS ==========
+    
+    //--- USERS ---//
     match /users/{userId} {
-      allow read, update, delete: if isAuth() && (request.auth.uid == userId || isAdmin(request.auth.uid));
+      // Admin can access any user document
+      // A user can only access their own document
+      allow read, update, delete: if isAdmin(request.auth.uid) || isOwner(userId);
+      // Any authenticated user can create their own account
       allow create: if isAuth();
     }
     
+    //--- RIDES ---//
     match /rides/{rideId} {
-      // ANY authenticated user can read the rides collection. 
-      // The app's query will filter what they actually see (e.g., drivers only see 'booked' rides).
-      allow read: if isAuth();
-
-      // Only the customer can create their own ride.
-      allow create: if isAuth() && request.resource.data.customerId == request.auth.uid;
+        // ANY authenticated user can read from the rides collection.
+        // The application code itself filters which rides a user sees
+        // (e.g., drivers only see 'booked' rides, customers only see their own ride).
+        // This is the key fix for the "permission-denied" error on collection listeners.
+        allow read: if isAuth();
       
-      // The assigned driver, the customer, or an admin can update the ride.
-      allow update: if isAuth() && (
-        (resource.data.driverId == request.auth.uid) ||
-        (resource.data.customerId == request.auth.uid) ||
-        isAdmin(request.auth.uid)
-      );
+        // A customer can create a ride for themselves
+        allow create: if isAuth() && request.resource.data.customerId == request.auth.uid;
+      
+        // Update permissions are complex:
+        allow update: if isAuth() && (
+            // Admin can update anything
+            isAdmin(request.auth.uid) ||
+            
+            // The customer who owns the ride can cancel it ('cancelled_by_customer')
+            (isOwner(resource.data.customerId) && request.resource.data.status == 'cancelled_by_customer') ||
+          
+            // Any driver can accept a ride ('accepted'), becoming the ride's driver
+            (
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'Driver' &&
+                resource.data.driverId == null && // No driver assigned yet
+                request.resource.data.status == 'accepted' &&
+                request.resource.data.driverId == request.auth.uid
+            ) ||
 
-      // Admin can delete rides.
-      allow delete: if isAuth() && isAdmin(request.auth.uid);
+            // The assigned driver can update the status to in_progress, completed, or cancelled
+            (
+              isOwner(resource.data.driverId) &&
+              (
+                request.resource.data.status == 'in_progress' ||
+                request.resource.data.status == 'completed' ||
+                request.resource.data.status == 'cancelled_by_driver'
+              )
+            )
+        );
     }
     
-    // All other collections are admin-only
-    match /advertisements/{adId} {
-      allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    //--- WALLET REQUESTS, CONFIGS, PAYOUTS, NOTIFICATIONS, ADVERTISEMENTS, etc. ---//
+    // These collections can only be accessed by admins
+    match /walletRequests/{docId} {
+      allow read, write, create, delete: if isAdmin(request.auth.uid);
     }
     
-    match /configs/{configId} {
-       allow read, write: if isAuth() && isAdmin(request.auth.uid);
+    match /payoutRequests/{docId} {
+        allow read, write, create, delete: if isAdmin(request.auth.uid);
+    }
+
+    match /notifications/{docId} {
+        allow read, write, create, delete: if isAdmin(request.auth.uid);
+    }
+
+    match /advertisements/{docId} {
+        allow read, write, create, delete: if isAdmin(request.auth.uid);
     }
     
-    match /notifications/{notifId} {
-       allow read, write: if isAuth() && isAdmin(request.auth.uid);
-    }
-    
-    match /payoutRequests/{payoutId} {
-       allow read, write: if isAuth() && isAdmin(request.auth.uid);
-    }
-    
-    match /walletRequests/{reqId} {
-       allow read, write: if isAuth() && isAdmin(request.auth.uid);
-    }
-    
-    match /walletTransactions/{transId} {
-       allow read, write: if isAuth() && isAdmin(request.auth.uid);
-    }
-    
-    match /chats/{chatId}/{message=**} {
-      allow read, write: if isAuth();
+    match /configs/{docId} {
+      allow read, write, create: if isAdmin(request.auth.uid);
     }
   }
 }
