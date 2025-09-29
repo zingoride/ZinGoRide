@@ -67,6 +67,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
   const [pickup, setPickup] = useState('');
   const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
   const [dropoff, setDropoff] = useState('');
+  const [dropoffCoords, setDropoffCoords] = useState<{lat: number, lng: number} | null>(null);
   const [loading, setLoading] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -158,6 +159,14 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
       });
       return;
     }
+    if (!dropoffCoords) {
+      toast({
+        variant: "destructive",
+        title: "Destination Required",
+        description: "Please select a destination from the suggestions.",
+      });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -180,6 +189,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
             status: 'searching',
             createdAt: serverTimestamp(),
             pickupCoords: new GeoPoint(finalPickupCoords.lat, finalPickupCoords.lng),
+            dropoffCoords: new GeoPoint(dropoffCoords.lat, dropoffCoords.lng),
         };
         
         const ridesCollection = collection(db, "rides");
@@ -199,6 +209,7 @@ export function RideBookingForm({ onFindRide }: RideBookingFormProps) {
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
     setDropoff(suggestion.display_name);
+    setDropoffCoords({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) });
     setSuggestions([]);
   }
 
